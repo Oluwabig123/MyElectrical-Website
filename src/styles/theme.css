@@ -1,0 +1,14 @@
+:root{
+  --bg: #070A12;
+  --panel: rgba(255,255,255,0.06);
+  --panel2: rgba(255,255,255,0.08);
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.70);
+  --line: rgba(255,255,255,0.10);
+  --brand: #FFD400; /* electric yellow */
+  --brand2:#2EE9FF; /* optional electric cyan accent */
+  --navy:#0B1020;
+  --radius: 18px;
+  --shadow: 0 24px 70px rgba(0,0,0,0.45);
+  --max: 1120px;
+}
