@@ -4,11 +4,9 @@ import SectionHeader from "../../components/ui/SectionHeader";
 import Reveal from "../../components/ui/Reveal";
 
 const points = [
-  { t: "Safety-first installations", d: "Correct protection, proper cable sizing, and structured distribution." },
-  { t: "Load balancing expertise", d: "Circuits planned to avoid overloads and reduce faults." },
-  { t: "Authentic materials only", d: "We recommend genuine components for durability and safety." },
-  { t: "Neat finishing", d: "Clean routing, proper trunking, and a professional final look." },
-  { t: "Customer satisfaction", d: "Clear communication and reliable delivery." },
+  { t: "Safety-first installs", d: "Correct protection and proper cable sizing." },
+  { t: "Clean finishing", d: "Neat routing with tidy final delivery." },
+  { t: "Reliable updates", d: "Clear communication from start to finish." },
 ];
 
 export default function WhyOduzz() {
@@ -17,8 +15,8 @@ export default function WhyOduzz() {
       <Container>
         <SectionHeader
           kicker="Why Oduzz"
-          title="Professional work you can trust"
-          subtitle="We combine clean workmanship with safety standards — because electricity must be done right."
+          title="Why clients choose Oduzz"
+          subtitle="Safe work. Clean delivery."
         />
 
         <div className="grid-3">

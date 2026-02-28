@@ -11,22 +11,19 @@ const lightingItems = [
   {
     projectId: "lighting-pop-1",
     title: "POP Line Lighting",
-    desc: "Straight, balanced light channels with clean edge finishing and proper circuit separation.",
-    tags: ["Aligned layout", "Neat channels", "Safe terminations"],
+    desc: "Straight channels, clean edges, and safe circuit separation.",
     src: "https://images.unsplash.com/photo-1540932239986-30128078f3c1?auto=format&fit=crop&w=2400&q=80",
   },
   {
     projectId: "lighting-chandelier-1",
     title: "Chandelier Installation",
-    desc: "Accurate centering, reinforced mounting points, and concealed routing for a polished look.",
-    tags: ["Centerline accuracy", "Reinforced support", "Hidden wiring"],
+    desc: "Accurate centering, reinforced mounting, and concealed routing.",
     src: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=2400&q=80",
   },
   {
     projectId: "lighting-accent-1",
     title: "Decorative Accent Lighting",
-    desc: "Layered warm and task lighting that upgrades ambiance without compromising safety.",
-    tags: ["Mood layering", "Glare control", "Code-compliant setup"],
+    desc: "Layered ambient and task lighting with controlled glare.",
     src: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=2400&q=80",
   },
 ];
@@ -37,12 +34,12 @@ export default function LightingShowcase() {
       <Container>
         <SectionHeader
           kicker="Interior finishing"
-          title="Precision lighting that completes your interior"
-          subtitle="From POP line lights to chandeliers and modern fixtures, every install is aligned, neat, and safety-checked."
+          title="Lighting highlights"
+          subtitle="POP lines, chandeliers, and accent setups."
         />
 
         <Reveal>
-          <div className="lightingMarquee" aria-label="Interior finishing moving gallery">
+          <div className="lightingMarquee" aria-label="Lighting project gallery">
             <div className="lightingMarqueeTrack">
               <div className="lightingMarqueeGroup">
                 {lightingItems.map((it) => (
@@ -56,7 +53,6 @@ export default function LightingShowcase() {
                     </Link>
                     <figcaption className="lightingMarqueeCaption">
                       <span className="lightingMarqueeTitle">{it.title}</span>
-                      <span className="lightingMarqueeDesc">{it.desc}</span>
                     </figcaption>
                   </figure>
                 ))}
@@ -73,7 +69,6 @@ export default function LightingShowcase() {
                     </Link>
                     <figcaption className="lightingMarqueeCaption">
                       <span className="lightingMarqueeTitle">{it.title}</span>
-                      <span className="lightingMarqueeDesc">{it.desc}</span>
                     </figcaption>
                   </figure>
                 ))}
@@ -89,12 +84,6 @@ export default function LightingShowcase() {
                 <div className="cardTitle">{it.title}</div>
                 <p className="p">{it.desc}</p>
 
-                <div className="lightingTags" aria-label={`${it.title} highlights`}>
-                  {it.tags.map((tag) => (
-                    <span key={tag} className="lightingTag">{tag}</span>
-                  ))}
-                </div>
-
                 <div className="lightingCardMedia">
                   <ParallaxImage src={it.src} alt={it.title} height={280} intensity={60} />
                 </div>
@@ -105,8 +94,8 @@ export default function LightingShowcase() {
 
         <Reveal delay={0.14}>
           <div className="lightingActions">
-            <Link to="/projects"><Button variant="outline">See lighting projects</Button></Link>
-            <Link to="/quote"><Button variant="primary">Get a Quote</Button></Link>
+            <Link to="/projects"><Button variant="outline">View projects</Button></Link>
+            <Link to="/quote"><Button variant="primary">Get quote</Button></Link>
           </div>
         </Reveal>
       </Container>

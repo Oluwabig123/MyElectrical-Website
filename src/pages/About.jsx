@@ -9,15 +9,11 @@ export default function About() {
         <SectionHeader
           kicker="About"
           title="Oduzz Electrical Concept"
-          subtitle="We focus on safety-first installations, load balancing, neat finishing, and authentic materials only."
+          subtitle="Safety-first wiring, solar, CCTV, and lighting."
         />
         <div className="card">
           <p className="p">
-            We serve Ikorodu and Lagos with professional electrical wiring, solar & inverter installations,
-            CCTV, smart home systems, and premium lighting finishes.
-          </p>
-          <p className="p">
-            Our work is clean, properly protected, and designed for long-term reliability.
+            We serve Ikorodu and Lagos with clean, code-compliant installations built for long-term reliability.
           </p>
         </div>
       </Container>

@@ -4,16 +4,16 @@ export const oduzzAssistantDoc = {
   lastUpdated: "2026-02-17",
   policy: {
     note:
-      "All recommendations are preliminary and must be confirmed with a physical site inspection before final quote.",
+      "All recommendations are preliminary and should be confirmed during site inspection.",
   },
   knowledge: {
     services: {
       solar:
-        "Solar and inverter installation includes load audit, equipment sizing, protection setup, and clean cable management.",
+        "Solar and inverter work includes load audit, correct sizing, protection setup, and clean cable management.",
       wiring:
-        "Residential and commercial wiring follows safety-first conduit routing and protection standards.",
+        "Wiring follows safety-first conduit routing and proper protection standards.",
       lighting:
-        "Lighting and interior finishing covers POP line lights, chandeliers, and decorative fixtures with neat terminations.",
+        "Lighting covers POP lines, chandeliers, and decorative fixtures with neat terminations.",
     },
   },
   solarSizing: {
@@ -40,4 +40,3 @@ export const oduzzAssistantDoc = {
     },
   },
 };
-

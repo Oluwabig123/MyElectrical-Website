@@ -9,9 +9,9 @@ export default function ServicesPreview() {
     <section className="section">
       <Container>
         <SectionHeader
-          kicker="What we do"
-          title="Electrical services built for safety and long-term reliability"
-          subtitle="Residential & commercial installations with clean finishing and correct protection devices."
+          kicker="Services"
+          title="Core electrical services"
+          subtitle="Choose what you need."
         />
 
         <div className="grid-3">

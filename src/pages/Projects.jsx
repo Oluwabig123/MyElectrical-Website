@@ -32,7 +32,7 @@ export default function Projects() {
         <SectionHeader
           kicker="Projects"
           title="Work gallery"
-          subtitle="Documented installations showing neat finishing, correct routing and safe protection."
+          subtitle="Verified installs with neat finishing and safe protection."
         />
 
         <div className="filters">
@@ -61,11 +61,28 @@ export default function Projects() {
                     <div className="cardTitle">{p.title}</div>
                     <p className="p">{p.summary}</p>
 
-                    {p.location ? (
-                      <p className="projectMeta">
-                        Location: <strong>{p.location}</strong>
-                      </p>
-                    ) : null}
+                    <div className="projectMetaGrid" aria-label={`${p.title} metadata`}>
+                      {p.scope ? (
+                        <p className="projectMeta">
+                          <span>Scope</span>
+                          <strong>{p.scope}</strong>
+                        </p>
+                      ) : null}
+                      {p.duration ? (
+                        <p className="projectMeta">
+                          <span>Duration</span>
+                          <strong>{p.duration}</strong>
+                        </p>
+                      ) : null}
+                      {p.location ? (
+                        <p className="projectMeta">
+                          <span>Location</span>
+                          <strong>{p.location}</strong>
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {p.outcome ? <p className="projectOutcome">{p.outcome}</p> : null}
 
                     {mapUrl ? (
                       <a
@@ -74,7 +91,7 @@ export default function Projects() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        View location on map
+                        Open map
                       </a>
                     ) : null}
 

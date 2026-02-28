@@ -11,7 +11,7 @@ export default function Services() {
         <SectionHeader
           kicker="Services"
           title="What we offer"
-          subtitle="Professional electrical solutions across wiring, solar, CCTV, smart systems, and finishing."
+          subtitle="Wiring, solar, CCTV, smart systems, and lighting."
         />
         <div className="grid-3">
           {services.map((s, i) => (

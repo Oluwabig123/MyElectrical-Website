@@ -12,8 +12,8 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Oduzz Electrical Concept — Ikorodu, Lagos"
-        description="Safety-first electrical wiring, solar/inverter, CCTV and smart home installations in Ikorodu, Lagos. Authentic materials only."
+        title="Oduzz Electrical Concept - Ikorodu, Lagos"
+        description="Safety-first wiring, solar/inverter, CCTV, and lighting in Ikorodu, Lagos."
       />
       <Hero />
       <ServicesPreview />

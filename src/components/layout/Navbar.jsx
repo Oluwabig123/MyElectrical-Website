@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import Container from "./Container.jsx";
 import Button from "../ui/Button.jsx";
@@ -12,9 +12,33 @@ const navItems = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function onPointerDown(event) {
+      if (!headerRef.current) return;
+      if (headerRef.current.contains(event.target)) return;
+      setOpen(false);
+    }
+
+    function onEscape(event) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [open]);
 
   return (
-    <header className="nav">
+    <header className="nav" ref={headerRef}>
       <Container className="navInner">
         <Link to="/" className="brand" aria-label="Oduzz Electrical Concept home">
           <span className="brandTraceWrap" aria-hidden="true">
@@ -41,7 +65,7 @@ export default function Navbar() {
 
         <div className="navCtas">
           <Link to="/quote" className="navTopQuote">
-            <Button variant="primary">Get a Quote</Button>
+            <Button variant="primary">Request Quote</Button>
           </Link>
           <button
             className="navBurger"
@@ -69,7 +93,7 @@ export default function Navbar() {
               </NavLink>
             ))}
             <Link to="/quote" onClick={() => setOpen(false)}>
-              <Button variant="primary" style={{ width: "100%" }}>Get a Quote</Button>
+              <Button variant="primary" style={{ width: "100%" }}>Request Quote</Button>
             </Link>
           </Container>
         </div>
