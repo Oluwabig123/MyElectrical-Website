@@ -1,8 +1,13 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { CONTACT_LINKS } from "../../data/contact.js";
 
 export default function FloatingContactCTA() {
+  const { pathname } = useLocation();
+  const hiddenRoutes = new Set(["/assistant", "/quote", "/contact"]);
+
+  if (hiddenRoutes.has(pathname)) return null;
+
   return (
     <div className="floatCta" role="region" aria-label="Quick contact">
       <Link className="floatBtn assistantMobileBtn" to="/assistant">Oduzz Assistant</Link>

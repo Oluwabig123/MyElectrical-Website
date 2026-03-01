@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import Button from "../components/ui/Button";
 import Container from "../components/layout/Container";
 import SectionHeader from "../components/ui/SectionHeader";
 import { oduzzAssistantDoc } from "../data/oduzzAssistantDoc";
@@ -6,6 +8,15 @@ import { oduzzAssistantDoc } from "../data/oduzzAssistantDoc";
 const MAX_INPUT_CHARS = 600;
 const MAX_MESSAGE_CHARS = 1200;
 const MAX_MESSAGES = 40;
+const INITIAL_ASSISTANT_MESSAGE = "Hi, I can help with solar sizing, wiring, lighting, and quotes.";
+
+const QUICK_PROMPTS = [
+  "Size my solar system",
+  "Cancel current flow",
+  "Explain wiring safety steps",
+  "Lighting quote checklist",
+  "What details do you need for a quote?",
+];
 
 function normalize(text) {
   return String(text || "").trim().toLowerCase();
@@ -66,14 +77,27 @@ export default function Assistant() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      text: "Hi, I can help with solar sizing, wiring, lighting, and quotes.",
+      text: INITIAL_ASSISTANT_MESSAGE,
     },
   ]);
+  const bodyRef = useRef(null);
 
   const headerMeta = useMemo(
     () => `${oduzzAssistantDoc.company} Doc v${oduzzAssistantDoc.version}`,
     []
   );
+  const stageLabel = useMemo(() => {
+    if (stage === "solar-loads") return "Solar sizing: load";
+    if (stage === "solar-location") return "Solar sizing: location";
+    if (stage === "solar-backup") return "Solar sizing: backup";
+    return "General assistant";
+  }, [stage]);
+
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+    body.scrollTop = body.scrollHeight;
+  }, [messages]);
 
   function addAssistant(text) {
     const safeText = clampMessage(text);
@@ -85,6 +109,7 @@ export default function Assistant() {
     const isSolar = /solar|inverter|sizing|size system|panel/.test(text);
     const isWiring = /wiring|conduit|fault|maintenance/.test(text);
     const isLighting = /lighting|chandelier|pop|interior/.test(text);
+    const isQuote = /quote|estimate|cost|price|budget/.test(text);
 
     if (isSolar) {
       setStage("solar-loads");
@@ -106,12 +131,27 @@ export default function Assistant() {
       return;
     }
 
+    if (isQuote) {
+      addAssistant(
+        "For a faster quote, share service type, location, and urgency. You can also use the quote page for a guided form."
+      );
+      return;
+    }
+
     addAssistant(
       "Ask about solar sizing, wiring, lighting, or quote prep. Example: 'size my solar system'."
     );
   }
 
   function handleSolarFlow(raw) {
+    const command = normalize(raw);
+    if (/cancel|stop|start over|reset|exit/.test(command)) {
+      setStage("idle");
+      setDraft({ loadsWatts: null, location: "", backupHours: null });
+      addAssistant("Solar sizing flow cancelled. Ask another question anytime.");
+      return;
+    }
+
     if (stage === "solar-loads") {
       const watts = toNumber(raw);
       if (!Number.isFinite(watts) || watts <= 0) {
@@ -172,16 +212,34 @@ export default function Assistant() {
   function onSend() {
     const raw = input.trim().slice(0, MAX_INPUT_CHARS);
     if (!raw) return;
-
-    setMessages((prev) => [...prev, { role: "user", text: clampMessage(raw) }].slice(-MAX_MESSAGES));
+    sendMessage(raw);
     setInput("");
+  }
+
+  function sendMessage(raw) {
+    const safeRaw = String(raw || "").trim().slice(0, MAX_INPUT_CHARS);
+    if (!safeRaw) return;
+
+    setMessages((prev) => [...prev, { role: "user", text: clampMessage(safeRaw) }].slice(-MAX_MESSAGES));
 
     if (stage.startsWith("solar-")) {
-      handleSolarFlow(raw);
+      handleSolarFlow(safeRaw);
       return;
     }
 
-    handleGeneralIntent(raw);
+    handleGeneralIntent(safeRaw);
+  }
+
+  function onQuickPrompt(prompt) {
+    setInput("");
+    sendMessage(prompt);
+  }
+
+  function onReset() {
+    setStage("idle");
+    setDraft({ loadsWatts: null, location: "", backupHours: null });
+    setInput("");
+    setMessages([{ role: "assistant", text: INITIAL_ASSISTANT_MESSAGE }]);
   }
 
   function onKeyDown(e) {
@@ -192,40 +250,77 @@ export default function Assistant() {
   }
 
   return (
-    <section className="section">
+    <section className="section assistantPage">
       <Container>
         <SectionHeader
           kicker="Assistant"
           title="Oduzz Assistant Chat"
-          subtitle="Ask about solar sizing, wiring, lighting, and quotes."
+          subtitle="Ask about solar sizing, wiring, lighting, and quote preparation."
         />
 
-        <div className="oduzzAssistantPanel assistantPagePanel">
-          <div className="oduzzAssistantHead">
-            <strong>Oduzz</strong>
-            <span>{headerMeta}</span>
-          </div>
+        <div className="assistantLayout">
+          <aside className="card assistantGuide">
+            <h3 className="assistantGuideTitle">Quick prompts</h3>
+            <div className="assistantQuickList">
+              {QUICK_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className="assistantQuickBtn"
+                  onClick={() => onQuickPrompt(prompt)}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
 
-          <div className="oduzzAssistantBody assistantPageBody">
-            {messages.map((m, i) => (
-              <div key={`${m.role}-${i}`} className={`oduzzMsg ${m.role === "user" ? "user" : "assistant"}`}>
-                {m.text}
+            <div className="assistantGuidePanel">
+              <p className="assistantGuideText">
+                Need detailed project pricing?
+                <Link className="assistantGuideLink" to="/quote"> Open the quote form.</Link>
+              </p>
+            </div>
+          </aside>
+
+          <div className="oduzzAssistantPanel assistantPagePanel">
+            <div className="oduzzAssistantHead">
+              <div className="assistantHeadMeta">
+                <strong>Oduzz</strong>
+                <span>{headerMeta}</span>
               </div>
-            ))}
-          </div>
+              <div className="assistantHeadActions">
+                <span className="assistantStage">{stageLabel}</span>
+                <Button type="button" variant="outline" className="assistantClearBtn" onClick={onReset}>
+                  Clear
+                </Button>
+              </div>
+            </div>
 
-          <div className="oduzzAssistantComposer">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_CHARS))}
-              onKeyDown={onKeyDown}
-              placeholder="Ask Oduzz about solar sizing, wiring, lighting..."
-              rows={2}
-              maxLength={MAX_INPUT_CHARS}
-            />
-            <button type="button" className="btn primary" onClick={onSend}>
-              Send
-            </button>
+            <div className="oduzzAssistantBody assistantPageBody" ref={bodyRef} role="log" aria-live="polite">
+              {messages.map((m, i) => (
+                <div key={`${m.role}-${i}`} className={`oduzzMsg ${m.role === "user" ? "user" : "assistant"}`}>
+                  {m.text}
+                </div>
+              ))}
+            </div>
+
+            <div className="oduzzAssistantComposer assistantPageComposer">
+              <div className="assistantComposerRow">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_CHARS))}
+                  onKeyDown={onKeyDown}
+                  placeholder="Ask Oduzz about solar sizing, wiring, lighting..."
+                  rows={2}
+                  maxLength={MAX_INPUT_CHARS}
+                  aria-label="Ask Oduzz a question"
+                />
+                <button type="button" className="btn primary" onClick={onSend}>
+                  Send
+                </button>
+              </div>
+              <p className="assistantHint">{input.length}/{MAX_INPUT_CHARS} characters</p>
+            </div>
           </div>
         </div>
       </Container>

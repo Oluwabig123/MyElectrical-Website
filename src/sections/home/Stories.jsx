@@ -9,7 +9,7 @@ import { projects } from "../../data/projects";
 
 export default function Stories() {
   return (
-    <section className="section">
+    <section className="section storiesPreview">
       <Container>
         <SectionHeader
           kicker="Proof of work"
@@ -17,12 +17,12 @@ export default function Stories() {
           subtitle="A few completed jobs."
         />
 
-        <div className="grid-3">
+        <div className="storiesGrid">
           {projects.slice(0, 3).map((p, i) => (
             <Reveal key={p.id} delay={i * 0.05}>
-              <article className="card">
+              <article className="card storiesCard">
                 <ParallaxImage src={p.image} alt={p.title} height={260} intensity={55} />
-                <div style={{ marginTop: 12 }}>
+                <div className="storiesCardBody">
                   <div className="cardTitle">{p.title}</div>
                   <p className="p">{p.summary}</p>
                   {p.outcome ? <p className="projectOutcome">{p.outcome}</p> : null}
@@ -33,7 +33,7 @@ export default function Stories() {
         </div>
 
         <Reveal delay={0.12}>
-          <div style={{ marginTop: 16 }}>
+          <div className="storiesActions">
             <Link to="/projects">
               <Button variant="outline">View projects</Button>
             </Link>

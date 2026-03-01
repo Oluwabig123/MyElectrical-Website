@@ -11,7 +11,7 @@ const points = [
 
 export default function WhyOduzz() {
   return (
-    <section className="section">
+    <section className="section whyOduzz">
       <Container>
         <SectionHeader
           kicker="Why Oduzz"
@@ -19,13 +19,14 @@ export default function WhyOduzz() {
           subtitle="Safe work. Clean delivery."
         />
 
-        <div className="grid-3">
+        <div className="whyOduzzGrid">
           {points.map((p, i) => (
             <Reveal key={p.t} delay={i * 0.04}>
-              <div className="card">
-                <div className="cardTitle">{p.t}</div>
+              <article className="card whyOduzzCard">
+                <span className="whyOduzzIndex">0{i + 1}</span>
+                <h3 className="cardTitle whyOduzzTitle">{p.t}</h3>
                 <p className="p">{p.d}</p>
-              </div>
+              </article>
             </Reveal>
           ))}
         </div>

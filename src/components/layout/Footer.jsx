@@ -3,6 +3,15 @@ import { Link } from "react-router-dom";
 import { CONTACT, CONTACT_LINKS } from "../../data/contact.js";
 import Container from "./Container.jsx";
 
+const quickLinks = [
+  { to: "/services", label: "Services" },
+  { to: "/projects", label: "Projects" },
+  { to: "/assistant", label: "Assistant" },
+  { to: "/about", label: "About" },
+  { to: "/quote", label: "Request Quote" },
+  { to: "/contact", label: "Contact" },
+];
+
 export default function Footer() {
   const year = new Date().getFullYear();
 
@@ -10,7 +19,7 @@ export default function Footer() {
     <footer className="footer">
       <Container className="footerShell">
         <div className="footerTop">
-          <div className="footerBrandBlock">
+          <section className="footerBrandBlock" aria-label="Business information">
             <img
               className="footerLogo"
               src="/oduzz-logo-transparent.png"
@@ -24,19 +33,18 @@ export default function Footer() {
               <span className="footerBadge">Licensed Electricians</span>
               <span className="footerBadge">Safety-First Installs</span>
             </div>
-          </div>
+          </section>
 
-          <div className="footerCol">
+          <nav className="footerCol footerLinksCol" aria-label="Footer quick links">
             <div className="footerTitle">Quick Links</div>
-            <Link className="footerLink" to="/services">Services</Link>
-            <Link className="footerLink" to="/projects">Projects</Link>
-            <Link className="footerLink" to="/assistant">Assistant</Link>
-            <Link className="footerLink" to="/about">About</Link>
-            <Link className="footerLink" to="/quote">Request Quote</Link>
-            <Link className="footerLink" to="/contact">Contact</Link>
-          </div>
+            <div className="footerLinksGrid">
+              {quickLinks.map((item) => (
+                <Link key={item.to} className="footerLink" to={item.to}>{item.label}</Link>
+              ))}
+            </div>
+          </nav>
 
-          <div className="footerCol">
+          <div className="footerCol footerContactCol">
             <div className="footerTitle">Contact</div>
             <a className="footerLink" href={CONTACT_LINKS.phone}>{CONTACT.phoneDisplay}</a>
             <a className="footerLink" href={CONTACT_LINKS.email}>{CONTACT.email}</a>
@@ -59,8 +67,8 @@ export default function Footer() {
 
       <div className="footerBottom">
         <Container className="footerBottomInner">
-          <span className="muted">{"\u00C2\u00A9"} {year} Oduzz Electrical Concept</span>
-          <span className="muted">Safety-first {"\u00E2\u20AC\u00A2"} Authentic materials only</span>
+          <span className="muted">&copy; {year} Oduzz Electrical Concept</span>
+          <span className="muted">Safety-first | Authentic materials only</span>
         </Container>
       </div>
     </footer>
