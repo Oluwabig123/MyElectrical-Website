@@ -817,6 +817,90 @@ select:focus-visible{
   display: inline-flex;
 }
 
+.productsPage{
+  position: relative;
+}
+.productsPage::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(760px 280px at 10% 8%, rgba(255,212,0,0.09), transparent 72%),
+    radial-gradient(600px 240px at 90% 86%, rgba(46,233,255,0.07), transparent 74%);
+}
+.productsPage .container{
+  position: relative;
+  z-index: 1;
+}
+.productsGrid{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.productsCard{
+  display: grid;
+  gap: 10px;
+  min-height: 188px;
+}
+.productsIndex{
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.9);
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  padding: 5px 9px;
+}
+.productsTitle{
+  margin: 0;
+}
+.productsCard .p{
+  color: rgba(255,255,255,0.88);
+}
+.productsMeta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.productsChip{
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: rgba(255,255,255,0.9);
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.05);
+  padding: 6px 9px;
+}
+.productsFoot{
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productsNote{
+  margin: 0;
+  color: rgba(255,255,255,0.86);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.productsActions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productsActions > *{
+  display: inline-flex;
+}
+
 .projectsPage{
   position: relative;
 }
@@ -1177,6 +1261,9 @@ select:focus-visible{
   .servicesPageGrid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .productsGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .quoteLayout{
     grid-template-columns: 1fr;
   }
@@ -1187,16 +1274,19 @@ select:focus-visible{
 @media (max-width: 768px){
   .aboutGrid,
   .servicesPageGrid,
+  .productsGrid,
   .contactGrid{
     grid-template-columns: 1fr;
   }
   .aboutPoint,
   .servicesPageCard,
+  .productsCard,
   .contactCard{
     min-height: 0;
   }
   .aboutFoot,
   .servicesPageFoot,
+  .productsFoot,
   .projectsToolbar,
   .projectsFoot,
   .contactFoot{
@@ -1204,6 +1294,7 @@ select:focus-visible{
   }
   .aboutActions,
   .servicesPageActions,
+  .productsActions,
   .projectsToolbarActions,
   .contactCardActions,
   .quoteInfoActions,
@@ -1211,6 +1302,7 @@ select:focus-visible{
     width: 100%;
   }
   .servicesPageActions > *,
+  .productsActions > *,
   .projectsToolbarActions > *,
   .contactCardActions > *,
   .quoteInfoActions > *,
@@ -1219,6 +1311,7 @@ select:focus-visible{
   }
   .aboutActions .btn,
   .servicesPageActions .btn,
+  .productsActions .btn,
   .projectsToolbarActions .btn,
   .contactCardActions .btn,
   .quoteInfoActions .btn,
@@ -1255,6 +1348,7 @@ select:focus-visible{
 @media (max-width: 560px){
   .aboutActions > *,
   .servicesPageActions > *,
+  .productsActions > *,
   .projectsToolbarActions > *,
   .contactCardActions > *,
   .quoteInfoActions > *,

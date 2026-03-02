@@ -5,6 +5,7 @@ import Button from "../ui/Button.jsx";
 
 const navItems = [
   { to: "/services", label: "Services" },
+  { to: "/products", label: "Products" },
   { to: "/projects", label: "Projects" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },

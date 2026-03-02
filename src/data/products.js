@@ -1,0 +1,51 @@
+export const cableProducts = [
+  {
+    id: "cable-1mm",
+    name: "Electrical Cable - 1mm",
+    size: "1mm",
+    type: "Copper single core",
+    bestFor: "Light points and low-load circuits",
+  },
+  {
+    id: "cable-1-5mm",
+    name: "Electrical Cable - 1.5mm",
+    size: "1.5mm",
+    type: "Copper single core",
+    bestFor: "Lighting runs and control wiring",
+  },
+  {
+    id: "cable-2-5mm",
+    name: "Electrical Cable - 2.5mm",
+    size: "2.5mm",
+    type: "Copper single core",
+    bestFor: "Socket outlets and moderate loads",
+  },
+  {
+    id: "cable-4mm",
+    name: "Electrical Cable - 4mm",
+    size: "4mm",
+    type: "Copper single core",
+    bestFor: "AC points and dedicated circuits",
+  },
+  {
+    id: "cable-6mm",
+    name: "Electrical Cable - 6mm",
+    size: "6mm",
+    type: "Copper single core",
+    bestFor: "Cookers and higher-load branch circuits",
+  },
+  {
+    id: "cable-10mm",
+    name: "Electrical Cable - 10mm",
+    size: "10mm",
+    type: "Copper single core",
+    bestFor: "Sub-main distribution and inverter links",
+  },
+  {
+    id: "cable-16mm",
+    name: "Electrical Cable - 16mm",
+    size: "16mm",
+    type: "Copper single core",
+    bestFor: "Main feeder and heavy-load applications",
+  },
+];
