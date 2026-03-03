@@ -423,6 +423,11 @@ select:focus-visible{
   --hero-overlay-mid: rgba(6,8,20,0.22);
   --hero-overlay-end: rgba(6,8,20,0.56);
   --hero-fade-duration: 850ms;
+  touch-action: pan-y;
+}
+.heroStage:focus-visible{
+  outline: 2px solid rgba(255,212,0,0.72);
+  outline-offset: -2px;
 }
 @supports (height: 100dvh){
   .heroStage{

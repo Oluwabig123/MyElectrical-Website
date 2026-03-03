@@ -6,6 +6,7 @@ import { CONTACT, CONTACT_LINKS } from "../../data/contact.js";
 import { heroGallery } from "../../data/heroGallery.js";
 
 const HERO_ROTATE_MS = 5000;
+const SWIPE_THRESHOLD_PX = 42;
 
 function fitSingleLineText(element, minFontSizePx) {
   if (!element || typeof window === "undefined") return;
@@ -25,20 +26,41 @@ function fitSingleLineText(element, minFontSizePx) {
 }
 
 export default function Hero() {
+  const hasSlides = heroGallery.length > 0;
+  const totalSlides = heroGallery.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isInteractionPaused, setIsInteractionPaused] = useState(false);
   const [isPageHidden, setIsPageHidden] = useState(false);
   const titleRef = useRef(null);
   const copyRef = useRef(null);
+  const touchStartXRef = useRef(null);
+  const touchStartYRef = useRef(null);
 
-  if (heroGallery.length === 0) return null;
-
-  const activeSlide = heroGallery[activeIndex] ?? heroGallery[0];
+  const safeActiveIndex =
+    hasSlides && totalSlides > 0 ? ((activeIndex % totalSlides) + totalSlides) % totalSlides : 0;
+  const activeSlide = hasSlides ? (heroGallery[safeActiveIndex] ?? heroGallery[0]) : null;
   const shouldAutoRotate =
-    heroGallery.length > 1 && !prefersReducedMotion && !isInteractionPaused && !isPageHidden;
+    hasSlides && totalSlides > 1 && !prefersReducedMotion && !isInteractionPaused && !isPageHidden;
+
+  function goToNextSlide() {
+    if (!hasSlides || totalSlides <= 1) return;
+    setActiveIndex((prev) => (prev + 1) % totalSlides);
+  }
+
+  function goToPrevSlide() {
+    if (!hasSlides || totalSlides <= 1) return;
+    setActiveIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
+  }
+
+  function goToSlide(index) {
+    if (!hasSlides || totalSlides <= 0) return;
+    const normalizedIndex = ((index % totalSlides) + totalSlides) % totalSlides;
+    setActiveIndex(normalizedIndex);
+  }
 
   useEffect(() => {
+    if (!hasSlides) return undefined;
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
 
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -53,22 +75,23 @@ export default function Hero() {
 
     mediaQuery.addListener(syncPreference);
     return () => mediaQuery.removeListener(syncPreference);
-  }, []);
+  }, [hasSlides]);
 
   useEffect(() => {
+    if (!hasSlides) return undefined;
     const onVisibilityChange = () => setIsPageHidden(document.hidden);
     onVisibilityChange();
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, []);
+  }, [hasSlides]);
 
   useEffect(() => {
     if (!shouldAutoRotate) return undefined;
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % heroGallery.length);
+      setActiveIndex((prev) => (prev + 1) % totalSlides);
     }, HERO_ROTATE_MS);
     return () => clearInterval(timer);
-  }, [shouldAutoRotate]);
+  }, [shouldAutoRotate, totalSlides]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -100,28 +123,114 @@ export default function Hero() {
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", queueFit);
     };
-  }, [activeSlide.id]);
+  }, [activeSlide?.id]);
+
+  function handleHeroKeyDown(event) {
+    if (!hasSlides || totalSlides <= 1) return;
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setIsInteractionPaused(true);
+      goToNextSlide();
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setIsInteractionPaused(true);
+      goToPrevSlide();
+      return;
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault();
+      setIsInteractionPaused(true);
+      goToSlide(0);
+      return;
+    }
+
+    if (event.key === "End") {
+      event.preventDefault();
+      setIsInteractionPaused(true);
+      goToSlide(totalSlides - 1);
+    }
+  }
+
+  function clearTouchTracking() {
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+  }
+
+  function handleHeroTouchStart(event) {
+    if (!hasSlides || totalSlides <= 1) return;
+    const touchPoint = event.touches?.[0];
+    if (!touchPoint) return;
+    touchStartXRef.current = touchPoint.clientX;
+    touchStartYRef.current = touchPoint.clientY;
+    setIsInteractionPaused(true);
+  }
+
+  function handleHeroTouchEnd(event) {
+    if (!hasSlides || totalSlides <= 1) return;
+
+    const startX = touchStartXRef.current;
+    const startY = touchStartYRef.current;
+    const touchPoint = event.changedTouches?.[0];
+
+    if (startX == null || startY == null || !touchPoint) {
+      clearTouchTracking();
+      setIsInteractionPaused(false);
+      return;
+    }
+
+    const deltaX = touchPoint.clientX - startX;
+    const deltaY = touchPoint.clientY - startY;
+    const isHorizontalSwipe = Math.abs(deltaX) >= SWIPE_THRESHOLD_PX && Math.abs(deltaX) > Math.abs(deltaY);
+
+    if (isHorizontalSwipe) {
+      if (deltaX < 0) goToNextSlide();
+      if (deltaX > 0) goToPrevSlide();
+    }
+
+    clearTouchTracking();
+    setIsInteractionPaused(false);
+  }
+
+  function handleHeroTouchCancel() {
+    clearTouchTracking();
+    setIsInteractionPaused(false);
+  }
 
   function onHeroBlur(event) {
     if (event.currentTarget.contains(event.relatedTarget)) return;
     setIsInteractionPaused(false);
   }
 
+  if (!hasSlides || !activeSlide) return null;
+
   return (
     <section className="hero">
       <div
         className="heroStage"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Featured services gallery"
+        tabIndex={0}
         onMouseEnter={() => setIsInteractionPaused(true)}
         onMouseLeave={() => setIsInteractionPaused(false)}
         onFocusCapture={() => setIsInteractionPaused(true)}
         onBlurCapture={onHeroBlur}
+        onKeyDown={handleHeroKeyDown}
+        onTouchStart={handleHeroTouchStart}
+        onTouchEnd={handleHeroTouchEnd}
+        onTouchCancel={handleHeroTouchCancel}
       >
         <div className="heroGallery">
           {heroGallery.map((item, index) => (
             <figure
               key={item.id}
-              className={`heroGalleryItem${index === activeIndex ? " active" : ""}`}
-              aria-hidden={index !== activeIndex}
+              className={`heroGalleryItem${index === safeActiveIndex ? " active" : ""}`}
+              aria-hidden={index !== safeActiveIndex}
             >
               <img
                 src={item.image}
@@ -164,16 +273,16 @@ export default function Hero() {
           </div>
         </Container>
 
-        {heroGallery.length > 1 ? (
+        {totalSlides > 1 ? (
           <div className="heroControls" aria-label="Hero gallery controls">
             {heroGallery.map((item, index) => (
               <button
                 key={`hero-control-${item.id}`}
                 type="button"
-                className={`heroDot${index === activeIndex ? " active" : ""}`}
-                onClick={() => setActiveIndex(index)}
+                className={`heroDot${index === safeActiveIndex ? " active" : ""}`}
+                onClick={() => goToSlide(index)}
                 aria-label={`Show slide ${index + 1}: ${item.title}`}
-                aria-pressed={index === activeIndex}
+                aria-pressed={index === safeActiveIndex}
               />
             ))}
           </div>
