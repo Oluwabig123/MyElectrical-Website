@@ -138,14 +138,17 @@ export function normalizeProduct(rawProduct, fallbackId) {
     bestFor: safeBestFor,
   });
 
+  const providedCategory = sanitizeText(rawProduct?.category);
+  const finalCategory = categoryLabelByKey[providedCategory] ? providedCategory : inferredCategory;
+
   return {
     id: sanitizeText(rawProduct?.id) || fallbackId,
     name: safeName,
     size: safeSize,
     type: safeType,
     bestFor: safeBestFor,
-    category: inferredCategory,
-    categoryLabel: getCategoryLabel(inferredCategory),
+    category: finalCategory,
+    categoryLabel: getCategoryLabel(finalCategory),
   };
 }
 

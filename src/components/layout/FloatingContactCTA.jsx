@@ -4,7 +4,7 @@ import { CONTACT_LINKS } from "../../data/contact.js";
 
 export default function FloatingContactCTA() {
   const { pathname } = useLocation();
-  const hiddenRoutes = new Set(["/assistant", "/quote", "/contact"]);
+  const hiddenRoutes = new Set(["/assistant", "/quote", "/contact", "/test-your-memory"]);
 
   if (hiddenRoutes.has(pathname)) return null;
 

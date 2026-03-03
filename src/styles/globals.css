@@ -1002,10 +1002,37 @@ select:focus-visible{
   font-size: 14px;
   line-height: 1.5;
 }
+.productsCloudBadge{
+  margin: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  padding: 9px 11px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.productsCloudBadge.online{
+  border-color: rgba(120,224,148,0.42);
+  background: rgba(120,224,148,0.12);
+  color: rgba(214,255,223,0.96);
+}
+.productsCloudBadge.offline{
+  border-color: rgba(255,212,0,0.32);
+  background: rgba(255,212,0,0.10);
+  color: rgba(255,241,194,0.95);
+}
 .productsAdminBody{
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.productsAdminAuthForm{
+  margin: 0;
+}
+.productsAdminAuthTitle{
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 .productsAdminForm{
   margin: 0;
@@ -1022,6 +1049,12 @@ select:focus-visible{
 .productsAdminAutoCategory strong{
   color: rgba(255,212,0,0.96);
   font-weight: 800;
+}
+.productsAdminAuthMeta{
+  margin: 0 0 12px;
+  color: rgba(255,255,255,0.82);
+  font-size: 12px;
+  line-height: 1.4;
 }
 .productsAdminFormActions{
   margin-top: 2px;
@@ -1198,6 +1231,191 @@ select:focus-visible{
   flex-wrap: wrap;
 }
 .productsActions > *{
+  display: inline-flex;
+}
+
+.memoryGamePage{
+  position: relative;
+}
+.memoryGamePage::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(760px 300px at 12% 10%, rgba(255,212,0,0.10), transparent 72%),
+    radial-gradient(580px 240px at 88% 86%, rgba(46,233,255,0.08), transparent 72%);
+}
+.memoryGamePage .container{
+  position: relative;
+  z-index: 1;
+}
+.memoryDesktopOnlyCard{
+  display: grid;
+  gap: 12px;
+  max-width: 620px;
+}
+.memoryDesktopOnlyText{
+  margin: 0;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.55;
+}
+.memoryDesktopOnlyActions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.memoryDesktopOnlyActions > *{
+  display: inline-flex;
+}
+.memoryGamePanel{
+  display: grid;
+  gap: 12px;
+}
+.memoryStatsGrid{
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.memoryStat{
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+}
+.memoryStat span{
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.74);
+}
+.memoryStat strong{
+  font-size: 16px;
+  color: rgba(255,255,255,0.97);
+  font-weight: 900;
+}
+.memoryProgressRow{
+  display: grid;
+  gap: 6px;
+}
+.memoryProgressRow small{
+  color: rgba(255,255,255,0.76);
+  font-size: 12px;
+}
+.memoryProgressTrack,
+.memoryTimerTrack{
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+}
+.memoryProgressFill,
+.memoryTimerFill{
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width .22s ease;
+}
+.memoryProgressFill{
+  background: linear-gradient(90deg, rgba(46,233,255,0.95), rgba(46,233,255,0.6));
+}
+.memoryTimerFill{
+  background: linear-gradient(90deg, rgba(255,212,0,0.95), rgba(255,148,0,0.85));
+}
+.memoryGrid{
+  display: grid;
+  gap: 8px;
+}
+.memoryCard{
+  border: none;
+  padding: 0;
+  background: transparent;
+  aspect-ratio: 5 / 6;
+  perspective: 900px;
+  cursor: pointer;
+}
+.memoryCard:disabled{
+  cursor: default;
+}
+.memoryCardInner{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .28s ease;
+}
+.memoryCard.flipped .memoryCardInner{
+  transform: rotateY(180deg);
+}
+.memoryCardFace{
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  backface-visibility: hidden;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.24);
+  font-weight: 800;
+}
+.memoryCardFront{
+  background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  color: rgba(255,255,255,0.92);
+  font-size: 20px;
+}
+.memoryCardBack{
+  transform: rotateY(180deg);
+  background: linear-gradient(160deg, rgba(255,212,0,0.20), rgba(255,255,255,0.05));
+  color: rgba(255,255,255,0.95);
+  font-size: clamp(11px, 2.4vw, 14px);
+  letter-spacing: 0.03em;
+  padding: 6px;
+}
+.memoryCard.matched .memoryCardBack{
+  border-color: rgba(120,224,148,0.5);
+  background: linear-gradient(160deg, rgba(120,224,148,0.2), rgba(255,255,255,0.05));
+  color: rgba(231,255,237,0.96);
+}
+.memoryHint{
+  margin: 0;
+  color: rgba(255,255,255,0.84);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.memoryResult{
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  display: grid;
+  gap: 10px;
+}
+.memoryResult p{
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.52;
+}
+.memoryResultWin{
+  border-color: rgba(120,224,148,0.44);
+  background: rgba(120,224,148,0.12);
+  color: rgba(221,255,230,0.96);
+}
+.memoryResultLose{
+  border-color: rgba(255,93,93,0.46);
+  background: rgba(255,93,93,0.14);
+  color: rgba(255,222,222,0.96);
+}
+.memoryResultActions{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.memoryResultActions > *{
   display: inline-flex;
 }
 
@@ -1625,7 +1843,16 @@ select:focus-visible{
     width: 100%;
     justify-content: space-between;
   }
+  .memoryResultActions,
+  .memoryDesktopOnlyActions{
+    width: 100%;
+  }
+  .memoryResultActions > *,
+  .memoryDesktopOnlyActions > *{
+    flex: 1 1 calc(50% - 4px);
+  }
   .productsAdminHead .btn,
+  .productsAdminAuthForm,
   .productsAdminFormActions,
   .productsAdminItemActions{
     width: 100%;
@@ -1670,6 +1897,10 @@ select:focus-visible{
   .quoteInfoActions > *,
   .quoteForm .formActions > *,
   .notFoundActions > *{
+    flex-basis: 100%;
+  }
+  .memoryResultActions > *,
+  .memoryDesktopOnlyActions > *{
     flex-basis: 100%;
   }
   .productsAdminFormActions .btn,

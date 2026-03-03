@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 export default function OduzzAssistantWidget() {
   const { pathname } = useLocation();
 
-  if (pathname === "/assistant") return null;
+  if (pathname === "/assistant" || pathname === "/test-your-memory") return null;
 
   return (
     <div className="oduzzAssistant" role="region" aria-label="Oduzz customer assistant">

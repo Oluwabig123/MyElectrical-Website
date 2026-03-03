@@ -14,3 +14,43 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Cloud Product Manager (Supabase)
+
+The Products page supports cloud updates from phone/desktop with auto category placement.
+
+### 1) Add environment variables
+
+Copy `.env.example` to `.env` and set:
+
+```bash
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
+
+### 2) Create table + RLS policies
+
+Run SQL from:
+
+`supabase/admin_products.sql`
+
+in Supabase SQL Editor.
+
+### 3) Create admin users
+
+In Supabase dashboard:
+
+`Authentication -> Users -> Add user`
+
+Only authenticated users can add/edit/delete cloud products.
+
+### 4) Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+### 5) Deploy
+
+Set the same `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in your hosting environment (Vercel/Netlify), then redeploy.

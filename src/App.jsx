@@ -8,6 +8,7 @@ import Products from "./pages/Products.jsx";
 import Projects from "./pages/Projects.jsx";
 import Quote from "./pages/Quote.jsx";
 import Assistant from "./pages/Assistant.jsx";
+import MemoryGame from "./pages/MemoryGame.jsx";
 import About from "./pages/About.jsx";
 import Contact from "./pages/Contact.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/quote" element={<Quote />} />
         <Route path="/assistant" element={<Assistant />} />
+        <Route path="/test-your-memory" element={<MemoryGame />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
