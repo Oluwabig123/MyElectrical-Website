@@ -7,13 +7,13 @@ import Reveal from "../components/ui/Reveal";
 
 const MAX_STAGE = 10;
 const GRID_CARD_COUNT = 16;
-const TARGET_CARD_COUNT = 2;
 const STAGE_TRIALS = 3;
 const TARGET_LABEL = "ODUZZ";
 const PREVIEW_SECONDS = 1;
 const BASE_SEARCH_SECONDS = 5;
 const SEARCH_DROP_PER_STAGE = 0.35;
 const MIN_SEARCH_SECONDS = 2.2;
+const MAX_TARGET_COUNT = 9;
 const TIMER_TICK_MS = 100;
 const WIN_ADVANCE_DELAY_MS = 900;
 const MOBILE_VIEWPORT_QUERY = "(max-width: 900px)";
@@ -44,8 +44,12 @@ function detectMobilePlayable() {
   return smallViewport && (touchScreen || mobileUa || ipadUa);
 }
 
-function pickTwoTargetSlots() {
-  return shuffleItems(Array.from({ length: GRID_CARD_COUNT }, (_item, index) => index)).slice(0, TARGET_CARD_COUNT);
+function getTargetCount(stage) {
+  return Math.min(stage + 1, MAX_TARGET_COUNT);
+}
+
+function pickTargetSlots(targetCount) {
+  return shuffleItems(Array.from({ length: GRID_CARD_COUNT }, (_item, index) => index)).slice(0, targetCount);
 }
 
 function getSearchSeconds(stage) {
@@ -54,7 +58,8 @@ function getSearchSeconds(stage) {
 }
 
 function buildStageRound(stage, totalScore, trialsLeft = STAGE_TRIALS, notice = "") {
-  const targetSlots = pickTwoTargetSlots();
+  const targetCount = getTargetCount(stage);
+  const targetSlots = pickTargetSlots(targetCount);
 
   const cards = Array.from({ length: GRID_CARD_COUNT }, (_item, slot) => {
     return {
@@ -68,6 +73,7 @@ function buildStageRound(stage, totalScore, trialsLeft = STAGE_TRIALS, notice = 
     trialsLeft,
     phase: "ready",
     cards,
+    targetCount,
     targetCardIds: targetSlots.map((slot) => `slot-${slot + 1}`),
     selectedIds: [],
     previewLeft: PREVIEW_SECONDS,
@@ -97,8 +103,8 @@ export default function MemoryGame() {
   const isWon = game.phase === "won";
   const isFailed = game.phase === "failed";
 
-  const selectedProgress = isWon ? TARGET_CARD_COUNT : Math.min(game.selectedIds.length, TARGET_CARD_COUNT);
-  const progressPercent = (selectedProgress / TARGET_CARD_COUNT) * 100;
+  const selectedProgress = isWon ? game.targetCount : Math.min(game.selectedIds.length, game.targetCount);
+  const progressPercent = game.targetCount > 0 ? (selectedProgress / game.targetCount) * 100 : 0;
   const stageSearchSeconds = getSearchSeconds(game.stage);
 
   React.useEffect(() => {
@@ -260,7 +266,7 @@ export default function MemoryGame() {
       if (prev.selectedIds.includes(cardId)) return prev;
 
       const nextSelectedIds = [...prev.selectedIds, cardId];
-      if (nextSelectedIds.length < TARGET_CARD_COUNT) {
+      if (nextSelectedIds.length < prev.targetCount) {
         return {
           ...prev,
           selectedIds: nextSelectedIds,
@@ -374,7 +380,7 @@ export default function MemoryGame() {
               <div className="memoryProgressTrack">
                 <span className="memoryProgressFill" style={{ width: `${progressPercent}%` }} />
               </div>
-              <small>{selectedProgress}/{TARGET_CARD_COUNT} target positions selected</small>
+              <small>{selectedProgress}/{game.targetCount} target positions selected</small>
             </div>
 
             {game.notice ? <p className="memoryNotice">{game.notice}</p> : null}
@@ -382,7 +388,7 @@ export default function MemoryGame() {
             {game.phase === "ready" ? (
               <div className="memoryStartCard">
                 <p>
-                  Stage {game.stage}: {TARGET_LABEL} will flash in 2 cards for <strong>{PREVIEW_SECONDS.toFixed(1)}s</strong>, then hide.
+                  Stage {game.stage}: {TARGET_LABEL} will flash in <strong>{game.targetCount}</strong> cards for <strong>{PREVIEW_SECONDS.toFixed(1)}s</strong>, then hide.
                   You get <strong>{stageSearchSeconds.toFixed(1)}s</strong> to tap those exact card positions.
                 </p>
                 <div className="memoryResultActions">
@@ -399,7 +405,7 @@ export default function MemoryGame() {
 
             {isSearching ? (
               <p className="memoryHint">
-                Tap the 2 card locations where {TARGET_LABEL} flashed before {formatSeconds(game.searchLeft)}s. Higher stages give less time.
+                Tap the {game.targetCount} card locations where {TARGET_LABEL} flashed before {formatSeconds(game.searchLeft)}s. Higher stages give less time.
               </p>
             ) : null}
 
