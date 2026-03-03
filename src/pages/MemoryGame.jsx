@@ -9,6 +9,7 @@ const MAX_STAGE = 10;
 const GRID_CARD_COUNT = 16;
 const TARGET_CARD_COUNT = 2;
 const STAGE_TRIALS = 3;
+const TARGET_LABEL = "ODUZZ";
 const PREVIEW_SECONDS = 2;
 const SEARCH_SECONDS = 5;
 const TIMER_TICK_MS = 100;
@@ -45,22 +46,12 @@ function pickTwoTargetSlots() {
   return shuffleItems(Array.from({ length: GRID_CARD_COUNT }, (_item, index) => index)).slice(0, TARGET_CARD_COUNT);
 }
 
-function pickTwoTargetNumbers() {
-  return shuffleItems(Array.from({ length: 90 }, (_item, index) => index + 10)).slice(0, TARGET_CARD_COUNT);
-}
-
 function buildStageRound(stage, totalScore, trialsLeft = STAGE_TRIALS, notice = "") {
   const targetSlots = pickTwoTargetSlots();
-  const targetNumbers = pickTwoTargetNumbers();
-  const targetBySlot = targetSlots.reduce((acc, slot, index) => {
-    acc[slot] = targetNumbers[index];
-    return acc;
-  }, {});
 
   const cards = Array.from({ length: GRID_CARD_COUNT }, (_item, slot) => {
     return {
       id: `slot-${slot + 1}`,
-      targetNumber: targetBySlot[slot] ?? null,
     };
   });
 
@@ -71,7 +62,6 @@ function buildStageRound(stage, totalScore, trialsLeft = STAGE_TRIALS, notice = 
     phase: "ready",
     cards,
     targetCardIds: targetSlots.map((slot) => `slot-${slot + 1}`),
-    targetNumbers,
     selectedIds: [],
     previewLeft: PREVIEW_SECONDS,
     searchLeft: SEARCH_SECONDS,
@@ -384,8 +374,8 @@ export default function MemoryGame() {
             {game.phase === "ready" ? (
               <div className="memoryStartCard">
                 <p>
-                  Stage {game.stage}: two numbers are hidden in the 16 blocks. You will see them for <strong>2.0s</strong>,
-                  then they hide and you get <strong>5.0s</strong> to tap their exact locations.
+                  Stage {game.stage}: {TARGET_LABEL} will flash in 2 cards for <strong>2.0s</strong>, then hide.
+                  You get <strong>5.0s</strong> to tap those exact card positions.
                 </p>
                 <div className="memoryResultActions">
                   <Button variant="primary" onClick={startStagePreview}>Start Stage</Button>
@@ -395,13 +385,13 @@ export default function MemoryGame() {
 
             {isPreviewing ? (
               <p className="memoryPreviewBadge">
-                Memorize these numbers: {game.targetNumbers.join(" and ")} ({formatSeconds(game.previewLeft)}s)
+                Memorize where {TARGET_LABEL} appears ({formatSeconds(game.previewLeft)}s)
               </p>
             ) : null}
 
             {isSearching ? (
               <p className="memoryHint">
-                Find the locations of {game.targetNumbers.join(" and ")} before {formatSeconds(game.searchLeft)}s.
+                Tap the 2 card locations where {TARGET_LABEL} flashed before {formatSeconds(game.searchLeft)}s.
               </p>
             ) : null}
 
@@ -411,31 +401,29 @@ export default function MemoryGame() {
                 const isSelected = game.selectedIds.includes(card.id);
 
                 const revealDuringPreview = isPreviewing && isTarget;
-                const revealDuringSearch = isSearching && isSelected;
                 const revealOnWon = isWon && isTarget;
                 const revealOnFailed = isFailed && (isTarget || isSelected);
-                const shouldReveal = revealDuringPreview || revealDuringSearch || revealOnWon || revealOnFailed;
+                const showTargetLabel = revealDuringPreview || revealOnWon || (isFailed && isTarget);
 
-                const isWrongPick = shouldReveal && isSelected && !isTarget;
-                const cardText = shouldReveal
-                  ? isTarget
-                    ? String(card.targetNumber)
-                    : "X"
+                const isWrongPick = revealOnFailed && isSelected && !isTarget;
+                const cardText = showTargetLabel
+                  ? TARGET_LABEL
+                  : isWrongPick
+                  ? "X"
+                  : isSearching && isSelected
+                  ? "..."
                   : "?";
 
                 return (
                   <button
                     key={card.id}
                     type="button"
-                    className={`memoryCard${shouldReveal ? " flipped" : ""}${isTarget && shouldReveal ? " target" : ""}${isWrongPick ? " wrong" : ""}`}
+                    className={`memoryCard${showTargetLabel ? " revealed target" : ""}${isSelected ? " selected" : ""}${isWrongPick ? " wrong" : ""}`}
                     onClick={() => handleCardPress(card.id)}
                     disabled={!isSearching || game.isBoardLocked || isSelected}
-                    aria-label={shouldReveal ? `Card ${cardText}` : "Hidden memory card"}
+                    aria-label={showTargetLabel ? `${TARGET_LABEL} card` : "Hidden memory card"}
                   >
-                    <span className="memoryCardInner" aria-hidden="true">
-                      <span className="memoryCardFace memoryCardFront">?</span>
-                      <span className="memoryCardFace memoryCardBack">{cardText}</span>
-                    </span>
+                    <span className="memoryCardText" aria-hidden="true">{cardText}</span>
                   </button>
                 );
               })}
