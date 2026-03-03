@@ -2,7 +2,7 @@ export const heroGallery = [
   {
     id: "hero-wiring",
     image:
-      "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=2400&q=80",
+      "/hero/wiringg.jpg",
     alt: "Electrician working on a residential control panel installation",
     kicker: "The Responsible Installers",
     title: "Trusted Electrical Wiring",
@@ -13,7 +13,7 @@ export const heroGallery = [
   {
     id: "hero-solar",
     image:
-      "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=2400&q=80",
+      "/hero/solar.jpg",
     alt: "Technician wiring a solar inverter setup with safety equipment",
     kicker: "Energy Confidence",
     title: "Reliable Solar and Inverter",
@@ -24,7 +24,7 @@ export const heroGallery = [
   {
     id: "hero-cctv",
     image:
-      "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=2400&q=80",
+      "/hero/cctv.jpg",
     alt: "Security technician installing a CCTV camera on a wall",
     kicker: "Security That Works",
     title: "Clear CCTV Coverage",
@@ -35,7 +35,7 @@ export const heroGallery = [
   {
     id: "hero-lighting",
     image:
-      "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=2400&q=80",
+      "/hero/lightings.jpg",
     alt: "Interior chandelier installation with clean ceiling finishing",
     kicker: "Interior Finishing",
     title: "Lighting That Elevates",
@@ -46,7 +46,7 @@ export const heroGallery = [
   {
     id: "hero-interior",
     image:
-      "https://images.unsplash.com/photo-1540932239986-30128078f3c1?auto=format&fit=crop&w=2400&q=80",
+      "/hero/interior.jpg",
     alt: "Completed ambient lighting installation in a modern room",
     kicker: "Fast Response",
     title: "Electricians in Ikorodu",
