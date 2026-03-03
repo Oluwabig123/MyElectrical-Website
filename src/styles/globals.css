@@ -403,22 +403,31 @@ select:focus-visible{
   color: rgba(255,255,255,0.96);
 }
 
-.hero{ padding: 56px 0 28px; }
+.hero{
+  padding: 0;
+}
 .heroStage{
   position: relative;
   overflow: hidden;
-  min-height: clamp(400px, 56vh, 540px);
-  border-radius: calc(var(--radius) + 10px);
+  min-height: 100vh;
+  min-height: 100svh;
+  border-radius: 0;
   border: none;
-  background: rgba(255,255,255,0.03);
+  background: #05070f;
   box-shadow: none;
   display: flex;
   align-items: center;
-  --hero-image-opacity: 0.34;
-  --hero-overlay-start: rgba(6,8,20,0.9);
-  --hero-overlay-mid: rgba(6,8,20,0.62);
-  --hero-overlay-end: rgba(6,8,20,0.88);
-  --hero-fade-duration: 900ms;
+  padding-block: clamp(92px, 12vh, 132px) clamp(96px, 14vh, 138px);
+  --hero-image-opacity: 0.64;
+  --hero-overlay-start: rgba(6,8,20,0.52);
+  --hero-overlay-mid: rgba(6,8,20,0.22);
+  --hero-overlay-end: rgba(6,8,20,0.56);
+  --hero-fade-duration: 850ms;
+}
+@supports (height: 100dvh){
+  .heroStage{
+    min-height: 100dvh;
+  }
 }
 .heroGallery{
   position: absolute;
@@ -439,110 +448,230 @@ select:focus-visible{
   height: 100%;
   width: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
   opacity: var(--hero-image-opacity);
-  filter: saturate(1.08) contrast(1.04);
+  filter: saturate(1.12) contrast(1.04);
 }
 .heroOverlay{
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(102deg, var(--hero-overlay-start) 0%, var(--hero-overlay-mid) 48%, var(--hero-overlay-end) 100%),
-    radial-gradient(600px 280px at 18% 24%, rgba(255,212,0,0.12), transparent 70%);
+    linear-gradient(112deg, var(--hero-overlay-start) 0%, var(--hero-overlay-mid) 46%, var(--hero-overlay-end) 100%),
+    radial-gradient(700px 320px at 20% 18%, rgba(255,212,0,0.18), transparent 68%);
   pointer-events: none;
 }
-.heroContent{
+.heroContentWrap{
   position: relative;
   z-index: 1;
-  width: min(760px, 100%);
-  padding: clamp(24px, 5vw, 54px);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.heroContent{
+  width: min(980px, 100%);
+  padding: 0;
   margin-inline: auto;
   text-align: center;
-  border-radius: 16px;
   border: none;
-  background: rgba(7,10,18,0.22);
-  backdrop-filter: blur(2px);
+  background: none;
+  backdrop-filter: none;
+}
+.heroContactLead{
+  margin: 0 auto 12px;
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.24);
+  background: rgba(7,10,18,0.48);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.92);
+  white-space: nowrap;
+}
+.heroContactLead a{
+  color: inherit;
+}
+.heroKicker{
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,212,0,0.94);
+  white-space: nowrap;
 }
 .heroContent .h1{
-  max-width: 13ch;
-  margin-inline: auto;
-  color: rgba(255,255,255,0.93);
+  max-width: none;
+  margin: 10px auto 0;
+  color: rgba(255,255,255,0.98);
+  font-size: clamp(22px, 5.2vw, 54px);
+  line-height: 1.03;
+  letter-spacing: -0.028em;
+  white-space: nowrap;
 }
 .heroContent .p{
-  max-width: 50ch;
-  color: rgba(255,255,255,0.82);
-  margin-inline: auto;
+  max-width: none;
+  color: rgba(255,255,255,0.88);
+  margin: 14px auto 0;
+  font-size: clamp(13px, 1.4vw, 18px);
+  line-height: 1.55;
+  white-space: nowrap;
 }
 .heroCtas{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
   justify-content: center;
 }
-.heroTrust{
-  margin: 10px 0 0;
-  color: rgba(255,255,255,0.86);
-  font-size: 14px;
-  line-height: 1.55;
-  max-width: 520px;
-  margin-inline: auto;
+.heroCtas .btn{
+  min-height: 52px;
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
-.heroBadges{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top: 14px;
-  justify-content: center;
+.heroServicesPrompt{
+  margin: 16px 0 0;
+  color: rgba(255,255,255,0.84);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
 }
-.pill{
-  font-size: 12px; color: rgba(255,255,255,0.90);
-  padding: 7px 10px; border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
+.heroServicesPrompt a{
+  color: rgba(255,212,0,0.95);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.heroControls{
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(6,8,20,0.55);
+  backdrop-filter: blur(8px);
+}
+.heroDot{
+  width: 10px;
+  height: 10px;
+  display: block;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.58);
+  background: rgba(255,255,255,0.35);
+  padding: 0;
+  cursor: pointer;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+.heroDot:hover{
+  background: rgba(255,255,255,0.56);
+}
+.heroDot.active{
+  background: rgba(255,212,0,0.95);
+  border-color: rgba(255,212,0,0.95);
+  transform: scale(1.15);
+}
+@media (min-width: 1200px){
+  .heroStage{
+    padding-block: clamp(96px, 11vh, 138px) clamp(104px, 13vh, 152px);
+  }
+  .heroContent{
+    width: min(1040px, 100%);
+  }
+  .heroContent .h1{
+    font-size: clamp(36px, 4.5vw, 62px);
+  }
 }
 @media (max-width: 920px){
   .heroStage{
-    min-height: 400px;
-    --hero-image-opacity: 0.22;
-    --hero-overlay-start: rgba(6,8,20,0.95);
-    --hero-overlay-mid: rgba(6,8,20,0.74);
-    --hero-overlay-end: rgba(6,8,20,0.93);
+    padding-block: 88px 118px;
+    --hero-image-opacity: 0.58;
+    --hero-overlay-start: rgba(6,8,20,0.60);
+    --hero-overlay-mid: rgba(6,8,20,0.34);
+    --hero-overlay-end: rgba(6,8,20,0.64);
   }
   .heroContent{
-    width: 100%;
-    padding: 18px;
+    width: min(760px, 100%);
   }
   .heroContent .h1{
-    max-width: 12ch;
-    font-size: clamp(27px, 6vw, 36px);
-    line-height: 1.1;
+    font-size: clamp(24px, 6.2vw, 44px);
   }
   .heroContent .p{
-    max-width: 34ch;
     font-size: 15px;
-    line-height: 1.55;
+    line-height: 1.57;
   }
 }
 @media (max-width: 768px){
-  .heroCallBtn{
-    display: none;
+  .heroStage{
+    padding-block: 82px 112px;
+    --hero-image-opacity: 0.56;
+  }
+  .heroContactLead{
+    font-size: 12px;
+    letter-spacing: 0.03em;
+  }
+  .heroCtas .btn{
+    flex: 1 1 170px;
+    min-height: 50px;
   }
 }
 @media (max-width: 600px){
   .heroStage{
-    min-height: 380px;
-    --hero-image-opacity: 0.18;
+    padding-block: 74px 104px;
   }
-  .heroContent{
-    padding: 16px;
-    background: rgba(7,10,18,0.28);
+  .heroControls{
+    bottom: 18px;
+  }
+  .heroDot{
+    width: 9px;
+    height: 9px;
+  }
+  .heroContactLead{
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 8px 12px;
   }
   .heroContent .h1{
-    font-size: clamp(25px, 8vw, 33px);
+    font-size: clamp(20px, 7.6vw, 34px);
+    line-height: 1.02;
   }
-  .heroTrust{
+  .heroContent .p{
     font-size: 13px;
+  }
+}
+@media (max-width: 420px){
+  .heroStage{
+    padding-block: 68px 96px;
+  }
+  .heroContent .h1{
+    font-size: clamp(18px, 7vw, 28px);
+    letter-spacing: -0.024em;
+  }
+  .heroContent .p{
+    font-size: 12.5px;
+    line-height: 1.52;
+  }
+  .heroCtas .btn{
+    min-height: 48px;
+    padding: 10px 14px;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+  }
+  .heroServicesPrompt{
+    font-size: 12px;
   }
 }
 
@@ -832,6 +961,165 @@ select:focus-visible{
 .productsPage .container{
   position: relative;
   z-index: 1;
+}
+.productsAdminShell{
+  margin-bottom: 16px;
+  display: grid;
+  gap: 14px;
+}
+.productsAdminHead{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.productsAdminHeadCopy{
+  display: grid;
+  gap: 6px;
+  max-width: 70ch;
+}
+.productsAdminTitle{
+  margin: 0;
+  font-size: clamp(19px, 1.9vw, 24px);
+  line-height: 1.2;
+}
+.productsAdminLead{
+  margin: 0;
+  color: rgba(255,255,255,0.86);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.productsAdminBody{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.productsAdminForm{
+  margin: 0;
+}
+.productsAdminAutoCategory{
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  font-size: 13px;
+  color: rgba(255,255,255,0.84);
+}
+.productsAdminAutoCategory strong{
+  color: rgba(255,212,0,0.96);
+  font-weight: 800;
+}
+.productsAdminFormActions{
+  margin-top: 2px;
+}
+.productsAdminListWrap{
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.productsAdminListTitle{
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.productsAdminEmpty{
+  margin: 0;
+  color: rgba(255,255,255,0.78);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.productsAdminList{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.productsAdminItem{
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  padding: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productsAdminItemCopy{
+  min-width: 0;
+}
+.productsAdminItemName{
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.95);
+  line-height: 1.35;
+}
+.productsAdminItemMeta{
+  margin: 6px 0 0;
+  color: rgba(255,255,255,0.8);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.productsAdminItemActions{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.productsAdminItemActions .btn{
+  min-height: 38px;
+  padding: 8px 11px;
+  font-size: 13px;
+}
+.productsDangerBtn{
+  border-color: rgba(255,93,93,0.45);
+  color: rgba(255,219,219,0.95);
+}
+.productsDangerBtn:hover{
+  background: rgba(255,93,93,0.16);
+  border-color: rgba(255,93,93,0.56);
+}
+.productsSummary{
+  margin: 2px 0 0;
+  color: rgba(255,255,255,0.84);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.productsCategorySection{
+  margin-top: 16px;
+}
+.productsCategoryHead{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.productsCategoryTitle{
+  margin: 0;
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.2;
+}
+.productsCategoryCount{
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.9);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .productsGrid{
   display: grid;
@@ -1261,6 +1549,9 @@ select:focus-visible{
   .servicesPageGrid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .productsAdminBody{
+    grid-template-columns: 1fr;
+  }
   .productsGrid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1322,6 +1613,19 @@ select:focus-visible{
     width: 100%;
     justify-content: space-between;
   }
+  .productsAdminHead .btn,
+  .productsAdminFormActions,
+  .productsAdminItemActions{
+    width: 100%;
+  }
+  .productsAdminFormActions .btn,
+  .productsAdminItemActions .btn{
+    flex: 1 1 calc(50% - 4px);
+    width: 100%;
+  }
+  .productsCategoryHead{
+    align-items: flex-start;
+  }
   .assistantComposerRow{
     grid-template-columns: 1fr;
   }
@@ -1354,6 +1658,10 @@ select:focus-visible{
   .quoteInfoActions > *,
   .quoteForm .formActions > *,
   .notFoundActions > *{
+    flex-basis: 100%;
+  }
+  .productsAdminFormActions .btn,
+  .productsAdminItemActions .btn{
     flex-basis: 100%;
   }
 }
@@ -1703,6 +2011,9 @@ input:focus, textarea:focus, select:focus{ border-color: rgba(255,212,0,0.42); b
 }
 @media (prefers-reduced-motion: reduce){
   .heroGalleryItem{
+    transition: none;
+  }
+  .heroDot{
     transition: none;
   }
   .lightingMarqueeTrack{
