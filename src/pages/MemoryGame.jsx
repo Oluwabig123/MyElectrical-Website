@@ -7,37 +7,14 @@ import Reveal from "../components/ui/Reveal";
 
 const MAX_STAGE = 10;
 const GRID_CARD_COUNT = 16;
+const TARGET_CARD_COUNT = 2;
 const STAGE_TRIALS = 3;
-const PREVIEW_TICK_MS = 100;
-const PREVIEW_START_SECONDS = 2;
-const PREVIEW_MIN_SECONDS = 0.8;
-const PREVIEW_DROP_PER_STAGE = 0.12;
-const FLIP_BACK_DELAY_MS = 650;
+const PREVIEW_SECONDS = 2;
+const SEARCH_SECONDS = 5;
+const TIMER_TICK_MS = 100;
+const WIN_ADVANCE_DELAY_MS = 900;
 const MOBILE_VIEWPORT_QUERY = "(max-width: 900px)";
 const TOUCH_QUERY = "(hover: none) and (pointer: coarse)";
-
-const SYMBOL_POOL = [
-  "Wire",
-  "Socket",
-  "Light",
-  "Panel",
-  "Battery",
-  "Inverter",
-  "Protector",
-  "Switch",
-  "Conduit",
-  "Meter",
-  "Fuse",
-  "Cable",
-  "RCCB",
-  "MCB",
-  "Clamp",
-  "Tester",
-  "Solar",
-  "Lamp",
-  "Trunk",
-  "Outlet",
-];
 
 function shuffleItems(values) {
   const copy = [...values];
@@ -64,62 +41,67 @@ function detectMobilePlayable() {
   return smallViewport && (touchScreen || mobileUa || ipadUa);
 }
 
-function getPreviewSeconds(stage) {
-  const seconds = PREVIEW_START_SECONDS - (stage - 1) * PREVIEW_DROP_PER_STAGE;
-  return Number(Math.max(PREVIEW_MIN_SECONDS, seconds).toFixed(1));
+function pickTwoTargetSlots() {
+  return shuffleItems(Array.from({ length: GRID_CARD_COUNT }, (_item, index) => index)).slice(0, TARGET_CARD_COUNT);
 }
 
-function buildStageDeck(stage) {
-  const pairCount = GRID_CARD_COUNT / 2;
-  const startIndex = (stage - 1) % SYMBOL_POOL.length;
-  const selectedSymbols = [];
+function pickTwoTargetNumbers() {
+  return shuffleItems(Array.from({ length: 90 }, (_item, index) => index + 10)).slice(0, TARGET_CARD_COUNT);
+}
 
-  for (let i = 0; i < pairCount; i += 1) {
-    const symbolIndex = (startIndex + i) % SYMBOL_POOL.length;
-    selectedSymbols.push(SYMBOL_POOL[symbolIndex]);
-  }
+function buildStageRound(stage, totalScore, trialsLeft = STAGE_TRIALS, notice = "") {
+  const targetSlots = pickTwoTargetSlots();
+  const targetNumbers = pickTwoTargetNumbers();
+  const targetBySlot = targetSlots.reduce((acc, slot, index) => {
+    acc[slot] = targetNumbers[index];
+    return acc;
+  }, {});
 
-  const cards = selectedSymbols.flatMap((symbol, index) => {
-    return [
-      { id: `${stage}-${index}-a`, symbol },
-      { id: `${stage}-${index}-b`, symbol },
-    ];
+  const cards = Array.from({ length: GRID_CARD_COUNT }, (_item, slot) => {
+    return {
+      id: `slot-${slot + 1}`,
+      targetNumber: targetBySlot[slot] ?? null,
+    };
   });
 
-  return shuffleItems(cards);
-}
-
-function calculateStageScore(stage, trialsLeft, moves) {
-  const raw = stage * 60 + trialsLeft * 45 - moves * 2;
-  return Math.max(40, raw);
-}
-
-function createStageState(stage, totalScore) {
   return {
     stage,
     totalScore,
+    trialsLeft,
     phase: "ready",
-    cards: buildStageDeck(stage),
-    flippedIds: [],
-    matchedIds: [],
-    moves: 0,
-    trialsLeft: STAGE_TRIALS,
-    previewLeft: getPreviewSeconds(stage),
+    cards,
+    targetCardIds: targetSlots.map((slot) => `slot-${slot + 1}`),
+    targetNumbers,
+    selectedIds: [],
+    previewLeft: PREVIEW_SECONDS,
+    searchLeft: SEARCH_SECONDS,
     isBoardLocked: true,
+    notice,
     lastStageScore: 0,
   };
 }
 
-export default function MemoryGame() {
-  const mismatchTimeoutRef = React.useRef(null);
-  const [isMobilePlayable, setIsMobilePlayable] = React.useState(() => detectMobilePlayable());
-  const [game, setGame] = React.useState(() => createStageState(1, 0));
+function calculateStageScore(stage, trialsLeft, searchLeft) {
+  const rawScore = stage * 70 + trialsLeft * 40 + Math.ceil(searchLeft * 10);
+  return Math.max(50, rawScore);
+}
 
-  const matchedPairs = game.matchedIds.length / 2;
-  const totalPairs = game.cards.length / 2;
-  const progressPercent = totalPairs > 0 ? (matchedPairs / totalPairs) * 100 : 0;
+function formatSeconds(value) {
+  return Math.max(0, value).toFixed(1);
+}
+
+export default function MemoryGame() {
+  const stageAdvanceTimeoutRef = React.useRef(null);
+  const [isMobilePlayable, setIsMobilePlayable] = React.useState(() => detectMobilePlayable());
+  const [game, setGame] = React.useState(() => buildStageRound(1, 0));
+
   const isPreviewing = game.phase === "preview";
-  const isPlaying = game.phase === "playing";
+  const isSearching = game.phase === "search";
+  const isWon = game.phase === "won";
+  const isFailed = game.phase === "failed";
+
+  const selectedProgress = isWon ? TARGET_CARD_COUNT : Math.min(game.selectedIds.length, TARGET_CARD_COUNT);
+  const progressPercent = (selectedProgress / TARGET_CARD_COUNT) * 100;
 
   React.useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -139,178 +121,189 @@ export default function MemoryGame() {
 
   React.useEffect(() => {
     return () => {
-      if (mismatchTimeoutRef.current) {
-        window.clearTimeout(mismatchTimeoutRef.current);
+      if (stageAdvanceTimeoutRef.current) {
+        window.clearTimeout(stageAdvanceTimeoutRef.current);
       }
     };
   }, []);
 
   React.useEffect(() => {
-    if (game.phase !== "preview") return undefined;
+    if (!isPreviewing) return undefined;
 
     const timer = window.setInterval(() => {
       setGame((prev) => {
         if (prev.phase !== "preview") return prev;
 
-        const nextLeft = Number((prev.previewLeft - PREVIEW_TICK_MS / 1000).toFixed(1));
-        if (nextLeft <= 0) {
+        const nextPreviewLeft = Number((prev.previewLeft - TIMER_TICK_MS / 1000).toFixed(1));
+        if (nextPreviewLeft <= 0) {
           return {
             ...prev,
-            phase: "playing",
+            phase: "search",
             previewLeft: 0,
-            flippedIds: [],
+            searchLeft: SEARCH_SECONDS,
+            selectedIds: [],
             isBoardLocked: false,
+            notice: "",
           };
         }
 
         return {
           ...prev,
-          previewLeft: nextLeft,
+          previewLeft: nextPreviewLeft,
         };
       });
-    }, PREVIEW_TICK_MS);
+    }, TIMER_TICK_MS);
 
     return () => {
       window.clearInterval(timer);
     };
-  }, [game.phase]);
+  }, [isPreviewing]);
+
+  React.useEffect(() => {
+    if (!isSearching) return undefined;
+
+    const timer = window.setInterval(() => {
+      setGame((prev) => {
+        if (prev.phase !== "search") return prev;
+
+        const nextSearchLeft = Number((prev.searchLeft - TIMER_TICK_MS / 1000).toFixed(1));
+        if (nextSearchLeft <= 0) {
+          const nextTrials = prev.trialsLeft - 1;
+
+          if (nextTrials <= 0) {
+            return {
+              ...prev,
+              phase: "failed",
+              searchLeft: 0,
+              trialsLeft: 0,
+              selectedIds: [],
+              isBoardLocked: true,
+              notice: "Time up. No trials left.",
+            };
+          }
+
+          return buildStageRound(
+            prev.stage,
+            prev.totalScore,
+            nextTrials,
+            `Time up. ${nextTrials} trial${nextTrials === 1 ? "" : "s"} left.`
+          );
+        }
+
+        return {
+          ...prev,
+          searchLeft: nextSearchLeft,
+        };
+      });
+    }, TIMER_TICK_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [isSearching]);
+
+  React.useEffect(() => {
+    if (!isWon) return undefined;
+
+    stageAdvanceTimeoutRef.current = window.setTimeout(() => {
+      setGame((prev) => {
+        if (prev.phase !== "won") return prev;
+
+        if (prev.stage >= MAX_STAGE) {
+          return buildStageRound(1, 0, STAGE_TRIALS, "All stages cleared. Starting again from Stage 1.");
+        }
+
+        return buildStageRound(
+          prev.stage + 1,
+          prev.totalScore,
+          STAGE_TRIALS,
+          `Great! Stage ${prev.stage + 1} is ready.`
+        );
+      });
+    }, WIN_ADVANCE_DELAY_MS);
+
+    return () => {
+      if (stageAdvanceTimeoutRef.current) {
+        window.clearTimeout(stageAdvanceTimeoutRef.current);
+        stageAdvanceTimeoutRef.current = null;
+      }
+    };
+  }, [isWon]);
 
   function startStagePreview() {
-    if (mismatchTimeoutRef.current) {
-      window.clearTimeout(mismatchTimeoutRef.current);
-      mismatchTimeoutRef.current = null;
-    }
-
     setGame((prev) => {
       if (prev.phase !== "ready") return prev;
 
       return {
         ...prev,
         phase: "preview",
-        previewLeft: getPreviewSeconds(prev.stage),
-        flippedIds: prev.cards.map((card) => card.id),
-        matchedIds: [],
-        moves: 0,
-        trialsLeft: STAGE_TRIALS,
+        previewLeft: PREVIEW_SECONDS,
+        searchLeft: SEARCH_SECONDS,
+        selectedIds: [],
         isBoardLocked: true,
+        notice: "",
       };
     });
   }
 
-  function resetToStage(stage, totalScore) {
-    if (mismatchTimeoutRef.current) {
-      window.clearTimeout(mismatchTimeoutRef.current);
-      mismatchTimeoutRef.current = null;
+  function restartGame() {
+    if (stageAdvanceTimeoutRef.current) {
+      window.clearTimeout(stageAdvanceTimeoutRef.current);
+      stageAdvanceTimeoutRef.current = null;
     }
 
-    setGame(createStageState(stage, totalScore));
+    setGame(buildStageRound(1, 0));
   }
 
   function handleCardPress(cardId) {
     setGame((prev) => {
-      if (prev.phase !== "playing") return prev;
+      if (prev.phase !== "search") return prev;
       if (prev.isBoardLocked) return prev;
-      if (prev.flippedIds.includes(cardId) || prev.matchedIds.includes(cardId)) return prev;
+      if (prev.selectedIds.includes(cardId)) return prev;
 
-      const nextFlipped = [...prev.flippedIds, cardId];
-      if (nextFlipped.length < 2) {
+      const nextSelectedIds = [...prev.selectedIds, cardId];
+      if (nextSelectedIds.length < TARGET_CARD_COUNT) {
         return {
           ...prev,
-          flippedIds: nextFlipped,
+          selectedIds: nextSelectedIds,
         };
       }
 
-      const [firstId, secondId] = nextFlipped;
-      const firstCard = prev.cards.find((card) => card.id === firstId);
-      const secondCard = prev.cards.find((card) => card.id === secondId);
-      const nextMoves = prev.moves + 1;
+      const isCorrectSelection = prev.targetCardIds.every((targetId) => nextSelectedIds.includes(targetId));
 
-      if (!firstCard || !secondCard) {
+      if (isCorrectSelection) {
+        const stageScore = calculateStageScore(prev.stage, prev.trialsLeft, prev.searchLeft);
         return {
           ...prev,
-          flippedIds: [],
-          moves: nextMoves,
+          phase: "won",
+          selectedIds: nextSelectedIds,
+          isBoardLocked: true,
+          lastStageScore: stageScore,
+          totalScore: prev.totalScore + stageScore,
+          notice: "Correct locations found.",
         };
       }
 
-      if (firstCard.symbol === secondCard.symbol) {
-        const nextMatched = [...prev.matchedIds, firstId, secondId];
-        const hasClearedStage = nextMatched.length === prev.cards.length;
+      const nextTrials = prev.trialsLeft - 1;
 
-        if (hasClearedStage) {
-          const stageScore = calculateStageScore(prev.stage, prev.trialsLeft, nextMoves);
-          return {
-            ...prev,
-            phase: "won",
-            moves: nextMoves,
-            flippedIds: [],
-            matchedIds: nextMatched,
-            isBoardLocked: true,
-            lastStageScore: stageScore,
-            totalScore: prev.totalScore + stageScore,
-          };
-        }
-
+      if (nextTrials <= 0) {
         return {
           ...prev,
-          moves: nextMoves,
-          flippedIds: [],
-          matchedIds: nextMatched,
+          phase: "failed",
+          selectedIds: nextSelectedIds,
+          trialsLeft: 0,
+          isBoardLocked: true,
+          notice: "Wrong locations. No trials left.",
         };
       }
 
-      if (mismatchTimeoutRef.current) {
-        window.clearTimeout(mismatchTimeoutRef.current);
-      }
-
-      mismatchTimeoutRef.current = window.setTimeout(() => {
-        setGame((latest) => {
-          if (latest.phase !== "playing") return latest;
-
-          const nextTrials = latest.trialsLeft - 1;
-          if (nextTrials <= 0) {
-            return {
-              ...latest,
-              phase: "failed",
-              flippedIds: [],
-              isBoardLocked: true,
-              trialsLeft: 0,
-            };
-          }
-
-          return {
-            ...latest,
-            flippedIds: [],
-            isBoardLocked: false,
-            trialsLeft: nextTrials,
-          };
-        });
-      }, FLIP_BACK_DELAY_MS);
-
-      return {
-        ...prev,
-        moves: nextMoves,
-        flippedIds: nextFlipped,
-        isBoardLocked: true,
-      };
+      return buildStageRound(
+        prev.stage,
+        prev.totalScore,
+        nextTrials,
+        `Wrong locations. ${nextTrials} trial${nextTrials === 1 ? "" : "s"} left.`
+      );
     });
-  }
-
-  function handleNextStage() {
-    if (game.stage >= MAX_STAGE) {
-      resetToStage(1, 0);
-      return;
-    }
-
-    resetToStage(game.stage + 1, game.totalScore);
-  }
-
-  function handleRestartFromStageOne() {
-    resetToStage(1, 0);
-  }
-
-  function handleReplayStage() {
-    resetToStage(game.stage, game.totalScore);
   }
 
   if (!isMobilePlayable) {
@@ -348,8 +341,8 @@ export default function MemoryGame() {
       <Container>
         <SectionHeader
           kicker="Test Your Memory"
-          title="Stage challenge: memorize then match"
-          subtitle="16 blocks per stage. Press start when ready."
+          title="Locate the hidden numbers"
+          subtitle="Press start, memorize for 2 seconds, then find both positions in 5 seconds."
         />
 
         <Reveal delay={0.04}>
@@ -364,8 +357,14 @@ export default function MemoryGame() {
                 <strong>{game.trialsLeft}</strong>
               </div>
               <div className="memoryStat">
-                <span>Moves</span>
-                <strong>{game.moves}</strong>
+                <span>Timer</span>
+                <strong>
+                  {isPreviewing
+                    ? `${formatSeconds(game.previewLeft)}s`
+                    : isSearching
+                    ? `${formatSeconds(game.searchLeft)}s`
+                    : "Ready"}
+                </strong>
               </div>
               <div className="memoryStat">
                 <span>Total score</span>
@@ -373,16 +372,21 @@ export default function MemoryGame() {
               </div>
             </div>
 
-            <div className="memoryProgressRow" aria-label="Stage progress">
+            <div className="memoryProgressRow" aria-label="Selection progress">
               <div className="memoryProgressTrack">
                 <span className="memoryProgressFill" style={{ width: `${progressPercent}%` }} />
               </div>
-              <small>{matchedPairs}/{totalPairs} pairs matched</small>
+              <small>{selectedProgress}/{TARGET_CARD_COUNT} target positions selected</small>
             </div>
+
+            {game.notice ? <p className="memoryNotice">{game.notice}</p> : null}
 
             {game.phase === "ready" ? (
               <div className="memoryStartCard">
-                <p>Stage {game.stage} is ready. You will see cards for <strong>{getPreviewSeconds(game.stage)}s</strong>.</p>
+                <p>
+                  Stage {game.stage}: two numbers are hidden in the 16 blocks. You will see them for <strong>2.0s</strong>,
+                  then they hide and you get <strong>5.0s</strong> to tap their exact locations.
+                </p>
                 <div className="memoryResultActions">
                   <Button variant="primary" onClick={startStagePreview}>Start Stage</Button>
                 </div>
@@ -390,58 +394,66 @@ export default function MemoryGame() {
             ) : null}
 
             {isPreviewing ? (
-              <p className="memoryPreviewBadge">Memorize now: {game.previewLeft.toFixed(1)}s</p>
+              <p className="memoryPreviewBadge">
+                Memorize these numbers: {game.targetNumbers.join(" and ")} ({formatSeconds(game.previewLeft)}s)
+              </p>
+            ) : null}
+
+            {isSearching ? (
+              <p className="memoryHint">
+                Find the locations of {game.targetNumbers.join(" and ")} before {formatSeconds(game.searchLeft)}s.
+              </p>
             ) : null}
 
             <div className="memoryGrid" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
               {game.cards.map((card) => {
-                const isRevealed =
-                  game.phase === "preview" ||
-                  game.flippedIds.includes(card.id) ||
-                  game.matchedIds.includes(card.id);
-                const isMatched = game.matchedIds.includes(card.id);
+                const isTarget = game.targetCardIds.includes(card.id);
+                const isSelected = game.selectedIds.includes(card.id);
+
+                const revealDuringPreview = isPreviewing && isTarget;
+                const revealDuringSearch = isSearching && isSelected;
+                const revealOnWon = isWon && isTarget;
+                const revealOnFailed = isFailed && (isTarget || isSelected);
+                const shouldReveal = revealDuringPreview || revealDuringSearch || revealOnWon || revealOnFailed;
+
+                const isWrongPick = shouldReveal && isSelected && !isTarget;
+                const cardText = shouldReveal
+                  ? isTarget
+                    ? String(card.targetNumber)
+                    : "X"
+                  : "?";
 
                 return (
                   <button
                     key={card.id}
                     type="button"
-                    className={`memoryCard${isRevealed ? " flipped" : ""}${isMatched ? " matched" : ""}`}
+                    className={`memoryCard${shouldReveal ? " flipped" : ""}${isTarget && shouldReveal ? " target" : ""}${isWrongPick ? " wrong" : ""}`}
                     onClick={() => handleCardPress(card.id)}
-                    disabled={!isPlaying || isMatched || game.isBoardLocked}
-                    aria-label={isRevealed ? `Card ${card.symbol}` : "Hidden memory card"}
+                    disabled={!isSearching || game.isBoardLocked || isSelected}
+                    aria-label={shouldReveal ? `Card ${cardText}` : "Hidden memory card"}
                   >
                     <span className="memoryCardInner" aria-hidden="true">
                       <span className="memoryCardFace memoryCardFront">?</span>
-                      <span className="memoryCardFace memoryCardBack">{card.symbol}</span>
+                      <span className="memoryCardFace memoryCardBack">{cardText}</span>
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            {isPlaying ? (
-              <p className="memoryHint">Match all pairs exactly. Each wrong pair costs 1 trial.</p>
-            ) : null}
-
-            {game.phase === "won" ? (
+            {isWon ? (
               <div className="memoryResult memoryResultWin">
                 <p>
-                  Stage {game.stage} complete. Stage score: <strong>{game.lastStageScore}</strong>
+                  Correct. Stage score: <strong>{game.lastStageScore}</strong>. Moving to Stage {game.stage >= MAX_STAGE ? 1 : game.stage + 1}.
                 </p>
-                <div className="memoryResultActions">
-                  <Button variant="primary" onClick={handleNextStage}>
-                    {game.stage >= MAX_STAGE ? "Restart game" : "Next stage"}
-                  </Button>
-                  <Button variant="outline" onClick={handleReplayStage}>Replay stage</Button>
-                </div>
               </div>
             ) : null}
 
-            {game.phase === "failed" ? (
+            {isFailed ? (
               <div className="memoryResult memoryResultLose">
-                <p>You used all 3 trials. Game restarts from Stage 1.</p>
+                <p>You used all 3 trials. Restart from Stage 1.</p>
                 <div className="memoryResultActions">
-                  <Button variant="primary" onClick={handleRestartFromStageOne}>Restart game</Button>
+                  <Button variant="primary" onClick={restartGame}>Restart game</Button>
                 </div>
               </div>
             ) : null}

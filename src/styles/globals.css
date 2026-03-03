@@ -1318,6 +1318,16 @@ select:focus-visible{
   font-size: 14px;
   line-height: 1.5;
 }
+.memoryNotice{
+  margin: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.88);
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 8px 10px;
+}
 .memoryPreviewBadge{
   margin: 0;
   border-radius: 999px;
@@ -1400,14 +1410,19 @@ select:focus-visible{
   transform: rotateY(180deg);
   background: linear-gradient(160deg, rgba(255,212,0,0.20), rgba(255,255,255,0.05));
   color: rgba(255,255,255,0.95);
-  font-size: clamp(11px, 2.4vw, 14px);
+  font-size: clamp(14px, 3.2vw, 20px);
   letter-spacing: 0.03em;
   padding: 6px;
 }
-.memoryCard.matched .memoryCardBack{
+.memoryCard.target .memoryCardBack{
   border-color: rgba(120,224,148,0.5);
   background: linear-gradient(160deg, rgba(120,224,148,0.2), rgba(255,255,255,0.05));
   color: rgba(231,255,237,0.96);
+}
+.memoryCard.wrong .memoryCardBack{
+  border-color: rgba(255,93,93,0.5);
+  background: linear-gradient(160deg, rgba(255,93,93,0.2), rgba(255,255,255,0.05));
+  color: rgba(255,227,227,0.97);
 }
 .memoryHint{
   margin: 0;
