@@ -30,7 +30,6 @@ export default function Hero() {
   const totalSlides = heroGallery.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [isInteractionPaused, setIsInteractionPaused] = useState(false);
   const [isPageHidden, setIsPageHidden] = useState(false);
   const titleRef = useRef(null);
   const copyRef = useRef(null);
@@ -41,7 +40,7 @@ export default function Hero() {
     hasSlides && totalSlides > 0 ? ((activeIndex % totalSlides) + totalSlides) % totalSlides : 0;
   const activeSlide = hasSlides ? (heroGallery[safeActiveIndex] ?? heroGallery[0]) : null;
   const shouldAutoRotate =
-    hasSlides && totalSlides > 1 && !prefersReducedMotion && !isInteractionPaused && !isPageHidden;
+    hasSlides && totalSlides > 1 && !prefersReducedMotion && !isPageHidden;
 
   function goToNextSlide() {
     if (!hasSlides || totalSlides <= 1) return;
@@ -130,28 +129,24 @@ export default function Hero() {
 
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      setIsInteractionPaused(true);
       goToNextSlide();
       return;
     }
 
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      setIsInteractionPaused(true);
       goToPrevSlide();
       return;
     }
 
     if (event.key === "Home") {
       event.preventDefault();
-      setIsInteractionPaused(true);
       goToSlide(0);
       return;
     }
 
     if (event.key === "End") {
       event.preventDefault();
-      setIsInteractionPaused(true);
       goToSlide(totalSlides - 1);
     }
   }
@@ -167,7 +162,6 @@ export default function Hero() {
     if (!touchPoint) return;
     touchStartXRef.current = touchPoint.clientX;
     touchStartYRef.current = touchPoint.clientY;
-    setIsInteractionPaused(true);
   }
 
   function handleHeroTouchEnd(event) {
@@ -179,7 +173,6 @@ export default function Hero() {
 
     if (startX == null || startY == null || !touchPoint) {
       clearTouchTracking();
-      setIsInteractionPaused(false);
       return;
     }
 
@@ -193,17 +186,10 @@ export default function Hero() {
     }
 
     clearTouchTracking();
-    setIsInteractionPaused(false);
   }
 
   function handleHeroTouchCancel() {
     clearTouchTracking();
-    setIsInteractionPaused(false);
-  }
-
-  function onHeroBlur(event) {
-    if (event.currentTarget.contains(event.relatedTarget)) return;
-    setIsInteractionPaused(false);
   }
 
   if (!hasSlides || !activeSlide) return null;
@@ -216,10 +202,6 @@ export default function Hero() {
         aria-roledescription="carousel"
         aria-label="Featured services gallery"
         tabIndex={0}
-        onMouseEnter={() => setIsInteractionPaused(true)}
-        onMouseLeave={() => setIsInteractionPaused(false)}
-        onFocusCapture={() => setIsInteractionPaused(true)}
-        onBlurCapture={onHeroBlur}
         onKeyDown={handleHeroKeyDown}
         onTouchStart={handleHeroTouchStart}
         onTouchEnd={handleHeroTouchEnd}
