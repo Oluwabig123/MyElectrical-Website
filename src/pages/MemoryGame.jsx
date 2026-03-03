@@ -10,8 +10,10 @@ const GRID_CARD_COUNT = 16;
 const TARGET_CARD_COUNT = 2;
 const STAGE_TRIALS = 3;
 const TARGET_LABEL = "ODUZZ";
-const PREVIEW_SECONDS = 2;
-const SEARCH_SECONDS = 5;
+const PREVIEW_SECONDS = 1;
+const BASE_SEARCH_SECONDS = 5;
+const SEARCH_DROP_PER_STAGE = 0.35;
+const MIN_SEARCH_SECONDS = 2.2;
 const TIMER_TICK_MS = 100;
 const WIN_ADVANCE_DELAY_MS = 900;
 const MOBILE_VIEWPORT_QUERY = "(max-width: 900px)";
@@ -46,6 +48,11 @@ function pickTwoTargetSlots() {
   return shuffleItems(Array.from({ length: GRID_CARD_COUNT }, (_item, index) => index)).slice(0, TARGET_CARD_COUNT);
 }
 
+function getSearchSeconds(stage) {
+  const seconds = BASE_SEARCH_SECONDS - (stage - 1) * SEARCH_DROP_PER_STAGE;
+  return Number(Math.max(MIN_SEARCH_SECONDS, seconds).toFixed(1));
+}
+
 function buildStageRound(stage, totalScore, trialsLeft = STAGE_TRIALS, notice = "") {
   const targetSlots = pickTwoTargetSlots();
 
@@ -64,7 +71,7 @@ function buildStageRound(stage, totalScore, trialsLeft = STAGE_TRIALS, notice = 
     targetCardIds: targetSlots.map((slot) => `slot-${slot + 1}`),
     selectedIds: [],
     previewLeft: PREVIEW_SECONDS,
-    searchLeft: SEARCH_SECONDS,
+    searchLeft: getSearchSeconds(stage),
     isBoardLocked: true,
     notice,
     lastStageScore: 0,
@@ -92,6 +99,7 @@ export default function MemoryGame() {
 
   const selectedProgress = isWon ? TARGET_CARD_COUNT : Math.min(game.selectedIds.length, TARGET_CARD_COUNT);
   const progressPercent = (selectedProgress / TARGET_CARD_COUNT) * 100;
+  const stageSearchSeconds = getSearchSeconds(game.stage);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -130,7 +138,7 @@ export default function MemoryGame() {
             ...prev,
             phase: "search",
             previewLeft: 0,
-            searchLeft: SEARCH_SECONDS,
+            searchLeft: getSearchSeconds(prev.stage),
             selectedIds: [],
             isBoardLocked: false,
             notice: "",
@@ -228,7 +236,7 @@ export default function MemoryGame() {
         ...prev,
         phase: "preview",
         previewLeft: PREVIEW_SECONDS,
-        searchLeft: SEARCH_SECONDS,
+        searchLeft: getSearchSeconds(prev.stage),
         selectedIds: [],
         isBoardLocked: true,
         notice: "",
@@ -332,7 +340,7 @@ export default function MemoryGame() {
         <SectionHeader
           kicker="Test Your Memory"
           title="Locate the hidden numbers"
-          subtitle="Press start, memorize for 2 seconds, then find both positions in 5 seconds."
+          subtitle="Press start, memorize for 1 second, then find both positions before time runs out."
         />
 
         <Reveal delay={0.04}>
@@ -374,8 +382,8 @@ export default function MemoryGame() {
             {game.phase === "ready" ? (
               <div className="memoryStartCard">
                 <p>
-                  Stage {game.stage}: {TARGET_LABEL} will flash in 2 cards for <strong>2.0s</strong>, then hide.
-                  You get <strong>5.0s</strong> to tap those exact card positions.
+                  Stage {game.stage}: {TARGET_LABEL} will flash in 2 cards for <strong>{PREVIEW_SECONDS.toFixed(1)}s</strong>, then hide.
+                  You get <strong>{stageSearchSeconds.toFixed(1)}s</strong> to tap those exact card positions.
                 </p>
                 <div className="memoryResultActions">
                   <Button variant="primary" onClick={startStagePreview}>Start Stage</Button>
@@ -391,7 +399,7 @@ export default function MemoryGame() {
 
             {isSearching ? (
               <p className="memoryHint">
-                Tap the 2 card locations where {TARGET_LABEL} flashed before {formatSeconds(game.searchLeft)}s.
+                Tap the 2 card locations where {TARGET_LABEL} flashed before {formatSeconds(game.searchLeft)}s. Higher stages give less time.
               </p>
             ) : null}
 
