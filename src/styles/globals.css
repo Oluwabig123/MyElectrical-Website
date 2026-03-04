@@ -1037,6 +1037,19 @@ select:focus-visible{
 .productsAdminForm{
   margin: 0;
 }
+.productsAdminImagePreviewWrap{
+  margin: 2px 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+}
+.productsAdminImagePreview{
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  display: block;
+}
 .productsAdminAutoCategory{
   margin: 0 0 12px;
   padding: 10px 12px;
@@ -1098,8 +1111,18 @@ select:focus-visible{
   gap: 10px;
   flex-wrap: wrap;
 }
+.productsAdminThumb{
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  flex: 0 0 auto;
+}
 .productsAdminItemCopy{
   min-width: 0;
+  flex: 1 1 220px;
 }
 .productsAdminItemName{
   margin: 0;
@@ -1175,6 +1198,34 @@ select:focus-visible{
   display: grid;
   gap: 10px;
   min-height: 188px;
+}
+.productsImageWrap{
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.03);
+  min-height: 160px;
+}
+.productsImage{
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+.productsImageFallback{
+  width: 100%;
+  height: 160px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.86);
+  background:
+    radial-gradient(220px 80px at 16% 12%, rgba(255,212,0,0.26), transparent 70%),
+    radial-gradient(220px 80px at 86% 82%, rgba(46,233,255,0.20), transparent 72%),
+    rgba(255,255,255,0.03);
 }
 .productsIndex{
   width: fit-content;

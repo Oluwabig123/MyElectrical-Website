@@ -15,6 +15,7 @@ import {
 import {
   ADMIN_PRODUCTS_TABLE,
   isSupabaseConfigured,
+  PRODUCT_IMAGES_BUCKET,
   supabase,
 } from "../lib/supabaseClient";
 
@@ -23,6 +24,7 @@ const EMPTY_ADMIN_FORM = {
   size: "",
   type: "",
   bestFor: "",
+  imageUrl: "",
 };
 
 const EMPTY_AUTH_FORM = {
@@ -30,8 +32,25 @@ const EMPTY_AUTH_FORM = {
   password: "",
 };
 
+const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+
 function sanitizeValue(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeImageUrl(value) {
+  const rawUrl = sanitizeValue(value);
+  if (!rawUrl) return "";
+
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return "";
+    }
+    return parsed.href;
+  } catch {
+    return "";
+  }
 }
 
 function normalizeAdminPayload(formValues) {
@@ -40,12 +59,14 @@ function normalizeAdminPayload(formValues) {
     size: sanitizeValue(formValues.size) || "N/A",
     type: sanitizeValue(formValues.type) || "Electrical item",
     bestFor: sanitizeValue(formValues.bestFor) || "General electrical use",
+    imageUrl: normalizeImageUrl(formValues.imageUrl),
   };
 }
 
 function validateAdminPayload(payload) {
   if (!payload.name) return "Product name is required.";
   if (!payload.bestFor) return "Add a short best-for note.";
+  if (!payload.imageUrl) return "Add a valid image URL or upload an image.";
   return "";
 }
 
@@ -57,6 +78,7 @@ function mapCloudRowToProduct(row) {
       size: row.size,
       type: row.type,
       bestFor: row.best_for,
+      imageUrl: row.image_url,
       category: row.category,
     },
     row.id
@@ -65,7 +87,11 @@ function mapCloudRowToProduct(row) {
 
 function formatSupabaseError(error, fallbackMessage) {
   if (!error) return fallbackMessage;
-  return sanitizeValue(error.message) || fallbackMessage;
+  const message = sanitizeValue(error.message);
+  if (message.toLowerCase().includes("image_url")) {
+    return "Database update needed for product images. Re-run supabase/admin_products.sql in Supabase SQL Editor.";
+  }
+  return message || fallbackMessage;
 }
 
 export default function Products() {
@@ -78,6 +104,7 @@ export default function Products() {
   const [isAuthLoading, setIsAuthLoading] = React.useState(true);
   const [isCatalogLoading, setIsCatalogLoading] = React.useState(true);
   const [isSavingProduct, setIsSavingProduct] = React.useState(false);
+  const [isUploadingImage, setIsUploadingImage] = React.useState(false);
   const [deletingProductId, setDeletingProductId] = React.useState("");
   const [catalogError, setCatalogError] = React.useState("");
   const [formStatus, setFormStatus] = React.useState({ type: "", message: "" });
@@ -111,7 +138,7 @@ export default function Products() {
 
     const { data, error } = await supabase
       .from(ADMIN_PRODUCTS_TABLE)
-      .select("id,name,size,type,best_for,category,created_at")
+      .select("id,name,size,type,best_for,image_url,category,created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -199,6 +226,73 @@ export default function Products() {
     setEditingProductId(null);
   }
 
+  async function handleImageUploadChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!supabase || !isAuthenticated) {
+      setFormStatus({ type: "error", message: "Sign in first to upload product images." });
+      event.target.value = "";
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setFormStatus({ type: "error", message: "Choose a valid image file." });
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PRODUCT_IMAGE_SIZE_BYTES) {
+      setFormStatus({
+        type: "error",
+        message: "Image is too large. Use 5MB or less.",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    const fileExtension = sanitizeValue(file.name.split(".").pop()).toLowerCase();
+    const safeExtension = fileExtension.replace(/[^a-z0-9]/g, "") || "jpg";
+    const uniqueSuffix = Math.random().toString(36).slice(2, 8);
+    const uploadPath = `${authSession?.user?.id || "admin"}/${Date.now()}-${uniqueSuffix}.${safeExtension}`;
+
+    setIsUploadingImage(true);
+    setFormStatus({ type: "", message: "" });
+
+    const { error: uploadError } = await supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .upload(uploadPath, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+      });
+
+    if (uploadError) {
+      setFormStatus({
+        type: "error",
+        message: formatSupabaseError(uploadError, "Could not upload image."),
+      });
+      setIsUploadingImage(false);
+      event.target.value = "";
+      return;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(uploadPath);
+
+    setAdminForm((prev) => ({
+      ...prev,
+      imageUrl: publicUrl,
+    }));
+    setFormStatus({
+      type: "success",
+      message: "Image uploaded. Save product to publish changes.",
+    });
+    setIsUploadingImage(false);
+    event.target.value = "";
+  }
+
   async function handleAdminLogin(event) {
     event.preventDefault();
     if (!isSupabaseConfigured || !supabase) return;
@@ -271,6 +365,7 @@ export default function Products() {
           size: payload.size,
           type: payload.type,
           best_for: payload.bestFor,
+          image_url: payload.imageUrl,
           category: inferredCategory,
         })
         .eq("id", editingProductId);
@@ -295,6 +390,7 @@ export default function Products() {
           size: payload.size,
           type: payload.type,
           best_for: payload.bestFor,
+          image_url: payload.imageUrl,
           category: inferredCategory,
           created_by: authSession?.user?.id || null,
         },
@@ -331,6 +427,7 @@ export default function Products() {
       size: selectedProduct.size,
       type: selectedProduct.type,
       bestFor: selectedProduct.bestFor,
+      imageUrl: selectedProduct.imageUrl || "",
     });
     setFormStatus({ type: "", message: "" });
   }
@@ -492,6 +589,36 @@ export default function Products() {
                       />
                     </label>
                     <label className="field">
+                      <span>Image URL *</span>
+                      <input
+                        type="url"
+                        name="imageUrl"
+                        value={adminForm.imageUrl}
+                        onChange={handleFormInputChange}
+                        placeholder="https://...product-image.jpg"
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Upload image (optional)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUploadChange}
+                        disabled={isUploadingImage}
+                      />
+                    </label>
+                    {adminForm.imageUrl ? (
+                      <div className="productsAdminImagePreviewWrap">
+                        <img
+                          src={adminForm.imageUrl}
+                          alt="Product preview"
+                          className="productsAdminImagePreview"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
+                    ) : null}
+                    <label className="field">
                       <span>Best for *</span>
                       <textarea
                         rows={3}
@@ -503,8 +630,10 @@ export default function Products() {
                     </label>
 
                     <div className="formActions productsAdminFormActions">
-                      <Button type="submit" variant="primary" disabled={isSavingProduct}>
-                        {isSavingProduct
+                      <Button type="submit" variant="primary" disabled={isSavingProduct || isUploadingImage}>
+                        {isUploadingImage
+                          ? "Uploading image..."
+                          : isSavingProduct
                           ? "Saving..."
                           : editingProductId
                           ? "Update product"
@@ -541,6 +670,15 @@ export default function Products() {
                     <ul className="productsAdminList">
                       {adminCatalog.items.map((item) => (
                         <li key={item.id} className="productsAdminItem">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="productsAdminThumb"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : null}
                           <div className="productsAdminItemCopy">
                             <p className="productsAdminItemName">{item.name}</p>
                             <p className="productsAdminItemMeta">
@@ -591,6 +729,21 @@ export default function Products() {
                 <Reveal key={item.id} delay={groupIndex * 0.06 + index * 0.03}>
                   <article className="card productsCard">
                     <span className="productsIndex">{String(index + 1).padStart(2, "0")}</span>
+                    <div className="productsImageWrap">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="productsImage"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <div className="productsImageFallback" aria-hidden="true">
+                          Oduzz
+                        </div>
+                      )}
+                    </div>
                     <h3 className="cardTitle productsTitle">{item.name}</h3>
                     <p className="p">{item.bestFor}</p>
                     <div className="productsMeta" aria-label={`${item.name} specifications`}>

@@ -130,6 +130,7 @@ export function normalizeProduct(rawProduct, fallbackId) {
   const safeSize = sanitizeText(rawProduct?.size) || "N/A";
   const safeType = sanitizeText(rawProduct?.type) || "Electrical item";
   const safeBestFor = sanitizeText(rawProduct?.bestFor) || "General electrical use";
+  const safeImageUrl = sanitizeText(rawProduct?.imageUrl);
 
   const inferredCategory = inferProductCategory({
     name: safeName,
@@ -147,6 +148,7 @@ export function normalizeProduct(rawProduct, fallbackId) {
     size: safeSize,
     type: safeType,
     bestFor: safeBestFor,
+    imageUrl: safeImageUrl,
     category: finalCategory,
     categoryLabel: getCategoryLabel(finalCategory),
   };
