@@ -1367,6 +1367,16 @@ select:focus-visible{
   display: grid;
   gap: 8px;
 }
+.memoryGridShell{
+  position: relative;
+}
+.memoryGridLock{
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 14px;
+  background: rgba(7,10,18,0.16);
+}
 .memoryCard{
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: 12px;
@@ -1385,11 +1395,14 @@ select:focus-visible{
   box-shadow: 0 10px 20px rgba(0,0,0,0.24);
   transition: transform .14s ease, border-color .14s ease, background-color .14s ease;
 }
-.memoryCard:active{
+.memoryCard:enabled:active{
   transform: scale(0.98);
 }
 .memoryCard:disabled{
   cursor: default;
+}
+.memoryCard.locked{
+  pointer-events: none;
 }
 .memoryCardText{
   display: inline-flex;

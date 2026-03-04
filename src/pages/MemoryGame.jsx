@@ -9,13 +9,13 @@ const MAX_STAGE = 10;
 const GRID_CARD_COUNT = 16;
 const STAGE_TRIALS = 3;
 const TARGET_LABEL = "ODUZZ";
-const PREVIEW_SECONDS = 1;
+const PREVIEW_SECONDS = 0.8;
 const BASE_SEARCH_SECONDS = 5;
 const SEARCH_DROP_PER_STAGE = 0.35;
 const MIN_SEARCH_SECONDS = 2.2;
 const MAX_TARGET_COUNT = 9;
 const TIMER_TICK_MS = 100;
-const WIN_ADVANCE_DELAY_MS = 900;
+const WIN_ADVANCE_DELAY_MS = 1700;
 const MOBILE_VIEWPORT_QUERY = "(max-width: 900px)";
 const TOUCH_QUERY = "(hover: none) and (pointer: coarse)";
 
@@ -102,6 +102,7 @@ export default function MemoryGame() {
   const isSearching = game.phase === "search";
   const isWon = game.phase === "won";
   const isFailed = game.phase === "failed";
+  const isGridLocked = !isSearching || game.isBoardLocked;
 
   const selectedProgress = isWon ? game.targetCount : Math.min(game.selectedIds.length, game.targetCount);
   const progressPercent = game.targetCount > 0 ? (selectedProgress / game.targetCount) * 100 : 0;
@@ -409,44 +410,50 @@ export default function MemoryGame() {
               </p>
             ) : null}
 
-            <div className="memoryGrid" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
-              {game.cards.map((card) => {
-                const isTarget = game.targetCardIds.includes(card.id);
-                const isSelected = game.selectedIds.includes(card.id);
+            <div className="memoryGridShell">
+              {isGridLocked ? <div className="memoryGridLock" aria-hidden="true" /> : null}
+              <div className="memoryGrid" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
+                {game.cards.map((card) => {
+                  const isTarget = game.targetCardIds.includes(card.id);
+                  const isSelected = game.selectedIds.includes(card.id);
 
-                const revealDuringPreview = isPreviewing && isTarget;
-                const revealOnWon = isWon && isTarget;
-                const revealOnFailed = isFailed && (isTarget || isSelected);
-                const showTargetLabel = revealDuringPreview || revealOnWon || (isFailed && isTarget);
+                  const revealDuringPreview = isPreviewing && isTarget;
+                  const revealOnWon = isWon && isTarget;
+                  const revealOnFailed = isFailed && (isTarget || isSelected);
+                  const showTargetLabel = revealDuringPreview || revealOnWon || (isFailed && isTarget);
 
-                const isWrongPick = revealOnFailed && isSelected && !isTarget;
-                const cardText = showTargetLabel
-                  ? TARGET_LABEL
-                  : isWrongPick
-                  ? "X"
-                  : isSearching && isSelected
-                  ? "..."
-                  : "?";
+                  const isWrongPick = revealOnFailed && isSelected && !isTarget;
+                  const cardText = showTargetLabel
+                    ? TARGET_LABEL
+                    : isWrongPick
+                    ? "X"
+                    : isSearching && isSelected
+                    ? "..."
+                    : "?";
 
-                return (
-                  <button
-                    key={card.id}
-                    type="button"
-                    className={`memoryCard${showTargetLabel ? " revealed target" : ""}${isSelected ? " selected" : ""}${isWrongPick ? " wrong" : ""}`}
-                    onClick={() => handleCardPress(card.id)}
-                    disabled={!isSearching || game.isBoardLocked || isSelected}
-                    aria-label={showTargetLabel ? `${TARGET_LABEL} card` : "Hidden memory card"}
-                  >
-                    <span className="memoryCardText" aria-hidden="true">{cardText}</span>
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={card.id}
+                      type="button"
+                      className={`memoryCard${showTargetLabel ? " revealed target" : ""}${isSelected ? " selected" : ""}${isWrongPick ? " wrong" : ""}${isGridLocked ? " locked" : ""}`}
+                      onClick={() => handleCardPress(card.id)}
+                      disabled={isGridLocked || isSelected}
+                      aria-label={showTargetLabel ? `${TARGET_LABEL} card` : "Hidden memory card"}
+                    >
+                      <span className="memoryCardText" aria-hidden="true">{cardText}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {isWon ? (
               <div className="memoryResult memoryResultWin">
                 <p>
-                  Correct. Stage score: <strong>{game.lastStageScore}</strong>. Moving to Stage {game.stage >= MAX_STAGE ? 1 : game.stage + 1}.
+                  <strong>Congratulations!</strong> You crossed Stage {game.stage}.
+                </p>
+                <p>
+                  Stage score: <strong>{game.lastStageScore}</strong>. Moving to Stage {game.stage >= MAX_STAGE ? 1 : game.stage + 1}.
                 </p>
               </div>
             ) : null}
