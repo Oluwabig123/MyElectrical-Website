@@ -10,6 +10,7 @@ const GRID_CARD_COUNT = 16;
 const STAGE_TRIALS = 3;
 const TARGET_LABEL = "ODUZZ";
 const PREVIEW_SECONDS = 0.8;
+const POST_PREVIEW_DELAY_SECONDS = 1;
 const BASE_SEARCH_SECONDS = 5;
 const SEARCH_DROP_PER_STAGE = 0.35;
 const MIN_SEARCH_SECONDS = 2.2;
@@ -77,6 +78,7 @@ function buildStageRound(stage, totalScore, trialsLeft = STAGE_TRIALS, notice = 
     targetCardIds: targetSlots.map((slot) => `slot-${slot + 1}`),
     selectedIds: [],
     previewLeft: PREVIEW_SECONDS,
+    postPreviewDelayLeft: POST_PREVIEW_DELAY_SECONDS,
     searchLeft: getSearchSeconds(stage),
     isBoardLocked: true,
     notice,
@@ -100,6 +102,7 @@ export default function MemoryGame() {
 
   const isPreviewing = game.phase === "preview";
   const isSearching = game.phase === "search";
+  const isPostPreviewDelay = game.phase === "postPreviewDelay";
   const isWon = game.phase === "won";
   const isFailed = game.phase === "failed";
   const isGridLocked = !isSearching || game.isBoardLocked;
@@ -143,11 +146,12 @@ export default function MemoryGame() {
         if (nextPreviewLeft <= 0) {
           return {
             ...prev,
-            phase: "search",
+            phase: "postPreviewDelay",
             previewLeft: 0,
+            postPreviewDelayLeft: POST_PREVIEW_DELAY_SECONDS,
             searchLeft: getSearchSeconds(prev.stage),
             selectedIds: [],
-            isBoardLocked: false,
+            isBoardLocked: true,
             notice: "",
           };
         }
@@ -163,6 +167,39 @@ export default function MemoryGame() {
       window.clearInterval(timer);
     };
   }, [isPreviewing]);
+
+  React.useEffect(() => {
+    if (!isPostPreviewDelay) return undefined;
+
+    const timer = window.setInterval(() => {
+      setGame((prev) => {
+        if (prev.phase !== "postPreviewDelay") return prev;
+
+        const nextDelayLeft = Number((prev.postPreviewDelayLeft - TIMER_TICK_MS / 1000).toFixed(1));
+        if (nextDelayLeft <= 0) {
+          return {
+            ...prev,
+            phase: "search",
+            postPreviewDelayLeft: 0,
+            searchLeft: getSearchSeconds(prev.stage),
+            selectedIds: [],
+            isBoardLocked: false,
+            notice: "",
+          };
+        }
+
+        return {
+          ...prev,
+          postPreviewDelayLeft: nextDelayLeft,
+          isBoardLocked: true,
+        };
+      });
+    }, TIMER_TICK_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [isPostPreviewDelay]);
 
   React.useEffect(() => {
     if (!isSearching) return undefined;
@@ -243,6 +280,7 @@ export default function MemoryGame() {
         ...prev,
         phase: "preview",
         previewLeft: PREVIEW_SECONDS,
+        postPreviewDelayLeft: POST_PREVIEW_DELAY_SECONDS,
         searchLeft: getSearchSeconds(prev.stage),
         selectedIds: [],
         isBoardLocked: true,
@@ -366,6 +404,8 @@ export default function MemoryGame() {
                 <strong>
                   {isPreviewing
                     ? `${formatSeconds(game.previewLeft)}s`
+                    : isPostPreviewDelay
+                    ? `${formatSeconds(game.postPreviewDelayLeft)}s`
                     : isSearching
                     ? `${formatSeconds(game.searchLeft)}s`
                     : "Ready"}
@@ -407,6 +447,12 @@ export default function MemoryGame() {
             {isSearching ? (
               <p className="memoryHint">
                 Tap the {game.targetCount} card locations where {TARGET_LABEL} flashed before {formatSeconds(game.searchLeft)}s. Higher stages give less time.
+              </p>
+            ) : null}
+
+            {isPostPreviewDelay ? (
+              <p className="memoryHint">
+                {TARGET_LABEL} is hidden. Wait {formatSeconds(game.postPreviewDelayLeft)}s before cards become clickable.
               </p>
             ) : null}
 
