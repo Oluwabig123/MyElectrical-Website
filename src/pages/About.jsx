@@ -6,6 +6,7 @@ import SectionHeader from "../components/ui/SectionHeader";
 import Reveal from "../components/ui/Reveal";
 import { CONTACT, CONTACT_LINKS } from "../data/contact";
 
+// Static trust points used to explain the company value proposition.
 const trustPoints = [
   {
     title: "Safety-first process",
@@ -31,6 +32,7 @@ export default function About() {
           subtitle="Safety-first wiring, solar, CCTV, and lighting."
         />
 
+        {/* Intro copy for the page overview. */}
         <Reveal>
           <article className="card aboutLeadCard">
             <p className="aboutLead">
@@ -43,6 +45,7 @@ export default function About() {
           </article>
         </Reveal>
 
+        {/* Trust point cards rendered from local page data. */}
         <div className="aboutGrid">
           {trustPoints.map((item, i) => (
             <Reveal key={item.title} delay={i * 0.04}>
@@ -55,6 +58,7 @@ export default function About() {
           ))}
         </div>
 
+        {/* Closing contact actions for users ready to request work. */}
         <Reveal delay={0.12}>
           <div className="aboutFoot">
             <p className="aboutNote">

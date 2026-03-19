@@ -10,6 +10,7 @@ const MAX_MESSAGE_CHARS = 1200;
 const MAX_MESSAGES = 40;
 const INITIAL_ASSISTANT_MESSAGE = "Hi, I can help with solar sizing, wiring, lighting, and quotes.";
 
+// Shortcut prompts for common conversations the assistant supports.
 const QUICK_PROMPTS = [
   "Size my solar system",
   "Cancel current flow",
@@ -46,6 +47,7 @@ function getPeakSunHours(location) {
   return (exact || fallback || { value: 4.5 }).value;
 }
 
+// Converts user-provided load details into a rough solar system recommendation.
 function buildSolarRecommendation({ loadsWatts, location, backupHours }) {
   const rules = oduzzAssistantDoc.solarSizing;
   const assumptions = rules.assumptions;
@@ -71,6 +73,7 @@ function buildSolarRecommendation({ loadsWatts, location, backupHours }) {
 }
 
 export default function Assistant() {
+  // Chat state and solar-sizing flow state live together in this page component.
   const [input, setInput] = useState("");
   const [stage, setStage] = useState("idle");
   const [draft, setDraft] = useState({ loadsWatts: null, location: "", backupHours: null });
@@ -86,6 +89,8 @@ export default function Assistant() {
     () => `${oduzzAssistantDoc.company} Doc v${oduzzAssistantDoc.version}`,
     []
   );
+
+  // UI label shown above the chat to reflect the current assistant mode.
   const stageLabel = useMemo(() => {
     if (stage === "solar-loads") return "Solar sizing: load";
     if (stage === "solar-location") return "Solar sizing: location";
@@ -99,11 +104,13 @@ export default function Assistant() {
     body.scrollTop = body.scrollHeight;
   }, [messages]);
 
+  // Adds an assistant reply while enforcing the page-level message cap.
   function addAssistant(text) {
     const safeText = clampMessage(text);
     setMessages((prev) => [...prev, { role: "assistant", text: safeText }].slice(-MAX_MESSAGES));
   }
 
+  // Routes general questions into a simple intent-based response flow.
   function handleGeneralIntent(raw) {
     const text = normalize(raw);
     const isSolar = /solar|inverter|sizing|size system|panel/.test(text);
@@ -143,6 +150,7 @@ export default function Assistant() {
     );
   }
 
+  // Handles the multi-step solar sizing conversation.
   function handleSolarFlow(raw) {
     const command = normalize(raw);
     if (/cancel|stop|start over|reset|exit/.test(command)) {
@@ -209,6 +217,7 @@ export default function Assistant() {
     }
   }
 
+  // Submit from the current input box value.
   function onSend() {
     const raw = input.trim().slice(0, MAX_INPUT_CHARS);
     if (!raw) return;
@@ -216,6 +225,7 @@ export default function Assistant() {
     setInput("");
   }
 
+  // Shared send path used by both manual input and quick prompts.
   function sendMessage(raw) {
     const safeRaw = String(raw || "").trim().slice(0, MAX_INPUT_CHARS);
     if (!safeRaw) return;
@@ -235,6 +245,7 @@ export default function Assistant() {
     sendMessage(prompt);
   }
 
+  // Resets the assistant back to the initial state.
   function onReset() {
     setStage("idle");
     setDraft({ loadsWatts: null, location: "", backupHours: null });
@@ -258,6 +269,7 @@ export default function Assistant() {
           subtitle="Ask about solar sizing, wiring, lighting, and quote preparation."
         />
 
+        {/* Two-column layout with prompt shortcuts and the live chat panel. */}
         <div className="assistantLayout">
           <aside className="card assistantGuide">
             <h3 className="assistantGuideTitle">Quick prompts</h3>
@@ -282,6 +294,7 @@ export default function Assistant() {
             </div>
           </aside>
 
+          {/* Chat transcript, status header, and composer controls. */}
           <div className="oduzzAssistantPanel assistantPagePanel">
             <div className="oduzzAssistantHead">
               <div className="assistantHeadMeta">

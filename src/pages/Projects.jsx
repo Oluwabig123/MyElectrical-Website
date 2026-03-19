@@ -10,10 +10,12 @@ import { projectCategories, projects } from "../data/projects";
 import { safeExternalUrl } from "../utils/safeExternalUrl";
 
 export default function Projects() {
+  // Read the optional project query param so direct links can highlight a project.
   const [searchParams] = useSearchParams();
   const selectedProjectId = searchParams.get("project");
   const [cat, setCat] = useState("All");
 
+  // Filter the gallery client-side by the selected category chip.
   const filtered = useMemo(() => {
     if (cat === "All") return projects;
     return projects.filter((p) => p.category === cat);
@@ -37,6 +39,7 @@ export default function Projects() {
           subtitle="Verified installs with neat finishing and safe protection."
         />
 
+        {/* Summary row and primary quote action. */}
         <div className="projectsToolbar">
           <p className="projectsSummary">
             {filtered.length} project{filtered.length === 1 ? "" : "s"} shown
@@ -47,6 +50,7 @@ export default function Projects() {
           </div>
         </div>
 
+        {/* Category chips switch the visible subset of projects. */}
         <div className="projectsFiltersWrap">
           <div className="filters" aria-label="Filter projects by category">
             {projectCategories.map((c) => (
@@ -74,6 +78,7 @@ export default function Projects() {
         ) : (
           <div className="projectsGrid">
             {filtered.map((p, i) => {
+              // Sanitize the external map link before exposing it in the UI.
               const mapUrl = safeExternalUrl(p.mapUrl);
               return (
                 <Reveal key={p.id} delay={i * 0.03}>

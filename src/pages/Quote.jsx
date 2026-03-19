@@ -22,6 +22,7 @@ const SERVICE_OPTIONS = [
   "Fault diagnosis / maintenance",
 ];
 
+// Basic phone validation keeps the generated WhatsApp message useful.
 function isValidPhone(phone) {
   const digits = phone.replace(/[^\d]/g, "");
   return digits.length >= 10 && digits.length <= 15;
@@ -55,10 +56,12 @@ function validateForm(form) {
 }
 
 export default function Quote() {
+  // Form state, field errors, and submission feedback all stay local to this page.
   const [form, setForm] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState(null);
 
+  // Updates fields, normalizes phone input, and clears stale errors/status.
   function onChange(e) {
     const { name, value } = e.target;
     const nextValue = name === "phone" ? value.replace(/[^0-9+() -]/g, "") : value;
@@ -76,12 +79,14 @@ export default function Quote() {
     if (status) setStatus(null);
   }
 
+  // Clears the form back to its initial blank state.
   function onClear() {
     setForm(INITIAL_FORM);
     setErrors({});
     setStatus(null);
   }
 
+  // Validates the form and opens WhatsApp with a prefilled quote request.
   function onSubmit(e) {
     e.preventDefault();
     const nextErrors = validateForm(form);
@@ -114,6 +119,7 @@ export default function Quote() {
           subtitle="Share your job details for a quick estimate and schedule."
         />
 
+        {/* Two-column layout: prep tips on the left, guided quote form on the right. */}
         <div className="quoteLayout">
           <aside className="card quoteInfo" aria-label="Quote preparation tips">
             <div className="quoteInfoTitle">Before you submit</div>
@@ -136,6 +142,7 @@ export default function Quote() {
             </div>
           </aside>
 
+          {/* Quote request form that forwards the details into WhatsApp. */}
           <form className="form quoteForm" onSubmit={onSubmit} noValidate>
             <p className="formNote">
               Typical response {CONTACT.whatsappResponseTime} on WhatsApp | {CONTACT.businessHours}

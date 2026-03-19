@@ -1323,10 +1323,21 @@ select:focus-visible{
   display: grid;
   gap: 12px;
 }
+.memoryPlayArea{
+  display: grid;
+  gap: 12px;
+}
+.memorySidebar,
+.memoryBoardColumn,
+.memoryBoardStatus{
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
 .memoryStatsGrid{
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 .memoryStat{
   border: 1px solid rgba(255,255,255,0.14);
@@ -1347,6 +1358,15 @@ select:focus-visible{
   color: rgba(255,255,255,0.97);
   font-weight: 900;
 }
+.memorySessionMeta{
+  margin: 0;
+  color: rgba(255,255,255,0.88);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.memorySessionMeta strong{
+  color: rgba(255,241,194,0.98);
+}
 .memoryProgressRow{
   display: grid;
   gap: 6px;
@@ -1354,6 +1374,10 @@ select:focus-visible{
 .memoryProgressRow small{
   color: rgba(255,255,255,0.76);
   font-size: 12px;
+}
+.memoryTimerRow{
+  display: grid;
+  gap: 6px;
 }
 .memoryStartCard{
   border: 1px solid rgba(255,255,255,0.16);
@@ -1420,6 +1444,8 @@ select:focus-visible{
 }
 .memoryGridShell{
   position: relative;
+  width: min(100%, 560px);
+  justify-self: center;
 }
 .memoryGridLock{
   position: absolute;
@@ -1445,15 +1471,29 @@ select:focus-visible{
   cursor: pointer;
   box-shadow: 0 10px 20px rgba(0,0,0,0.24);
   transition: transform .14s ease, border-color .14s ease, background-color .14s ease;
+  position: relative;
 }
 .memoryCard:enabled:active{
   transform: scale(0.98);
+}
+.memoryCard:focus-visible{
+  outline: 2px solid rgba(46,233,255,0.92);
+  outline-offset: 2px;
 }
 .memoryCard:disabled{
   cursor: default;
 }
 .memoryCard.locked{
   pointer-events: none;
+}
+.memoryCardCoord{
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.54);
 }
 .memoryCardText{
   display: inline-flex;
@@ -1478,6 +1518,10 @@ select:focus-visible{
   border-color: rgba(255,93,93,0.5);
   background: linear-gradient(160deg, rgba(255,93,93,0.2), rgba(255,255,255,0.05));
   color: rgba(255,227,227,0.97);
+}
+.memoryCard.missed{
+  border-color: rgba(255,212,0,0.56);
+  box-shadow: 0 0 0 3px rgba(255,212,0,0.14), 0 10px 20px rgba(0,0,0,0.24);
 }
 .memoryHint{
   margin: 0;
@@ -1514,6 +1558,103 @@ select:focus-visible{
 }
 .memoryResultActions > *{
   display: inline-flex;
+}
+@media (min-width: 1024px){
+  .memoryGamePage{
+    padding: 28px 0 24px;
+  }
+  .memoryGamePage .container{
+    min-height: calc(100vh - 110px);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    align-content: start;
+  }
+  .memoryGamePage .sectionHeader{
+    margin-bottom: 12px;
+    max-width: 680px;
+  }
+  .memoryGamePage .sectionHeader .h2{
+    font-size: clamp(22px, 2vw, 30px);
+    margin: 8px 0 10px;
+  }
+  .memoryGamePage .sectionHeader .p{
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .memoryGamePanel{
+    gap: 14px;
+    min-height: 0;
+    padding: 12px;
+  }
+  .memoryPlayArea{
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    min-height: 0;
+  }
+  .memorySidebar{
+    gap: 10px;
+  }
+  .memoryBoardColumn{
+    min-width: 0;
+    align-content: center;
+  }
+  .memoryBoardStatus{
+    width: min(100%, 540px);
+    justify-self: center;
+  }
+  .memoryGridShell{
+    width: min(100%, calc(100vh - 290px), 520px);
+    justify-self: center;
+  }
+  .memoryBoardStatus{
+    gap: 8px;
+  }
+  .memoryPreviewBadge{
+    justify-self: start;
+  }
+  .memoryStatsGrid{
+    gap: 6px;
+  }
+  .memoryStat{
+    padding: 7px 9px;
+  }
+  .memoryStat strong{
+    font-size: 15px;
+  }
+  .memorySessionMeta,
+  .memoryProgressRow small,
+  .memoryHint,
+  .memoryNotice{
+    font-size: 12px;
+  }
+  .memoryStartCard,
+  .memoryResult{
+    gap: 8px;
+    padding: 9px 10px;
+  }
+  .memoryStartCard p,
+  .memoryResult p{
+    font-size: 13px;
+    line-height: 1.45;
+  }
+}
+@media (min-width: 1024px) and (max-height: 820px){
+  .memoryGamePage{
+    padding: 22px 0 18px;
+  }
+  .memoryGamePage .container{
+    min-height: calc(100vh - 96px);
+  }
+  .memoryGamePage .sectionHeader{
+    margin-bottom: 10px;
+  }
+  .memoryGamePage .sectionHeader .p{
+    display: none;
+  }
+  .memoryGridShell{
+    width: min(100%, calc(100vh - 250px), 480px);
+  }
 }
 @keyframes memoryFlash{
   0%,100%{ transform: scale(1); }
@@ -2701,4 +2842,3 @@ input:focus, textarea:focus, select:focus{ border-color: rgba(255,212,0,0.42); b
     max-height: 56vh;
   }
 }
-

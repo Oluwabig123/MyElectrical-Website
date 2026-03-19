@@ -17,6 +17,7 @@ export default function Services() {
           subtitle="Wiring, solar, CCTV, smart systems, lighting, and maintenance."
         />
 
+        {/* Service cards rendered from the shared services dataset. */}
         <div className="servicesPageGrid">
           {services.map((s, i) => (
             <Reveal key={s.title} delay={i * 0.04}>
@@ -29,6 +30,7 @@ export default function Services() {
           ))}
         </div>
 
+        {/* Footer actions for users ready to call or request a quote. */}
         <Reveal delay={0.14}>
           <div className="servicesPageFoot">
             <p className="servicesPageNote">

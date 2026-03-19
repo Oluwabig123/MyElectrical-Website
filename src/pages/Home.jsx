@@ -11,10 +11,12 @@ import CTAQuoteStrip from "../sections/home/CTAQuoteStrip";
 export default function Home() {
   return (
     <>
+      {/* Route-level metadata for the landing page. */}
       <SEO
         title="Oduzz Electrical Concept - Ikorodu, Lagos"
         description="Safety-first wiring, solar/inverter, CCTV, and lighting in Ikorodu, Lagos."
       />
+      {/* Home page sections are composed from standalone section components. */}
       <Hero />
       <ServicesPreview />
       <Stories />

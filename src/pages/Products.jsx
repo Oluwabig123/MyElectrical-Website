@@ -34,6 +34,7 @@ const EMPTY_AUTH_FORM = {
 
 const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
+// Small input helpers keep the admin payload predictable before validation.
 function sanitizeValue(value) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -70,6 +71,7 @@ function validateAdminPayload(payload) {
   return "";
 }
 
+// Converts Supabase rows into the normalized catalog shape used by the page UI.
 function mapCloudRowToProduct(row) {
   return normalizeProduct(
     {
@@ -95,6 +97,7 @@ function formatSupabaseError(error, fallbackMessage) {
 }
 
 export default function Products() {
+  // Admin state, auth state, and product catalog state all live in this page.
   const [isAdminOpen, setIsAdminOpen] = React.useState(false);
   const [adminForm, setAdminForm] = React.useState(EMPTY_ADMIN_FORM);
   const [authForm, setAuthForm] = React.useState(EMPTY_AUTH_FORM);
@@ -112,6 +115,7 @@ export default function Products() {
 
   const isAuthenticated = Boolean(authSession?.user);
 
+  // Merge shipped product data with cloud-managed records.
   const mergedProducts = React.useMemo(
     () => [...cableProducts, ...cloudProducts],
     [cloudProducts]
@@ -125,6 +129,7 @@ export default function Products() {
     return getCategoryLabel(draftCategory);
   }, [adminForm]);
 
+  // Loads cloud products for both the public catalog and the admin list.
   const loadCloudProducts = React.useCallback(async () => {
     if (!isSupabaseConfigured || !supabase) {
       setCloudProducts([]);
@@ -152,6 +157,7 @@ export default function Products() {
     setIsCatalogLoading(false);
   }, []);
 
+  // Keep the UI in sync with Supabase changes pushed from any admin session.
   React.useEffect(() => {
     let isMounted = true;
 
@@ -211,6 +217,7 @@ export default function Products() {
     };
   }, [loadCloudProducts]);
 
+  // Shared input handlers for the admin auth and product forms.
   function handleFormInputChange(event) {
     const { name, value } = event.target;
     setAdminForm((prev) => ({ ...prev, [name]: value }));
@@ -226,6 +233,7 @@ export default function Products() {
     setEditingProductId(null);
   }
 
+  // Uploads a selected image to Supabase storage and stores its public URL in the form.
   async function handleImageUploadChange(event) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -293,6 +301,7 @@ export default function Products() {
     event.target.value = "";
   }
 
+  // Signs an admin into Supabase so they can manage cloud products.
   async function handleAdminLogin(event) {
     event.preventDefault();
     if (!isSupabaseConfigured || !supabase) return;
@@ -339,6 +348,7 @@ export default function Products() {
     setAuthStatus({ type: "success", message: "Signed out." });
   }
 
+  // Creates or updates a cloud product, then refreshes the catalog view.
   async function handleAdminSubmit(event) {
     event.preventDefault();
     if (!supabase || !isAuthenticated) {
@@ -416,6 +426,7 @@ export default function Products() {
     loadCloudProducts();
   }
 
+  // Loads an existing cloud product back into the same form for editing.
   function startEditProduct(productId) {
     const selectedProduct = cloudProducts.find((item) => item.id === productId);
     if (!selectedProduct) return;
@@ -432,6 +443,7 @@ export default function Products() {
     setFormStatus({ type: "", message: "" });
   }
 
+  // Removes a cloud-managed product after a client-side confirmation step.
   async function handleDeleteProduct(productId) {
     if (!supabase || !isAuthenticated) {
       setFormStatus({ type: "error", message: "Sign in first to delete products." });
@@ -484,6 +496,7 @@ export default function Products() {
           subtitle="Base stock plus cloud-managed products, automatically grouped by category."
         />
 
+        {/* Inline admin panel for authenticating and managing cloud products. */}
         <Reveal delay={0.04}>
           <article className="card productsAdminShell">
             <div className="productsAdminHead">
@@ -715,6 +728,7 @@ export default function Products() {
           Showing {totalProducts} products across {totalCategories} categories.
         </p>
 
+        {/* Public product catalog grouped by inferred category. */}
         {catalog.groups.map((group, groupIndex) => (
           <section className="productsCategorySection" key={group.key}>
             <div className="productsCategoryHead">
@@ -757,6 +771,7 @@ export default function Products() {
           </section>
         ))}
 
+        {/* Final CTA for users who need help choosing a product. */}
         <Reveal delay={0.14}>
           <div className="productsFoot">
             <p className="productsNote">

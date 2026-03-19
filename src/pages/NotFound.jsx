@@ -7,6 +7,7 @@ export default function NotFound() {
   return (
     <section className="section notFoundPage">
       <Container>
+        {/* Recovery actions guide users back into valid site routes. */}
         <article className="card notFoundCard">
           <p className="notFoundCode">404</p>
           <h1 className="h2 notFoundTitle">Page not found</h1>

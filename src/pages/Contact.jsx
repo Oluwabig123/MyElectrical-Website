@@ -15,6 +15,7 @@ export default function Contact() {
           subtitle="Call, email, or chat with us on WhatsApp."
         />
 
+        {/* Core contact channels shown as separate action cards. */}
         <div className="contactGrid">
           <article className="card contactCard">
             <div className="cardTitle">Phone</div>
@@ -47,6 +48,7 @@ export default function Contact() {
           </article>
         </div>
 
+        {/* Quick fallback action for the fastest support channel. */}
         <div className="contactFoot">
           <p className="contactNote">Need fast support? WhatsApp is the quickest channel.</p>
           <a className="btn outline" target="_blank" rel="noreferrer" href={CONTACT_LINKS.whatsapp}>
