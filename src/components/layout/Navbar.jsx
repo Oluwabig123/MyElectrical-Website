@@ -50,7 +50,7 @@ export default function Navbar() {
           </span>
           <img
             className="brandLogo"
-            src="/oduzz-logo-transparent.png"
+            src="/oduzz-logo-transparent.webp"
             alt="Oduzz Electrical Concept"
             loading="eager"
             decoding="async"

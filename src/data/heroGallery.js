@@ -2,7 +2,7 @@ export const heroGallery = [
   {
     id: "hero-wiring",
     image:
-      "/hero/wiringg.jpg",
+      "/hero/wiringg.webp",
     alt: "Electrician working on a residential control panel installation",
     kicker: "The Responsible Installers",
     title: "Trusted Electrical Wiring",
@@ -13,7 +13,7 @@ export const heroGallery = [
   {
     id: "hero-solar",
     image:
-      "/hero/solar.jpg",
+      "/hero/solar.webp",
     alt: "Technician wiring a solar inverter setup with safety equipment",
     kicker: "Energy Confidence",
     title: "Reliable Solar and Inverter",
@@ -24,7 +24,7 @@ export const heroGallery = [
   {
     id: "hero-cctv",
     image:
-      "/hero/cctv.jpg",
+      "/hero/cctv.webp",
     alt: "Security technician installing a CCTV camera on a wall",
     kicker: "Security That Works",
     title: "Clear CCTV Coverage",
@@ -35,7 +35,7 @@ export const heroGallery = [
   {
     id: "hero-lighting",
     image:
-      "/hero/lightings.jpg",
+      "/hero/lightings.webp",
     alt: "Interior chandelier installation with clean ceiling finishing",
     kicker: "Interior Finishing",
     title: "Lighting That Elevates",

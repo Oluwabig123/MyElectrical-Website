@@ -39,6 +39,10 @@ export function isSolarQuestion(text) {
   return /solar|inverter|sizing|size system|panel/.test(normalize(text));
 }
 
+export function isQuoteQuestion(text) {
+  return /quote|estimate|cost|price|budget|pricing/.test(normalize(text));
+}
+
 export function buildSolarRecommendation({ loadsWatts, location, backupHours }) {
   const rules = oduzzAssistantDoc.solarSizing;
   const assumptions = rules.assumptions;

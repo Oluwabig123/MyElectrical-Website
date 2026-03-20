@@ -13,7 +13,7 @@ export const projects = [
     location: "Ikorodu, Lagos",
     mapUrl: "https://maps.google.com/?q=Ikorodu,+Lagos",
     image:
-      "/hero/solar.jpg",
+      "/hero/solar.webp",
   },
   {
     id: "wiring-1",
@@ -27,7 +27,7 @@ export const projects = [
     location: "Igbogbo, Ikorodu, Lagos",
     mapUrl: "https://maps.google.com/?q=Igbogbo,+Ikorodu,+Lagos",
     image:
-      "/hero/wiringg.jpg",
+      "/hero/wiringg.webp",
   },
   {
     id: "lighting-1",
@@ -41,7 +41,7 @@ export const projects = [
     location: "Ikorodu GRA, Lagos",
     mapUrl: "https://maps.google.com/?q=Ikorodu+GRA,+Lagos",
     image:
-      "/hero/lightings.jpg",
+      "/hero/lightings.webp",
   },
   {
     id: "lighting-pop-1",

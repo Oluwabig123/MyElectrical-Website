@@ -1,70 +1,58 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import Container from "../components/layout/Container";
 import SectionHeader from "../components/ui/SectionHeader";
 import Button from "../components/ui/Button";
 import { CONTACT, CONTACT_LINKS, buildWhatsAppUrl } from "../data/contact.js";
-
-const INITIAL_FORM = {
-  name: "",
-  phone: "",
-  service: "",
-  location: "",
-  details: "",
-};
-
-const SERVICE_OPTIONS = [
-  "Residential / commercial wiring",
-  "Solar / inverter installation",
-  "CCTV / security setup",
-  "Smart home systems",
-  "Lighting / POP / chandeliers",
-  "Fault diagnosis / maintenance",
-];
-
-// Basic phone validation keeps the generated WhatsApp message useful.
-function isValidPhone(phone) {
-  const digits = phone.replace(/[^\d]/g, "");
-  return digits.length >= 10 && digits.length <= 15;
-}
-
-function buildWhatsAppText(form) {
-  const lines = [
-    "Hello Oduzz, I want to request a quote.",
-    `Name: ${form.name}`,
-    `Phone: ${form.phone}`,
-    `Service: ${form.service}`,
-    `Location: ${form.location}`,
-    `Brief: ${form.details || "N/A"}`,
-  ];
-
-  return encodeURIComponent(lines.join("\n"));
-}
-
-function validateForm(form) {
-  const nextErrors = {};
-
-  if (!form.name.trim()) nextErrors.name = "Enter your name.";
-  if (!form.phone.trim()) nextErrors.phone = "Enter a phone number.";
-  if (form.phone.trim() && !isValidPhone(form.phone)) {
-    nextErrors.phone = "Enter a valid phone number (10 to 15 digits).";
-  }
-  if (!form.service.trim()) nextErrors.service = "Select a service.";
-  if (!form.location.trim()) nextErrors.location = "Enter your location.";
-
-  return nextErrors;
-}
+import {
+  BUDGET_OPTIONS,
+  buildQuoteSummary,
+  buildQuoteWhatsAppMessage,
+  createQuoteReference,
+  INITIAL_QUOTE_FORM,
+  readQuotePrefill,
+  sanitizePhoneInput,
+  SERVICE_OPTIONS,
+  URGENCY_OPTIONS,
+  validateQuoteForm,
+} from "../lib/quoteRequest.js";
+import {
+  canUploadQuoteImages,
+  MAX_QUOTE_IMAGE_COUNT,
+  MAX_QUOTE_IMAGE_SIZE_BYTES,
+  saveQuoteLead,
+  uploadQuoteLeadImages,
+} from "../lib/quoteLeadStorage.js";
 
 export default function Quote() {
+  const location = useLocation();
+  const prefill = useMemo(() => readQuotePrefill(location.search), [location.search]);
+  const hasPrefill = Object.values(prefill.form).some((value) => String(value || "").trim());
   // Form state, field errors, and submission feedback all stay local to this page.
-  const [form, setForm] = useState(INITIAL_FORM);
+  const [form, setForm] = useState(() => ({
+    ...INITIAL_QUOTE_FORM,
+    imageUrls: [],
+    referenceId: prefill.form.referenceId || createQuoteReference(),
+    ...prefill.form,
+  }));
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [status, setStatus] = useState(() =>
+    hasPrefill
+      ? {
+          type: "success",
+          text:
+            prefill.source === "assistant"
+              ? "Assistant details loaded. Review and send when ready."
+              : "Quote details loaded. Review and send when ready.",
+        }
+      : null
+  );
 
   // Updates fields, normalizes phone input, and clears stale errors/status.
   function onChange(e) {
     const { name, value } = e.target;
-    const nextValue = name === "phone" ? value.replace(/[^0-9+() -]/g, "") : value;
+    const nextValue = name === "phone" ? sanitizePhoneInput(value) : value;
 
     setForm((prev) => ({ ...prev, [name]: nextValue }));
 
@@ -81,15 +69,65 @@ export default function Quote() {
 
   // Clears the form back to its initial blank state.
   function onClear() {
-    setForm(INITIAL_FORM);
+    setForm({
+      ...INITIAL_QUOTE_FORM,
+      imageUrls: [],
+      referenceId: createQuoteReference(),
+    });
     setErrors({});
     setStatus(null);
   }
 
+  async function onImageChange(event) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!files.length) return;
+
+    if (!canUploadQuoteImages()) {
+      setStatus({
+        type: "error",
+        text: "Image uploads need Supabase configuration. You can still send photos manually on WhatsApp.",
+      });
+      return;
+    }
+
+    const existingCount = Array.isArray(form.imageUrls) ? form.imageUrls.length : 0;
+    const remainingSlots = MAX_QUOTE_IMAGE_COUNT - existingCount;
+
+    if (remainingSlots <= 0) {
+      setStatus({
+        type: "error",
+        text: `You already added the maximum of ${MAX_QUOTE_IMAGE_COUNT} images.`,
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const { imageUrls, error } = await uploadQuoteLeadImages({
+      files: files.slice(0, remainingSlots),
+      referenceId: form.referenceId,
+    });
+    setIsUploadingImage(false);
+
+    if (error) {
+      setStatus({ type: "error", text: error });
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      imageUrls: [...(prev.imageUrls || []), ...imageUrls].slice(0, MAX_QUOTE_IMAGE_COUNT),
+    }));
+    setStatus({
+      type: "success",
+      text: `${imageUrls.length} image(s) uploaded. They will be attached to the lead summary.`,
+    });
+  }
+
   // Validates the form and opens WhatsApp with a prefilled quote request.
-  function onSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault();
-    const nextErrors = validateForm(form);
+    const nextErrors = validateQuoteForm(form);
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -100,13 +138,23 @@ export default function Quote() {
       return;
     }
 
-    const waText = buildWhatsAppText(form);
+    const waText = encodeURIComponent(buildQuoteWhatsAppMessage(form));
     const waUrl = buildWhatsAppUrl(waText);
+
+    const { saved } = await saveQuoteLead({
+      form,
+      source: prefill.source || "website",
+      channel: "quote-page",
+      summary: buildQuoteSummary(form),
+    });
+
     window.open(waUrl, "_blank", "noopener,noreferrer");
 
     setStatus({
       type: "success",
-      text: `WhatsApp opened. We usually reply in ${CONTACT.whatsappResponseTime}.`,
+      text: saved
+        ? `WhatsApp opened and the lead was saved. We usually reply in ${CONTACT.whatsappResponseTime}.`
+        : `WhatsApp opened. Lead storage is unavailable, but we usually reply in ${CONTACT.whatsappResponseTime}.`,
     });
   }
 
@@ -126,8 +174,8 @@ export default function Quote() {
             <p className="quoteInfoLead">Include enough details so we can estimate faster.</p>
             <ul className="quoteChecklist">
               <li>Service type and job location.</li>
-              <li>Short description of your current setup.</li>
-              <li>Preferred date and urgency level.</li>
+              <li>Short description of your current setup or the job scope.</li>
+              <li>Urgency level, budget direction, and photos if available.</li>
             </ul>
 
             <div className="quoteInfoPanel">
@@ -147,6 +195,7 @@ export default function Quote() {
             <p className="formNote">
               Typical response {CONTACT.whatsappResponseTime} on WhatsApp | {CONTACT.businessHours}
             </p>
+            <p className="formNote">Reference: {form.referenceId}</p>
 
             <label className="field">
               <span>Name</span>
@@ -215,6 +264,46 @@ export default function Quote() {
                 rows={5}
               />
             </label>
+
+            <label className="field">
+              <span>Urgency (optional)</span>
+              <select name="urgency" value={form.urgency} onChange={onChange}>
+                <option value="">Select urgency...</option>
+                {URGENCY_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="field">
+              <span>Budget direction (optional)</span>
+              <select name="budget" value={form.budget} onChange={onChange}>
+                <option value="">Select budget range...</option>
+                {BUDGET_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </label>
+
+            <div className="field">
+              <span>Project photos (optional)</span>
+              <label className="assistantUploadButton quoteUploadButton">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={onImageChange}
+                  disabled={isUploadingImage}
+                />
+                {isUploadingImage ? "Uploading..." : "Upload images"}
+              </label>
+              <small className="fieldHint">
+                Up to {MAX_QUOTE_IMAGE_COUNT} images, {Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB each. Stored for human review only.
+              </small>
+              {form.imageUrls?.length ? (
+                <small className="fieldHint">{form.imageUrls.length} image(s) attached to this quote.</small>
+              ) : null}
+            </div>
 
             <div className="formActions">
               <a className="btn outline" href={CONTACT_LINKS.phone}>Call</a>

@@ -12,19 +12,19 @@ const lightingItems = [
     projectId: "lighting-pop-1",
     title: "POP Line Lighting",
     desc: "Straight channels, clean edges, and safe circuit separation.",
-    src: "/marquee/pop.jpg",
+    src: "/marquee/pop.webp",
   },
   {
     projectId: "lighting-chandelier-1",
     title: "Chandelier Installation",
     desc: "Accurate centering, reinforced mounting, and concealed routing.",
-    src: "/marquee/chandelier.jpg",
+    src: "/marquee/chandelier.webp",
   },
   {
     projectId: "lighting-accent-1",
     title: "Decorative Accent Lighting",
     desc: "Layered ambient and task lighting with controlled glare.",
-    src: "/marquee/accent.jpg",
+    src: "/marquee/accent.webp",
   },
 ];
 

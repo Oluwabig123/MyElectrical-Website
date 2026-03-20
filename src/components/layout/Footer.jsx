@@ -26,7 +26,7 @@ export default function Footer() {
           <section className="footerBrandBlock" aria-label="Business information">
             <img
               className="footerLogo"
-              src="/oduzz-logo-transparent.png"
+              src="/oduzz-logo-transparent.webp"
               alt="Oduzz Electrical Concept"
               loading="lazy"
               decoding="async"
