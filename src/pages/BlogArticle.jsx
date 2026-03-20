@@ -1,15 +1,61 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Container from "../components/layout/Container";
 import Button from "../components/ui/Button";
 import SEO from "../components/ui/SEO";
 import Reveal from "../components/ui/Reveal";
 import SmartImage from "../components/ui/SmartImage";
-import { getBlogPostBySlug, getRelatedBlogPosts } from "../data/blogPosts";
+import {
+  fetchPublishedBlogPosts,
+  getBlogPostBySlug,
+  getRelatedBlogPosts,
+  mergeBlogPosts,
+  staticBlogPosts,
+} from "../lib/blogContent.js";
 
 export default function BlogArticle() {
   const { slug } = useParams();
-  const post = getBlogPostBySlug(slug);
+  const [posts, setPosts] = useState(staticBlogPosts);
+  const [isLoading, setIsLoading] = useState(() => !getBlogPostBySlug(slug, staticBlogPosts));
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadPublishedPosts() {
+      try {
+        const dynamicPosts = await fetchPublishedBlogPosts();
+        if (!isActive) return;
+        if (dynamicPosts.length > 0) {
+          setPosts(mergeBlogPosts(dynamicPosts, staticBlogPosts));
+        }
+      } catch {
+        // The page can still render the static article set.
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    }
+
+    void loadPublishedPosts();
+    return () => {
+      isActive = false;
+    };
+  }, [slug]);
+
+  const post = useMemo(() => getBlogPostBySlug(slug, posts), [slug, posts]);
+
+  if (!post && isLoading) {
+    return (
+      <section className="section blogPostPage">
+        <Container>
+          <article className="card blogPostMissing">
+            <p className="blogSummary">Loading article</p>
+            <h1 className="h2">Fetching published content...</h1>
+            <p className="p">The blog article is being loaded.</p>
+          </article>
+        </Container>
+      </section>
+    );
+  }
 
   if (!post) {
     return (
@@ -29,7 +75,7 @@ export default function BlogArticle() {
     );
   }
 
-  const relatedPosts = getRelatedBlogPosts(post, 3);
+  const relatedPosts = getRelatedBlogPosts(post, 3, posts);
 
   return (
     <section className="section blogPostPage">

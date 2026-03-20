@@ -1,4 +1,4 @@
-import React, { startTransition, useDeferredValue, useMemo } from "react";
+import React, { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Container from "../components/layout/Container";
 import Button from "../components/ui/Button";
@@ -6,16 +6,43 @@ import SEO from "../components/ui/SEO";
 import SectionHeader from "../components/ui/SectionHeader";
 import Reveal from "../components/ui/Reveal";
 import SmartImage from "../components/ui/SmartImage";
-import { blogCategories, blogPosts } from "../data/blogPosts";
+import {
+  fetchPublishedBlogPosts,
+  getAllBlogCategories,
+  getFeaturedBlogPost,
+  mergeBlogPosts,
+  staticBlogPosts,
+} from "../lib/blogContent.js";
 
 export default function Blog() {
+  const [posts, setPosts] = useState(staticBlogPosts);
   const [searchParams, setSearchParams] = useSearchParams();
-  const featuredPost = blogPosts.find((post) => post.featured) || blogPosts[0];
+  const featuredPost = getFeaturedBlogPost(posts);
+  const categories = useMemo(() => getAllBlogCategories(posts), [posts]);
   const requestedCategory = searchParams.get("category") || "All";
-  const activeCategory = blogCategories.includes(requestedCategory) ? requestedCategory : "All";
+  const activeCategory = categories.includes(requestedCategory) ? requestedCategory : "All";
   const searchQuery = searchParams.get("q") || "";
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadPublishedPosts() {
+      try {
+        const dynamicPosts = await fetchPublishedBlogPosts();
+        if (!isActive || dynamicPosts.length === 0) return;
+        setPosts(mergeBlogPosts(dynamicPosts, staticBlogPosts));
+      } catch {
+        // Static posts remain in place if the dynamic feed is unavailable.
+      }
+    }
+
+    void loadPublishedPosts();
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   function updateFilters(next) {
     const nextParams = new URLSearchParams(searchParams);
@@ -38,7 +65,7 @@ export default function Blog() {
   }
 
   const visiblePosts = useMemo(() => {
-    return blogPosts.filter((post) => {
+    return posts.filter((post) => {
       if (post.slug === featuredPost.slug) return false;
       if (activeCategory !== "All" && post.category !== activeCategory) return false;
       if (!normalizedQuery) return true;
@@ -55,7 +82,7 @@ export default function Blog() {
 
       return searchParts.join(" ").toLowerCase().includes(normalizedQuery);
     });
-  }, [activeCategory, featuredPost.slug, normalizedQuery]);
+  }, [activeCategory, featuredPost.slug, normalizedQuery, posts]);
 
   return (
     <section className="section blogPage">
@@ -141,7 +168,7 @@ export default function Blog() {
             </div>
           </div>
           <div className="filters" aria-label="Filter blog posts by category">
-            {blogCategories.map((category) => (
+            {categories.map((category) => (
               <button
                 key={category}
                 type="button"
