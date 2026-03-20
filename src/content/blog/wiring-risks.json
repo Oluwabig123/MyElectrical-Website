@@ -1,0 +1,43 @@
+{
+  "slug": "wiring-risks",
+  "order": 1,
+  "featured": true,
+  "category": "Safety",
+  "title": "5 Electrical Wiring Mistakes That Create Hidden Risks",
+  "summary": "A practical guide that helps clients identify the kinds of wiring shortcuts that often lead to overheating, nuisance trips, and expensive rework.",
+  "seoDescription": "Learn the most common electrical wiring mistakes that create hidden safety risks in homes and small businesses.",
+  "readingTime": "4 min read",
+  "audience": "Homeowners",
+  "format": "Checklist",
+  "publishedLabel": "March 2026",
+  "image": "/hero/wiringg.jpg",
+  "imageAlt": "Electrician working on a residential control panel installation",
+  "points": [
+    "Undersized cables can heat up long before the problem is visible.",
+    "Messy panel work usually signals weak labeling and poor future maintenance.",
+    "Improper protection selection can make faults harder to isolate safely."
+  ],
+  "sections": [
+    {
+      "heading": "1. Undersized cables are a silent problem",
+      "body": [
+        "A cable that is too small for the connected load may not fail immediately, which is why it is often ignored until heat damage or nuisance trips begin.",
+        "Clients usually notice the symptom late: warm sockets, dimming under load, or a smell around connection points. By then, rework is already more expensive than correct sizing would have been."
+      ]
+    },
+    {
+      "heading": "2. Poor panel organization makes faults harder to manage",
+      "body": [
+        "When breakers are unlabeled and conductors are crowded or loosely terminated, fault tracing becomes slower and riskier.",
+        "Good panel finishing is not cosmetic. It reduces maintenance time, improves safety during troubleshooting, and gives future technicians a clear map of the installation."
+      ]
+    },
+    {
+      "heading": "3. Protection devices must match the circuit purpose",
+      "body": [
+        "A breaker is not just a switch. It is a protection decision tied to cable size, expected load, and the type of fault that must be interrupted safely.",
+        "Using the wrong device or rating can leave the circuit under-protected, which defeats the point of the installation even if everything looks neat on the surface."
+      ]
+    }
+  ]
+}

@@ -1,12 +1,24 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import SEO from "../components/ui/SEO";
+import DeferredSection from "../components/ui/DeferredSection";
 
 import Hero from "../sections/home/Hero";
 import ServicesPreview from "../sections/home/ServicesPreview";
-import Stories from "../sections/home/Stories";
-import LightingShowcase from "../sections/home/LightingShowcase";
-import WhyOduzz from "../sections/home/WhyOduzz";
-import CTAQuoteStrip from "../sections/home/CTAQuoteStrip";
+
+const Stories = lazy(() => import("../sections/home/Stories"));
+const LightingShowcase = lazy(() => import("../sections/home/LightingShowcase"));
+const WhyOduzz = lazy(() => import("../sections/home/WhyOduzz"));
+const CTAQuoteStrip = lazy(() => import("../sections/home/CTAQuoteStrip"));
+
+function HomeSectionFallback({ minHeight = 320 }) {
+  return (
+    <section className="section deferredSectionShell" aria-hidden="true">
+      <div className="container">
+        <div className="deferredSectionPlaceholder" style={{ minHeight }} />
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
   return (
@@ -19,10 +31,26 @@ export default function Home() {
       {/* Home page sections are composed from standalone section components. */}
       <Hero />
       <ServicesPreview />
-      <Stories />
-      <LightingShowcase />
-      <WhyOduzz />
-      <CTAQuoteStrip />
+      <DeferredSection fallback={<HomeSectionFallback minHeight={420} />}>
+        <Suspense fallback={<HomeSectionFallback minHeight={420} />}>
+          <Stories />
+        </Suspense>
+      </DeferredSection>
+      <DeferredSection fallback={<HomeSectionFallback minHeight={520} />}>
+        <Suspense fallback={<HomeSectionFallback minHeight={520} />}>
+          <LightingShowcase />
+        </Suspense>
+      </DeferredSection>
+      <DeferredSection fallback={<HomeSectionFallback minHeight={360} />}>
+        <Suspense fallback={<HomeSectionFallback minHeight={360} />}>
+          <WhyOduzz />
+        </Suspense>
+      </DeferredSection>
+      <DeferredSection fallback={<HomeSectionFallback minHeight={220} />}>
+        <Suspense fallback={<HomeSectionFallback minHeight={220} />}>
+          <CTAQuoteStrip />
+        </Suspense>
+      </DeferredSection>
     </>
   );
 }

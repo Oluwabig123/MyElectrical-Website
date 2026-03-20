@@ -1,0 +1,108 @@
+{
+  "intro": {
+    "title": "A learning hub, not just a landing page",
+    "subtitle": "Structured tracks, resource ideas, and audience-specific education paths that build trust before conversion.",
+    "lead": [
+      "The academy gives Oduzz a stronger position in the market by teaching first. It creates a place for clear homeowner guidance, pre-quote education, and beginner-friendly electrical learning.",
+      "This is structured as a hub so it can grow into lessons, checklists, workshop updates, and short training series without redesigning the page later."
+    ]
+  },
+  "audiences": [
+    {
+      "label": "For homeowners",
+      "title": "Understand the basics before work begins",
+      "summary": "A simple lane for clients who want to understand safety, load planning, and better installation decisions before requesting service."
+    },
+    {
+      "label": "For business owners",
+      "title": "Reduce guesswork in electrical planning",
+      "summary": "Useful for shops, offices, and property operators who need clearer decisions around backup power, CCTV, and maintenance readiness."
+    },
+    {
+      "label": "For learners",
+      "title": "Build confidence in electrical fundamentals",
+      "summary": "A beginner-friendly structure for aspiring technicians or apprentices who need discipline, terminology, and site awareness."
+    }
+  ],
+  "tracks": [
+    {
+      "title": "Home Electrical Safety Basics",
+      "level": "Starter",
+      "duration": "3 short lessons",
+      "audience": "Homeowners",
+      "summary": "A basic track that explains common household risk points, safe usage habits, and what to check before calling for correction work.",
+      "modules": [
+        "Recognizing overload signs and recurring fault patterns",
+        "Safe extension use, socket awareness, and quick home checks",
+        "When a small symptom needs professional attention"
+      ],
+      "outcome": "Clients ask better questions and spot problems earlier."
+    },
+    {
+      "title": "Solar and Inverter Planning Fundamentals",
+      "level": "Core",
+      "duration": "4 short lessons",
+      "audience": "Homeowners",
+      "summary": "A practical planning lane for load estimation, backup expectations, battery sizing thinking, and system maintenance habits.",
+      "modules": [
+        "Critical loads versus total loads",
+        "How backup hours affect battery and inverter decisions",
+        "Simple maintenance habits that protect system lifespan"
+      ],
+      "outcome": "Leads come in with clearer expectations and better sizing conversations."
+    },
+    {
+      "title": "Electrical Trade Readiness",
+      "level": "Foundation",
+      "duration": "5 short lessons",
+      "audience": "Learners",
+      "summary": "A structured beginner path that introduces electrical discipline, safety culture, and what good site execution looks like.",
+      "modules": [
+        "Basic site etiquette and tool handling",
+        "Clean routing, neat finishing, and labeling habits",
+        "Protection thinking and why shortcuts create future faults"
+      ],
+      "outcome": "The brand earns trust as a teacher, not only an installer."
+    }
+  ],
+  "resources": [
+    {
+      "type": "Checklist",
+      "status": "Ready next",
+      "title": "Pre-quote project checklist",
+      "summary": "A downloadable checklist covering location, service type, load notes, and photos clients should gather before requesting a quote."
+    },
+    {
+      "type": "Guide",
+      "status": "Ready next",
+      "title": "Homeowner safety starter guide",
+      "summary": "A short educational guide that helps clients understand overload warning signs, maintenance timing, and safe appliance behavior."
+    },
+    {
+      "type": "Mini class",
+      "status": "Scalable",
+      "title": "Solar sizing explained simply",
+      "summary": "A short class or video series that translates sizing concepts into plain language for first-time solar buyers."
+    },
+    {
+      "type": "Workshop",
+      "status": "Scalable",
+      "title": "Beginner electrical workshop announcements",
+      "summary": "A slot for future training dates, workshop invitations, or apprentice-facing sessions without changing the page structure."
+    }
+  ],
+  "outcomes": [
+    {
+      "title": "Higher trust before contact",
+      "summary": "Teaching-first content makes the business feel more competent and lowers the pressure of the first interaction."
+    },
+    {
+      "title": "Better qualified leads",
+      "summary": "People arrive with stronger context, clearer scope, and more realistic expectations around timelines and pricing."
+    },
+    {
+      "title": "Room to scale content later",
+      "summary": "This structure can grow into lessons, downloads, events, or article funnels without redesigning the academy page."
+    }
+  ]
+}

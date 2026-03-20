@@ -5,6 +5,8 @@ import Container from "./Container.jsx";
 
 const quickLinks = [
   { to: "/services", label: "Services" },
+  { to: "/blog", label: "Blog" },
+  { to: "/academy", label: "Academy" },
   { to: "/products", label: "Products" },
   { to: "/test-your-memory", label: "Test Your Memory" },
   { to: "/projects", label: "Projects" },

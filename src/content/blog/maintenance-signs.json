@@ -1,0 +1,43 @@
+{
+  "slug": "maintenance-signs",
+  "order": 6,
+  "featured": false,
+  "category": "Safety",
+  "title": "7 Early Signs Your Property Needs Electrical Maintenance",
+  "summary": "A maintenance-focused article that flags small warnings before they turn into bigger repair costs or safety issues.",
+  "seoDescription": "Spot the early signs that a home or business property may need electrical maintenance before faults worsen.",
+  "readingTime": "4 min read",
+  "audience": "Property managers",
+  "format": "Warning signs",
+  "publishedLabel": "March 2026",
+  "image": "/hero/wiring.jpg",
+  "imageAlt": "Electrical conduit routing and wiring work in progress",
+  "points": [
+    "Frequent trips usually point to a pattern, not a one-off event.",
+    "Warm sockets and flicker should be investigated early.",
+    "Preventive maintenance is usually cheaper than emergency correction."
+  ],
+  "sections": [
+    {
+      "heading": "Recurring trips are a signal",
+      "body": [
+        "When a breaker trips repeatedly, the goal should be to find the cause, not simply restore power and move on.",
+        "Patterns like this often indicate overload, connection weakness, or a developing equipment fault."
+      ]
+    },
+    {
+      "heading": "Small heat and flicker issues matter",
+      "body": [
+        "Warm outlets, dimming under load, and irregular flicker are easy to dismiss because they are intermittent at first.",
+        "These signs are often early warnings that should be investigated before visible damage appears."
+      ]
+    },
+    {
+      "heading": "Preventive work protects cost and uptime",
+      "body": [
+        "Maintenance is usually easier to schedule and cheaper to complete than emergency response after a failure.",
+        "For rental properties, offices, and retail spaces, early correction also protects user confidence and operating continuity."
+      ]
+    }
+  ]
+}

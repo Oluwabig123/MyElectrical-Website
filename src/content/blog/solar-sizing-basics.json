@@ -1,0 +1,43 @@
+{
+  "slug": "solar-sizing-basics",
+  "order": 2,
+  "featured": false,
+  "category": "Solar",
+  "title": "How to Think About Solar and Inverter Sizing Before You Buy",
+  "summary": "A decision guide focused on load planning, battery expectations, and how backup hours shape the entire system budget.",
+  "seoDescription": "A beginner-friendly guide to solar and inverter sizing, backup planning, and realistic battery expectations.",
+  "readingTime": "5 min read",
+  "audience": "Homeowners",
+  "format": "Planning guide",
+  "publishedLabel": "March 2026",
+  "image": "/hero/solar.jpg",
+  "imageAlt": "Technician wiring a solar inverter setup with safety equipment",
+  "points": [
+    "List critical loads first instead of trying to power every appliance at once.",
+    "Battery sizing should be tied to realistic backup hours, not guesswork.",
+    "Inverter size should reflect startup demand, not just steady-state use."
+  ],
+  "sections": [
+    {
+      "heading": "Start with critical loads",
+      "body": [
+        "The fastest way to overspend on solar is to size for every appliance instead of the loads that matter most during an outage.",
+        "A critical-load list usually includes lighting, refrigeration, networking, and a few key sockets. That list creates a much better starting point than a vague request for whole-house backup."
+      ]
+    },
+    {
+      "heading": "Battery planning changes the budget quickly",
+      "body": [
+        "Most clients focus on panel count first, but backup duration is often what drives the more expensive decisions in the system.",
+        "Once you know the number of hours you expect from the battery bank, sizing conversations become more grounded and the quote becomes more realistic."
+      ]
+    },
+    {
+      "heading": "Inverter size is not just a watts conversation",
+      "body": [
+        "Some appliances have startup demands that exceed their normal running load, which is why inverter selection should not be based on a rough estimate alone.",
+        "A good installer will ask about the actual devices you plan to power, not just the total you guessed from memory."
+      ]
+    }
+  ]
+}

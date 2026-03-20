@@ -1,0 +1,43 @@
+{
+  "slug": "lighting-planning",
+  "order": 4,
+  "featured": false,
+  "category": "Lighting",
+  "title": "Before You Install POP Lights or Chandeliers, Plan These 4 Things",
+  "summary": "A short planning article about switching zones, mounting points, brightness balance, and finishing quality.",
+  "seoDescription": "Plan POP lighting and chandelier installation properly with these four practical pre-install checks.",
+  "readingTime": "3 min read",
+  "audience": "Homeowners",
+  "format": "Pre-install brief",
+  "publishedLabel": "March 2026",
+  "image": "/hero/lightings.jpg",
+  "imageAlt": "Interior chandelier installation with clean ceiling finishing",
+  "points": [
+    "Separate switching gives better control than one all-on circuit.",
+    "Mounting strength matters as much as the fixture itself.",
+    "Room mood changes when ambient, accent, and task lighting are balanced."
+  ],
+  "sections": [
+    {
+      "heading": "Think in zones, not one switch",
+      "body": [
+        "A single switch for all decorative and ambient lights usually limits flexibility after installation.",
+        "Separate lighting zones let the room function differently at different times, which is especially useful for living spaces and statement ceilings."
+      ]
+    },
+    {
+      "heading": "Fixing strength should be planned before finishing",
+      "body": [
+        "A chandelier is not just a decorative choice. The mounting point has to support the fixture correctly and safely.",
+        "Planning this before ceiling closure avoids ugly corrections and unnecessary reinforcement work later."
+      ]
+    },
+    {
+      "heading": "Balance matters more than brightness alone",
+      "body": [
+        "Too much brightness can flatten a room, while poor layering can leave certain zones uncomfortable or ineffective.",
+        "Good lighting planning considers ambient feel, visual focus, and practical task use together."
+      ]
+    }
+  ]
+}

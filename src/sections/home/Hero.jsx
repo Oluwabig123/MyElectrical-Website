@@ -208,21 +208,15 @@ export default function Hero() {
         onTouchCancel={handleHeroTouchCancel}
       >
         <div className="heroGallery">
-          {heroGallery.map((item, index) => (
-            <figure
-              key={item.id}
-              className={`heroGalleryItem${index === safeActiveIndex ? " active" : ""}`}
-              aria-hidden={index !== safeActiveIndex}
-            >
-              <img
-                src={item.image}
-                alt={item.alt}
-                loading={index === 0 ? "eager" : "lazy"}
-                fetchPriority={index === 0 ? "high" : "auto"}
-                decoding="async"
-              />
-            </figure>
-          ))}
+          <figure key={activeSlide.id} className="heroGalleryItem active">
+            <img
+              src={activeSlide.image}
+              alt={activeSlide.alt}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </figure>
         </div>
 
         <div className="heroOverlay" aria-hidden="true" />

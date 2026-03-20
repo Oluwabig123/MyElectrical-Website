@@ -1,0 +1,43 @@
+{
+  "slug": "quote-readiness",
+  "order": 5,
+  "featured": false,
+  "category": "Planning",
+  "title": "How to Prepare for a Faster Electrical Quote",
+  "summary": "The fastest way to get accurate pricing is to send the right details up front. This guide shows what actually helps.",
+  "seoDescription": "Prepare better for an electrical quote by sending the details that improve pricing accuracy and speed.",
+  "readingTime": "3 min read",
+  "audience": "Homeowners",
+  "format": "Quote prep",
+  "publishedLabel": "March 2026",
+  "image": "/hero/1000512859.jpg",
+  "imageAlt": "Electrician checking a panel with test equipment before preparing work details",
+  "points": [
+    "Share your location, service type, and urgency first.",
+    "Photos and load details usually improve quote accuracy immediately.",
+    "Clear scope reduces back-and-forth and speeds up scheduling."
+  ],
+  "sections": [
+    {
+      "heading": "Start with the basic job facts",
+      "body": [
+        "A useful quote request starts with service type, location, and urgency. That alone removes a large amount of guesswork from the conversation.",
+        "If the job involves backup power, lighting, or CCTV, say so clearly instead of describing it as general electrical work."
+      ]
+    },
+    {
+      "heading": "Visual context shortens the back-and-forth",
+      "body": [
+        "Photos help installers understand access, current condition, and likely routing challenges before a visit is scheduled.",
+        "This usually leads to a faster and more realistic response than a text-only message."
+      ]
+    },
+    {
+      "heading": "Scope clarity helps everyone",
+      "body": [
+        "Clients often know what they want changed but not what that means electrically. A short list of priorities is still useful.",
+        "The clearer the scope, the less time gets lost to revisions and the easier it is to align budget with actual need."
+      ]
+    }
+  ]
+}

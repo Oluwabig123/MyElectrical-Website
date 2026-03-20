@@ -43,15 +43,4 @@ export const heroGallery = [
     ctaLabel: "View Projects",
     ctaTo: "/projects",
   },
-  {
-    id: "hero-interior",
-    image:
-      "/hero/interior.jpg",
-    alt: "Completed ambient lighting installation in a modern room",
-    kicker: "Fast Response",
-    title: "Electricians in Ikorodu",
-    copy: "Fast callout support and quick quotes.",
-    ctaLabel: "Start Quick Quote",
-    ctaTo: "/quote",
-  },
 ];

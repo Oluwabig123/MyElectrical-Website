@@ -1,0 +1,43 @@
+{
+  "slug": "cctv-install-quality",
+  "order": 3,
+  "featured": false,
+  "category": "CCTV",
+  "title": "What Good CCTV Installation Looks Like in Homes and Small Businesses",
+  "summary": "A client-friendly breakdown of camera placement, storage planning, cable discipline, and backup power considerations.",
+  "seoDescription": "Understand what separates a clean CCTV installation from a messy one, from placement to backup power.",
+  "readingTime": "4 min read",
+  "audience": "Business owners",
+  "format": "Field guide",
+  "publishedLabel": "March 2026",
+  "image": "/hero/cctv.jpg",
+  "imageAlt": "Security technician installing a CCTV camera system",
+  "points": [
+    "Coverage quality depends more on placement than the camera count alone.",
+    "Backup power planning matters if security is most important during outages.",
+    "Cable routing affects long-term reliability and the final finish."
+  ],
+  "sections": [
+    {
+      "heading": "Placement is more important than quantity",
+      "body": [
+        "Adding more cameras does not automatically improve security if the angles are wrong or the most important entry points are still weak.",
+        "A clean CCTV plan covers approach paths, blind spots, and lighting conditions instead of simply mounting devices wherever there is wall space."
+      ]
+    },
+    {
+      "heading": "Storage and power should be discussed early",
+      "body": [
+        "Many clients ask about resolution first, but storage retention and outage behavior often matter more in real use.",
+        "If cameras are a security priority, they should be considered in backup planning so the system remains useful during the periods that matter most."
+      ]
+    },
+    {
+      "heading": "Cable discipline affects the final result",
+      "body": [
+        "Neat routing protects both reliability and appearance. Exposed runs, poor termination points, and rushed penetrations usually age badly.",
+        "Good finishing helps the system blend into the property while remaining easier to service later."
+      ]
+    }
+  ]
+}
