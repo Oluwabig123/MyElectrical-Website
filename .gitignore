@@ -25,3 +25,7 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Local preview/runtime artifacts
+audit/preview.pid
+*:Zone.Identifier
