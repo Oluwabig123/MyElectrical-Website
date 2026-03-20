@@ -4,13 +4,18 @@ import Button from "../components/ui/Button";
 import Container from "../components/layout/Container";
 import SectionHeader from "../components/ui/SectionHeader";
 import { oduzzAssistantDoc } from "../data/oduzzAssistantDoc";
+import {
+  buildFallbackAssistantReply,
+  buildSolarRecommendation,
+  clampMessage,
+  INITIAL_ASSISTANT_MESSAGE,
+  isSolarQuestion,
+  MAX_INPUT_CHARS,
+  MAX_MESSAGES,
+  normalize,
+  toNumber,
+} from "../lib/assistantCore.js";
 
-const MAX_INPUT_CHARS = 600;
-const MAX_MESSAGE_CHARS = 1200;
-const MAX_MESSAGES = 40;
-const INITIAL_ASSISTANT_MESSAGE = "Hi, I can help with solar sizing, wiring, lighting, and quotes.";
-
-// Shortcut prompts for common conversations the assistant supports.
 const QUICK_PROMPTS = [
   "Size my solar system",
   "Cancel current flow",
@@ -19,61 +24,27 @@ const QUICK_PROMPTS = [
   "What details do you need for a quote?",
 ];
 
-function normalize(text) {
-  return String(text || "").trim().toLowerCase();
-}
+async function requestAssistantReply(messages) {
+  const response = await fetch("/api/assistant", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messages: messages.slice(-10),
+    }),
+  });
 
-function clampMessage(text) {
-  const value = String(text || "").trim();
-  if (value.length <= MAX_MESSAGE_CHARS) return value;
-  return `${value.slice(0, MAX_MESSAGE_CHARS)}...`;
-}
+  const payload = await response.json().catch(() => ({}));
 
-function toNumber(text) {
-  const n = Number(String(text || "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(n) ? n : NaN;
-}
+  if (!response.ok) {
+    throw new Error(payload.error || "Assistant request failed.");
+  }
 
-function roundUpByTable(value, table) {
-  const found = table.find((n) => n >= value);
-  return found || table[table.length - 1];
-}
-
-function getPeakSunHours(location) {
-  const loc = normalize(location);
-  const rows = oduzzAssistantDoc.solarSizing.peakSunHoursByLocation;
-  const exact = rows.find((r) => r.match.some((k) => k !== "default" && loc.includes(k)));
-  const fallback = rows.find((r) => r.match.includes("default"));
-  return (exact || fallback || { value: 4.5 }).value;
-}
-
-// Converts user-provided load details into a rough solar system recommendation.
-function buildSolarRecommendation({ loadsWatts, location, backupHours }) {
-  const rules = oduzzAssistantDoc.solarSizing;
-  const assumptions = rules.assumptions;
-  const sunHours = getPeakSunHours(location);
-
-  const inverterNeedKVA = (loadsWatts * assumptions.inverterSafetyFactor) / 1000;
-  const inverterKVA = roundUpByTable(inverterNeedKVA, rules.outputRules.inverterRoundingKVA);
-
-  const dailyEnergyKWh = (loadsWatts * backupHours) / 1000;
-  const rawSolarWp = (dailyEnergyKWh * assumptions.systemLossFactor * 1000) / sunHours;
-  const solarWp = roundUpByTable(rawSolarWp, rules.outputRules.panelRoundingWp);
-
-  const batteryKWh = dailyEnergyKWh / assumptions.batteryDoD;
-  const batteryAhAt48V = Math.ceil((batteryKWh * 1000) / assumptions.systemVoltage);
-
-  return {
-    inverterKVA,
-    solarWp,
-    batteryKWh: Number(batteryKWh.toFixed(1)),
-    batteryAhAt48V,
-    sunHours,
-  };
+  return String(payload.text || "").trim();
 }
 
 export default function Assistant() {
-  // Chat state and solar-sizing flow state live together in this page component.
   const [input, setInput] = useState("");
   const [stage, setStage] = useState("idle");
   const [draft, setDraft] = useState({ loadsWatts: null, location: "", backupHours: null });
@@ -83,6 +54,8 @@ export default function Assistant() {
       text: INITIAL_ASSISTANT_MESSAGE,
     },
   ]);
+  const [isResponding, setIsResponding] = useState(false);
+  const [assistantStatus, setAssistantStatus] = useState("");
   const bodyRef = useRef(null);
 
   const headerMeta = useMemo(
@@ -90,72 +63,57 @@ export default function Assistant() {
     []
   );
 
-  // UI label shown above the chat to reflect the current assistant mode.
   const stageLabel = useMemo(() => {
     if (stage === "solar-loads") return "Solar sizing: load";
     if (stage === "solar-location") return "Solar sizing: location";
     if (stage === "solar-backup") return "Solar sizing: backup";
+    if (isResponding) return "AI assistant: replying";
     return "General assistant";
-  }, [stage]);
+  }, [isResponding, stage]);
 
   useEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
     body.scrollTop = body.scrollHeight;
-  }, [messages]);
+  }, [messages, isResponding]);
 
-  // Adds an assistant reply while enforcing the page-level message cap.
   function addAssistant(text) {
     const safeText = clampMessage(text);
     setMessages((prev) => [...prev, { role: "assistant", text: safeText }].slice(-MAX_MESSAGES));
   }
 
-  // Routes general questions into a simple intent-based response flow.
-  function handleGeneralIntent(raw) {
-    const text = normalize(raw);
-    const isSolar = /solar|inverter|sizing|size system|panel/.test(text);
-    const isWiring = /wiring|conduit|fault|maintenance/.test(text);
-    const isLighting = /lighting|chandelier|pop|interior/.test(text);
-    const isQuote = /quote|estimate|cost|price|budget/.test(text);
-
-    if (isSolar) {
+  async function handleGeneralIntent(history, raw) {
+    if (isSolarQuestion(raw)) {
       setStage("solar-loads");
+      setAssistantStatus("");
       addAssistant("Share your total load in watts, for example 1800W.");
       return;
     }
 
-    if (isWiring) {
-      addAssistant(
-        `${oduzzAssistantDoc.knowledge.services.wiring} Share your location for next steps.`
-      );
-      return;
-    }
+    setIsResponding(true);
+    setAssistantStatus("");
 
-    if (isLighting) {
-      addAssistant(
-        `${oduzzAssistantDoc.knowledge.services.lighting} I can also share a quick pre-quote checklist.`
+    try {
+      const reply = await requestAssistantReply(history);
+      addAssistant(reply || buildFallbackAssistantReply(raw));
+    } catch (error) {
+      addAssistant(buildFallbackAssistantReply(raw));
+      setAssistantStatus(
+        /configured/i.test(String(error.message || ""))
+          ? "AI reply is not configured yet, so the assistant used local guidance."
+          : "AI reply was unavailable, so the assistant used local guidance."
       );
-      return;
+    } finally {
+      setIsResponding(false);
     }
-
-    if (isQuote) {
-      addAssistant(
-        "For a faster quote, share service type, location, and urgency. You can also use the quote page for a guided form."
-      );
-      return;
-    }
-
-    addAssistant(
-      "Ask about solar sizing, wiring, lighting, or quote prep. Example: 'size my solar system'."
-    );
   }
 
-  // Handles the multi-step solar sizing conversation.
   function handleSolarFlow(raw) {
     const command = normalize(raw);
     if (/cancel|stop|start over|reset|exit/.test(command)) {
       setStage("idle");
       setDraft({ loadsWatts: null, location: "", backupHours: null });
+      setAssistantStatus("");
       addAssistant("Solar sizing flow cancelled. Ask another question anytime.");
       return;
     }
@@ -166,7 +124,7 @@ export default function Assistant() {
         addAssistant("Enter a valid load in watts, for example 1200W or 2500.");
         return;
       }
-      setDraft((d) => ({ ...d, loadsWatts: watts }));
+      setDraft((current) => ({ ...current, loadsWatts: watts }));
       setStage("solar-location");
       addAssistant("Great. What is your location? Example: Ikorodu, Lagos.");
       return;
@@ -178,7 +136,7 @@ export default function Assistant() {
         addAssistant("Please provide a location.");
         return;
       }
-      setDraft((d) => ({ ...d, location }));
+      setDraft((current) => ({ ...current, location }));
       setStage("solar-backup");
       addAssistant("How many backup hours do you need?");
       return;
@@ -196,17 +154,17 @@ export default function Assistant() {
         location: draft.location,
         backupHours,
       };
-      const rec = buildSolarRecommendation(payload);
+      const recommendation = buildSolarRecommendation(payload);
 
       addAssistant(
         [
           "Preliminary sizing:",
           `Load: ${payload.loadsWatts}W`,
-          `Location: ${payload.location} (sun hours used: ${rec.sunHours})`,
+          `Location: ${payload.location} (sun hours used: ${recommendation.sunHours})`,
           `Backup: ${backupHours}h`,
-          `Recommended inverter: ${rec.inverterKVA} kVA`,
-          `Recommended solar array: ${rec.solarWp} Wp`,
-          `Estimated battery bank: ${rec.batteryKWh} kWh (~${rec.batteryAhAt48V}Ah @48V)`,
+          `Recommended inverter: ${recommendation.inverterKVA} kVA`,
+          `Recommended solar array: ${recommendation.solarWp} Wp`,
+          `Estimated battery bank: ${recommendation.batteryKWh} kWh (~${recommendation.batteryAhAt48V}Ah @48V)`,
           oduzzAssistantDoc.policy.note,
         ].join("\n")
       );
@@ -217,45 +175,48 @@ export default function Assistant() {
     }
   }
 
-  // Submit from the current input box value.
   function onSend() {
     const raw = input.trim().slice(0, MAX_INPUT_CHARS);
-    if (!raw) return;
-    sendMessage(raw);
+    if (!raw || isResponding) return;
+    void sendMessage(raw);
     setInput("");
   }
 
-  // Shared send path used by both manual input and quick prompts.
-  function sendMessage(raw) {
+  async function sendMessage(raw) {
     const safeRaw = String(raw || "").trim().slice(0, MAX_INPUT_CHARS);
     if (!safeRaw) return;
 
-    setMessages((prev) => [...prev, { role: "user", text: clampMessage(safeRaw) }].slice(-MAX_MESSAGES));
+    const userMessage = { role: "user", text: clampMessage(safeRaw) };
+    const nextHistory = [...messages, userMessage].slice(-MAX_MESSAGES);
+
+    setMessages(nextHistory);
 
     if (stage.startsWith("solar-")) {
       handleSolarFlow(safeRaw);
       return;
     }
 
-    handleGeneralIntent(safeRaw);
+    await handleGeneralIntent(nextHistory, safeRaw);
   }
 
   function onQuickPrompt(prompt) {
+    if (isResponding) return;
     setInput("");
-    sendMessage(prompt);
+    void sendMessage(prompt);
   }
 
-  // Resets the assistant back to the initial state.
   function onReset() {
+    if (isResponding) return;
     setStage("idle");
     setDraft({ loadsWatts: null, location: "", backupHours: null });
     setInput("");
+    setAssistantStatus("");
     setMessages([{ role: "assistant", text: INITIAL_ASSISTANT_MESSAGE }]);
   }
 
-  function onKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  function onKeyDown(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       onSend();
     }
   }
@@ -269,7 +230,6 @@ export default function Assistant() {
           subtitle="Ask about solar sizing, wiring, lighting, and quote preparation."
         />
 
-        {/* Two-column layout with prompt shortcuts and the live chat panel. */}
         <div className="assistantLayout">
           <aside className="card assistantGuide">
             <h3 className="assistantGuideTitle">Quick prompts</h3>
@@ -280,6 +240,7 @@ export default function Assistant() {
                   type="button"
                   className="assistantQuickBtn"
                   onClick={() => onQuickPrompt(prompt)}
+                  disabled={isResponding}
                 >
                   {prompt}
                 </button>
@@ -294,7 +255,6 @@ export default function Assistant() {
             </div>
           </aside>
 
-          {/* Chat transcript, status header, and composer controls. */}
           <div className="oduzzAssistantPanel assistantPagePanel">
             <div className="oduzzAssistantHead">
               <div className="assistantHeadMeta">
@@ -310,29 +270,39 @@ export default function Assistant() {
             </div>
 
             <div className="oduzzAssistantBody assistantPageBody" ref={bodyRef} role="log" aria-live="polite">
-              {messages.map((m, i) => (
-                <div key={`${m.role}-${i}`} className={`oduzzMsg ${m.role === "user" ? "user" : "assistant"}`}>
-                  {m.text}
+              {messages.map((message, index) => (
+                <div
+                  key={`${message.role}-${index}`}
+                  className={`oduzzMsg ${message.role === "user" ? "user" : "assistant"}`}
+                >
+                  {message.text}
                 </div>
               ))}
+              {isResponding ? (
+                <div className="oduzzMsg assistant assistantTyping" aria-label="Assistant is typing">
+                  Oduzz is thinking...
+                </div>
+              ) : null}
             </div>
 
             <div className="oduzzAssistantComposer assistantPageComposer">
               <div className="assistantComposerRow">
                 <textarea
                   value={input}
-                  onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_CHARS))}
+                  onChange={(event) => setInput(event.target.value.slice(0, MAX_INPUT_CHARS))}
                   onKeyDown={onKeyDown}
                   placeholder="Ask Oduzz about solar sizing, wiring, lighting..."
                   rows={2}
                   maxLength={MAX_INPUT_CHARS}
                   aria-label="Ask Oduzz a question"
+                  disabled={isResponding}
                 />
-                <button type="button" className="btn primary" onClick={onSend}>
-                  Send
+                <button type="button" className="btn primary" onClick={onSend} disabled={isResponding}>
+                  {isResponding ? "Replying..." : "Send"}
                 </button>
               </div>
               <p className="assistantHint">{input.length}/{MAX_INPUT_CHARS} characters</p>
+              {assistantStatus ? <p className="assistantStatus">{assistantStatus}</p> : null}
             </div>
           </div>
         </div>

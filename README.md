@@ -26,6 +26,9 @@ Copy `.env.example` to `.env` and set:
 ```bash
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4.1-mini
+OPENAI_MAX_OUTPUT_TOKENS=180
 ```
 
 ### 2) Create table + RLS policies
@@ -54,9 +57,12 @@ npm run dev
 
 ### 5) Deploy
 
-If you deploy on Netlify, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in:
+If you deploy on Netlify, set `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `OPENAI_API_KEY`, and `OPENAI_MODEL` in:
 `Site configuration -> Environment variables`, then redeploy.
 Security headers are managed in `public/_headers`.
+
+If you deploy on Vercel, add `OPENAI_API_KEY`, optional `OPENAI_MODEL`, and optional `OPENAI_MAX_OUTPUT_TOKENS` in:
+`Project Settings -> Environment Variables`, then redeploy.
 
 ### 6) Verify end-to-end
 

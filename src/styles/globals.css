@@ -2232,6 +2232,11 @@ select:focus-visible{
   cursor: pointer;
   transition: background-color .14s ease, border-color .14s ease, transform .14s ease;
 }
+.assistantQuickBtn:disabled{
+  opacity: 0.64;
+  cursor: not-allowed;
+  transform: none;
+}
 .assistantQuickBtn:hover{
   background: rgba(255,255,255,0.09);
   border-color: rgba(255,212,0,0.26);
@@ -2306,6 +2311,12 @@ select:focus-visible{
   margin: 0;
   color: rgba(255,255,255,0.74);
   font-size: 12px;
+  line-height: 1.45;
+}
+.assistantStatus{
+  margin: 0;
+  color: rgba(255,255,255,0.82);
+  font-size: 13px;
   line-height: 1.45;
 }
 .notFoundPage{
@@ -3166,6 +3177,10 @@ input:focus, textarea:focus, select:focus{ border-color: rgba(255,212,0,0.42); b
 .oduzzMsg.assistant{
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.10);
+}
+.oduzzMsg.assistantTyping{
+  color: rgba(255,255,255,0.76);
+  font-style: italic;
 }
 .oduzzMsg.user{
   background: rgba(255,212,0,0.14);
