@@ -1,6 +1,5 @@
 import { CONTACT } from "../data/contact.js";
 import { oduzzAssistantDoc } from "../data/oduzzAssistantDoc.js";
-import { cableProducts } from "../data/products.js";
 import { services } from "../data/services.js";
 
 const blogSummary = [
@@ -26,9 +25,11 @@ const resourceSummary = [
 ].join("\n");
 
 const serviceSummary = services.map((service) => `- ${service.title}: ${service.desc}`).join("\n");
-const productSummary = cableProducts
-  .map((product) => `- ${product.name}: ${product.bestFor}`)
-  .join("\n");
+const productSummary = [
+  "- Product availability is managed online and can change with current stock.",
+  "- For a specific item, buyers should request current availability, price, and quantity.",
+  "- The product page reflects only online-managed stock entries.",
+].join("\n");
 
 export const ASSISTANT_SYSTEM_INSTRUCTIONS = [
   `You are the website assistant for ${oduzzAssistantDoc.company}.`,

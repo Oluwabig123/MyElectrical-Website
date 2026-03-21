@@ -5,7 +5,6 @@ import Button from "../components/ui/Button";
 import SectionHeader from "../components/ui/SectionHeader";
 import Reveal from "../components/ui/Reveal";
 import { CONTACT, buildWhatsAppUrl } from "../data/contact";
-import { cableProducts } from "../data/products";
 import {
   buildProductCatalog,
   formatProductPrice,
@@ -47,6 +46,8 @@ const EMPTY_CHECKOUT_FORM = {
 };
 
 const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const PAYSTACK_UNAVAILABLE_MESSAGE =
+  "Online card payment is being finalized. Please place this order on WhatsApp for now.";
 
 // Small input helpers keep the admin payload predictable before validation.
 function sanitizeValue(value) {
@@ -190,14 +191,9 @@ export default function Products() {
   const [isCheckoutLoading, setIsCheckoutLoading] = React.useState(false);
 
   const isAuthenticated = Boolean(authSession?.user);
+  const isPaystackEnabled = import.meta.env.VITE_PAYSTACK_ENABLED === "true";
 
-  // Merge shipped product data with cloud-managed records.
-  const mergedProducts = React.useMemo(
-    () => [...cableProducts, ...cloudProducts],
-    [cloudProducts]
-  );
-
-  const catalog = React.useMemo(() => buildProductCatalog(mergedProducts), [mergedProducts]);
+  const catalog = React.useMemo(() => buildProductCatalog(cloudProducts), [cloudProducts]);
   const adminCatalog = React.useMemo(
     () => buildProductCatalog(cloudProducts, { includeInactive: true }),
     [cloudProducts]
@@ -599,6 +595,11 @@ export default function Products() {
 
     if (!checkoutProduct) return;
 
+    if (!isPaystackEnabled) {
+      setCheckoutStatus({ type: "info", message: PAYSTACK_UNAVAILABLE_MESSAGE });
+      return;
+    }
+
     const validationError = validateCheckoutForm(checkoutForm);
     if (validationError) {
       setCheckoutStatus({ type: "error", message: validationError });
@@ -714,7 +715,7 @@ export default function Products() {
         <SectionHeader
           kicker="Products"
           title="Available electrical products"
-          subtitle="Base stock plus cloud-managed products, automatically grouped by category."
+          subtitle="Online-managed stock only, automatically grouped by category."
         />
 
         {/* Inline admin panel for authenticating and managing cloud products. */}
@@ -957,7 +958,7 @@ export default function Products() {
                     <p className="formStatus error">{catalogError}</p>
                   ) : null}
                   {!isCatalogLoading && !catalogError && adminCatalog.items.length === 0 ? (
-                    <p className="productsAdminEmpty">No cloud products yet.</p>
+                    <p className="productsAdminEmpty">No online products yet. Add stock from the manager to publish it here.</p>
                   ) : null}
                   {!isCatalogLoading && !catalogError && adminCatalog.items.length > 0 ? (
                     <ul className="productsAdminList">
@@ -1012,6 +1013,28 @@ export default function Products() {
           <p className={`formStatus ${checkoutFeedback.type || "success"} productsCheckoutFeedback`}>
             {checkoutFeedback.message}
           </p>
+        ) : null}
+
+        {!isCatalogLoading && !catalogError && catalog.groups.length === 0 ? (
+          <Reveal delay={0.08}>
+            <div className="card productsEmptyState">
+              <h3 className="productsEmptyTitle">Products update online only</h3>
+              <p className="productsEmptyLead">
+                The catalog is currently empty. New stock will appear here after it is added from the cloud product manager.
+              </p>
+              <div className="productsActions">
+                <Link to="/quote"><Button variant="primary">Request a product quote</Button></Link>
+                <a
+                  href={buildWhatsAppUrl(encodeURIComponent("Hello Oduzz, I want to ask about available electrical products."))}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn outline"
+                >
+                  Ask on WhatsApp
+                </a>
+              </div>
+            </div>
+          </Reveal>
         ) : null}
 
         {/* Public product catalog grouped by inferred category. */}
@@ -1078,7 +1101,7 @@ export default function Products() {
                               className="btn primary"
                               onClick={() => openCheckoutModal(item)}
                             >
-                              Checkout online
+                              {isPaystackEnabled ? "Checkout online" : "Checkout coming soon"}
                             </button>
                             <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn outline">
                               Buy on WhatsApp
@@ -1129,7 +1152,9 @@ export default function Products() {
                     {checkoutProduct.name}
                   </h3>
                   <p className="productsCheckoutLead">
-                    Online payments are processed with Paystack. Orders are recorded before redirect so payment verification stays traceable.
+                    {isPaystackEnabled
+                      ? "Online payments are processed with Paystack. Orders are recorded before redirect so payment verification stays traceable."
+                      : "Online card payment is being finalized. Use WhatsApp for this order while the checkout option is being completed."}
                   </p>
                 </div>
                 <button
@@ -1184,8 +1209,16 @@ export default function Products() {
                 </label>
 
                 <div className="productsCheckoutActions">
-                  <button type="submit" className="btn primary" disabled={isCheckoutLoading}>
-                    {isCheckoutLoading ? "Redirecting..." : "Pay with Paystack"}
+                  <button
+                    type="submit"
+                    className="btn primary"
+                    disabled={!isPaystackEnabled || isCheckoutLoading}
+                  >
+                    {!isPaystackEnabled
+                      ? "Paystack unavailable"
+                      : isCheckoutLoading
+                      ? "Redirecting..."
+                      : "Pay with Paystack"}
                   </button>
                   <a
                     href={buildWhatsAppUrl(encodeURIComponent(buildProductPurchaseMessage(checkoutProduct)))}
@@ -1196,6 +1229,10 @@ export default function Products() {
                     Order on WhatsApp
                   </a>
                 </div>
+
+                {!isPaystackEnabled ? (
+                  <p className="formStatus info">{PAYSTACK_UNAVAILABLE_MESSAGE}</p>
+                ) : null}
 
                 {checkoutStatus.message ? (
                   <p className={`formStatus ${checkoutStatus.type}`}>{checkoutStatus.message}</p>

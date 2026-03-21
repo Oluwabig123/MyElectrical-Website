@@ -11,6 +11,8 @@ import {
 } from "./_lib/commerce.js";
 
 const PAYSTACK_INITIALIZE_URL = "https://api.paystack.co/transaction/initialize";
+const PAYSTACK_UNAVAILABLE_MESSAGE =
+  "Online card payment is not available yet. Please place this order on WhatsApp for now.";
 
 function sanitizeText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -21,11 +23,12 @@ export default async function handler(req, res) {
     return methodNotAllowed(res, ["POST"]);
   }
 
+  const isPaystackEnabled = process.env.VITE_PAYSTACK_ENABLED?.trim().toLowerCase() === "true";
   const secretKey = process.env.PAYSTACK_SECRET_KEY?.trim();
-  if (!secretKey) {
-    return json(res, 500, {
+  if (!isPaystackEnabled || !secretKey) {
+    return json(res, 503, {
       ok: false,
-      error: "Paystack is not configured. Add PAYSTACK_SECRET_KEY.",
+      error: PAYSTACK_UNAVAILABLE_MESSAGE,
     });
   }
 
@@ -66,9 +69,9 @@ export default async function handler(req, res) {
     const referenceId = createReference("odzps");
     const siteUrl = buildSiteUrl(req);
     if (!siteUrl) {
-      return json(res, 500, {
+      return json(res, 503, {
         ok: false,
-        error: "SITE_URL is required for secure checkout callback handling.",
+        error: PAYSTACK_UNAVAILABLE_MESSAGE,
       });
     }
     const callbackUrl = `${siteUrl}/products?checkout=paystack`;
