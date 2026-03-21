@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { pickBlogImage } from "../src/data/blogImageGallery.js";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_MODEL = process.env.BLOG_OPENAI_MODEL || process.env.OPENAI_MODEL || "gpt-4.1-mini";
@@ -10,8 +11,6 @@ const BLOG_BLUEPRINTS = [
     category: "Safety",
     audience: "Homeowners",
     format: "Checklist",
-    imageUrl: "/hero/wiringg.webp",
-    imageAlt: "Electrical safety inspection and wiring work",
     angle:
       "Write a practical homeowner article on preventing hidden electrical risks before they become expensive faults.",
   },
@@ -19,8 +18,6 @@ const BLOG_BLUEPRINTS = [
     category: "Solar",
     audience: "Homeowners",
     format: "Planning guide",
-    imageUrl: "/hero/solar.webp",
-    imageAlt: "Solar inverter planning and installation work",
     angle:
       "Write a decision-making article that helps buyers think clearly about solar, inverter, battery, and backup tradeoffs.",
   },
@@ -28,8 +25,6 @@ const BLOG_BLUEPRINTS = [
     category: "Planning",
     audience: "Property managers",
     format: "Decision brief",
-    imageUrl: "/hero/1000512859.webp",
-    imageAlt: "Technician preparing electrical work details",
     angle:
       "Write an article that helps clients prepare better project information, reduce quote delays, and avoid scope confusion.",
   },
@@ -37,8 +32,6 @@ const BLOG_BLUEPRINTS = [
     category: "Lighting",
     audience: "Homeowners",
     format: "Pre-install brief",
-    imageUrl: "/hero/lightings.webp",
-    imageAlt: "Decorative lighting installation in a finished interior",
     angle:
       "Write a practical article about lighting layout, decorative fixtures, switching zones, and finishing quality.",
   },
@@ -46,8 +39,6 @@ const BLOG_BLUEPRINTS = [
     category: "CCTV",
     audience: "Business owners",
     format: "Field guide",
-    imageUrl: "/hero/cctv.webp",
-    imageAlt: "Security system planning and CCTV installation work",
     angle:
       "Write an article that helps small business owners think about camera coverage, storage, power, and reliability.",
   },
@@ -224,7 +215,7 @@ function buildPrompt({ blueprint, recentPosts, requestedTopic }) {
   ].join("\n");
 }
 
-function sanitizeGeneratedPost(payload, blueprint) {
+function sanitizeGeneratedPost(payload, blueprint, imageChoice) {
   const sections = toSections(payload?.sections);
   const points = toArrayOfStrings(payload?.points, 3).slice(0, 3);
   const title = String(payload?.title || "").trim();
@@ -249,13 +240,14 @@ function sanitizeGeneratedPost(payload, blueprint) {
     format: String(payload?.format || blueprint.format).trim() || blueprint.format,
     published_label: formatPublishedLabel(),
     published_at: new Date().toISOString(),
-    image_url: blueprint.imageUrl,
-    image_alt: blueprint.imageAlt,
+    image_url: imageChoice?.src || "/blog/safety-panel-check.webp",
+    image_alt: imageChoice?.alt || "Electrical project planning image",
     points,
     sections,
     source: "ai",
     metadata: {
       blueprint_category: blueprint.category,
+      image_id: imageChoice?.id || "",
       generated_at: new Date().toISOString(),
     },
   };
@@ -305,7 +297,7 @@ export default async function handler(req, res) {
 
   const { data: recentRows, error: recentError } = await supabaseAdmin
     .from(BLOG_POSTS_TABLE)
-    .select("slug, title, category, published_at, source")
+    .select("slug, title, category, published_at, source, image_url")
     .order("published_at", { ascending: false })
     .limit(12);
 
@@ -357,7 +349,13 @@ export default async function handler(req, res) {
   const payload = await response.json();
   const outputText = extractOutputText(payload);
   const generated = parseJsonObject(outputText);
-  const preparedPost = sanitizeGeneratedPost(generated, blueprint);
+  const imageChoice = pickBlogImage({
+    blueprint,
+    generatedPost: generated,
+    recentPosts,
+    requestedTopic: String(body.topic || "").trim(),
+  });
+  const preparedPost = sanitizeGeneratedPost(generated, blueprint, imageChoice);
 
   if (!preparedPost) {
     return res.status(502).json({

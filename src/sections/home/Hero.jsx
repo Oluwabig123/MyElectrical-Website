@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Container from "../../components/layout/Container";
 import Reveal from "../../components/ui/Reveal";
-import { CONTACT, CONTACT_LINKS } from "../../data/contact.js";
+import { CONTACT_LINKS } from "../../data/contact.js";
 import { heroGallery } from "../../data/heroGallery.js";
 
 const HERO_ROTATE_MS = 5000;
@@ -224,11 +224,6 @@ export default function Hero() {
         <Container className="heroContentWrap">
           <div className="heroContent">
             <Reveal key={activeSlide.id}>
-              <p className="heroContactLead">
-                <a href={CONTACT_LINKS.phone}>Call {CONTACT.phoneDisplay}</a>
-                <span aria-hidden="true">|</span>
-                <a target="_blank" rel="noreferrer" href={CONTACT_LINKS.whatsapp}>WhatsApp</a>
-              </p>
               <p className="heroKicker">{activeSlide.kicker}</p>
               <h1 ref={titleRef} className="h1">{activeSlide.title}</h1>
               <p ref={copyRef} className="p">{activeSlide.copy}</p>
@@ -242,10 +237,6 @@ export default function Hero() {
                 <a className="btn outline heroCallBtn" href={CONTACT_LINKS.phone}>Call Now</a>
               </div>
             </Reveal>
-
-            <p className="heroServicesPrompt">
-              Need details first? <Link to="/services">See our services</Link>
-            </p>
           </div>
         </Container>
 

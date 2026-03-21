@@ -60,7 +60,7 @@ export function normalizeDatabaseBlogPost(row) {
     publishedLabel:
       String(row.published_label || "").trim() || formatPublishedLabel(row.published_at) || "Recently published",
     publishedAt: row.published_at || "",
-    image: String(row.image_url || "").trim() || "/hero/wiringg.webp",
+    image: String(row.image_url || "").trim() || "/blog/safety-panel-check.webp",
     imageAlt: String(row.image_alt || "").trim() || "Electrical project planning image",
     points: normalizePoints(row.points),
     sections: normalizeSections(row.sections),
