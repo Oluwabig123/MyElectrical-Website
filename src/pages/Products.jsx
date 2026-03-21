@@ -4,11 +4,13 @@ import Container from "../components/layout/Container";
 import Button from "../components/ui/Button";
 import SectionHeader from "../components/ui/SectionHeader";
 import Reveal from "../components/ui/Reveal";
-import { CONTACT } from "../data/contact";
+import { CONTACT, buildWhatsAppUrl } from "../data/contact";
 import { cableProducts } from "../data/products";
 import {
   buildProductCatalog,
+  formatProductPrice,
   getCategoryLabel,
+  getProductAvailability,
   inferProductCategory,
   normalizeProduct,
 } from "../utils/productCatalog";
@@ -25,11 +27,23 @@ const EMPTY_ADMIN_FORM = {
   type: "",
   bestFor: "",
   imageUrl: "",
+  price: "",
+  currency: "NGN",
+  stockQty: "0",
+  slug: "",
+  isActive: true,
+  featured: false,
 };
 
 const EMPTY_AUTH_FORM = {
   email: "",
   password: "",
+};
+
+const EMPTY_CHECKOUT_FORM = {
+  name: "",
+  email: "",
+  phone: "",
 };
 
 const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -55,12 +69,26 @@ function normalizeImageUrl(value) {
 }
 
 function normalizeAdminPayload(formValues) {
+  const parsedPrice = Number.parseFloat(String(formValues.price || "").replace(/,/g, ""));
+  const safePriceAmount = Number.isFinite(parsedPrice) && parsedPrice > 0 ? Math.round(parsedPrice * 100) : 0;
+  const parsedStockQty = Number.parseInt(String(formValues.stockQty || ""), 10);
+
   return {
     name: sanitizeValue(formValues.name),
     size: sanitizeValue(formValues.size) || "N/A",
     type: sanitizeValue(formValues.type) || "Electrical item",
     bestFor: sanitizeValue(formValues.bestFor) || "General electrical use",
     imageUrl: normalizeImageUrl(formValues.imageUrl),
+    priceAmount: safePriceAmount,
+    currency: sanitizeValue(formValues.currency).toUpperCase() || "NGN",
+    stockQty: Number.isFinite(parsedStockQty) ? Math.max(0, parsedStockQty) : 0,
+    slug: sanitizeValue(formValues.slug)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80),
+    isActive: Boolean(formValues.isActive),
+    featured: Boolean(formValues.featured),
   };
 }
 
@@ -68,6 +96,7 @@ function validateAdminPayload(payload) {
   if (!payload.name) return "Product name is required.";
   if (!payload.bestFor) return "Add a short best-for note.";
   if (!payload.imageUrl) return "Add a valid image URL or upload an image.";
+  if (!payload.priceAmount) return "Add a valid product price.";
   return "";
 }
 
@@ -81,10 +110,52 @@ function mapCloudRowToProduct(row) {
       type: row.type,
       bestFor: row.best_for,
       imageUrl: row.image_url,
+      priceAmount: row.price_amount,
+      currency: row.currency,
+      stockQty: row.stock_qty,
+      slug: row.slug,
+      isActive: row.is_active,
+      featured: row.featured,
       category: row.category,
+      source: "cloud",
     },
     row.id
   );
+}
+
+function formatPriceInput(product) {
+  const amount = Number(product?.priceAmount || 0);
+  return amount > 0 ? String(amount / 100) : "";
+}
+
+function buildProductPurchaseMessage(product) {
+  const lines = [
+    "Hello Oduzz, I want to buy this product.",
+    `Product: ${product.name}`,
+    `Slug: ${product.slug || product.id}`,
+    `Price: ${formatProductPrice(product)}`,
+    `Availability: ${getProductAvailability(product)}`,
+    `Size/Spec: ${product.size || "N/A"}`,
+    `Type: ${product.type || "N/A"}`,
+  ];
+
+  return lines.join("\n");
+}
+
+function validateCheckoutForm(formValues) {
+  const name = sanitizeValue(formValues.name);
+  const email = sanitizeValue(formValues.email).toLowerCase();
+  const phone = sanitizeValue(formValues.phone);
+
+  if (!name) return "Enter your name to continue.";
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return "Enter a valid email address.";
+  }
+  if (phone && phone.replace(/[^\d+]/g, "").length < 7) {
+    return "Enter a valid phone number or leave it blank.";
+  }
+
+  return "";
 }
 
 function formatSupabaseError(error, fallbackMessage) {
@@ -112,6 +183,11 @@ export default function Products() {
   const [catalogError, setCatalogError] = React.useState("");
   const [formStatus, setFormStatus] = React.useState({ type: "", message: "" });
   const [authStatus, setAuthStatus] = React.useState({ type: "", message: "" });
+  const [checkoutProduct, setCheckoutProduct] = React.useState(null);
+  const [checkoutForm, setCheckoutForm] = React.useState(EMPTY_CHECKOUT_FORM);
+  const [checkoutStatus, setCheckoutStatus] = React.useState({ type: "", message: "" });
+  const [checkoutFeedback, setCheckoutFeedback] = React.useState({ type: "", message: "" });
+  const [isCheckoutLoading, setIsCheckoutLoading] = React.useState(false);
 
   const isAuthenticated = Boolean(authSession?.user);
 
@@ -122,7 +198,10 @@ export default function Products() {
   );
 
   const catalog = React.useMemo(() => buildProductCatalog(mergedProducts), [mergedProducts]);
-  const adminCatalog = React.useMemo(() => buildProductCatalog(cloudProducts), [cloudProducts]);
+  const adminCatalog = React.useMemo(
+    () => buildProductCatalog(cloudProducts, { includeInactive: true }),
+    [cloudProducts]
+  );
 
   const categoryPreviewLabel = React.useMemo(() => {
     const draftCategory = inferProductCategory(adminForm);
@@ -143,7 +222,7 @@ export default function Products() {
 
     const { data, error } = await supabase
       .from(ADMIN_PRODUCTS_TABLE)
-      .select("id,name,size,type,best_for,image_url,category,created_at")
+      .select("id,name,size,type,best_for,image_url,price_amount,currency,stock_qty,slug,is_active,featured,category,created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -219,8 +298,8 @@ export default function Products() {
 
   // Shared input handlers for the admin auth and product forms.
   function handleFormInputChange(event) {
-    const { name, value } = event.target;
-    setAdminForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = event.target;
+    setAdminForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   }
 
   function handleAuthInputChange(event) {
@@ -231,6 +310,23 @@ export default function Products() {
   function resetAdminForm() {
     setAdminForm(EMPTY_ADMIN_FORM);
     setEditingProductId(null);
+  }
+
+  function handleCheckoutInputChange(event) {
+    const { name, value } = event.target;
+    setCheckoutForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function closeCheckoutModal() {
+    if (isCheckoutLoading) return;
+    setCheckoutProduct(null);
+    setCheckoutStatus({ type: "", message: "" });
+    setCheckoutForm(EMPTY_CHECKOUT_FORM);
+  }
+
+  function openCheckoutModal(product) {
+    setCheckoutProduct(product);
+    setCheckoutStatus({ type: "", message: "" });
   }
 
   // Uploads a selected image to Supabase storage and stores its public URL in the form.
@@ -376,6 +472,12 @@ export default function Products() {
           type: payload.type,
           best_for: payload.bestFor,
           image_url: payload.imageUrl,
+          price_amount: payload.priceAmount,
+          currency: payload.currency,
+          stock_qty: payload.stockQty,
+          slug: payload.slug || null,
+          is_active: payload.isActive,
+          featured: payload.featured,
           category: inferredCategory,
         })
         .eq("id", editingProductId);
@@ -401,6 +503,12 @@ export default function Products() {
           type: payload.type,
           best_for: payload.bestFor,
           image_url: payload.imageUrl,
+          price_amount: payload.priceAmount,
+          currency: payload.currency,
+          stock_qty: payload.stockQty,
+          slug: payload.slug || null,
+          is_active: payload.isActive,
+          featured: payload.featured,
           category: inferredCategory,
           created_by: authSession?.user?.id || null,
         },
@@ -439,6 +547,12 @@ export default function Products() {
       type: selectedProduct.type,
       bestFor: selectedProduct.bestFor,
       imageUrl: selectedProduct.imageUrl || "",
+      price: formatPriceInput(selectedProduct),
+      currency: selectedProduct.currency || "NGN",
+      stockQty: String(selectedProduct.stockQty ?? 0),
+      slug: selectedProduct.slug || "",
+      isActive: selectedProduct.isActive,
+      featured: selectedProduct.featured,
     });
     setFormStatus({ type: "", message: "" });
   }
@@ -479,6 +593,113 @@ export default function Products() {
     setDeletingProductId("");
     loadCloudProducts();
   }
+
+  async function startPaystackCheckout(event) {
+    event.preventDefault();
+
+    if (!checkoutProduct) return;
+
+    const validationError = validateCheckoutForm(checkoutForm);
+    if (validationError) {
+      setCheckoutStatus({ type: "error", message: validationError });
+      return;
+    }
+
+    setIsCheckoutLoading(true);
+    setCheckoutStatus({ type: "", message: "" });
+
+    try {
+      const response = await fetch("/api/create-paystack-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: checkoutProduct.id,
+          customerName: sanitizeValue(checkoutForm.name),
+          customerEmail: sanitizeValue(checkoutForm.email),
+          customerPhone: sanitizeValue(checkoutForm.phone),
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok || !payload?.ok || !payload?.authorizationUrl) {
+        setCheckoutStatus({
+          type: "error",
+          message: payload?.error || "Could not start checkout right now.",
+        });
+        setIsCheckoutLoading(false);
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        window.location.href = payload.authorizationUrl;
+      }
+    } catch (error) {
+      setCheckoutStatus({
+        type: "error",
+        message: error?.message || "Could not start checkout right now.",
+      });
+      setIsCheckoutLoading(false);
+    }
+  }
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const params = new URLSearchParams(window.location.search);
+    const checkoutGateway = params.get("checkout");
+    const reference = params.get("reference") || params.get("trxref");
+
+    if (checkoutGateway !== "paystack" || !reference) {
+      return undefined;
+    }
+
+    let isActive = true;
+
+    async function verifyPayment() {
+      setCheckoutFeedback({ type: "info", message: "Confirming payment..." });
+
+      try {
+        const response = await fetch(
+          `/api/verify-paystack-payment?reference=${encodeURIComponent(reference)}`,
+          {
+            method: "GET",
+          }
+        );
+        const payload = await response.json().catch(() => ({}));
+
+        if (!isActive) return;
+
+        setCheckoutFeedback({
+          type: payload?.verified ? "success" : "error",
+          message:
+            payload?.message ||
+            (payload?.verified ? "Payment confirmed." : payload?.error || "Could not confirm payment."),
+        });
+      } catch (error) {
+        if (!isActive) return;
+        setCheckoutFeedback({
+          type: "error",
+          message: error?.message || "Could not confirm payment.",
+        });
+      } finally {
+        params.delete("checkout");
+        params.delete("reference");
+        params.delete("trxref");
+        const nextSearch = params.toString();
+        const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, "", nextUrl);
+      }
+    }
+
+    verifyPayment();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const totalProducts = catalog.items.length;
   const totalCategories = catalog.groups.length;
@@ -612,6 +833,47 @@ export default function Products() {
                       />
                     </label>
                     <label className="field">
+                      <span>Price *</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        name="price"
+                        value={adminForm.price}
+                        onChange={handleFormInputChange}
+                        placeholder="e.g. 18500"
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Currency</span>
+                      <select name="currency" value={adminForm.currency} onChange={handleFormInputChange}>
+                        <option value="NGN">NGN</option>
+                        <option value="USD">USD</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Stock quantity</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        name="stockQty"
+                        value={adminForm.stockQty}
+                        onChange={handleFormInputChange}
+                        placeholder="e.g. 12"
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Slug</span>
+                      <input
+                        type="text"
+                        name="slug"
+                        value={adminForm.slug}
+                        onChange={handleFormInputChange}
+                        placeholder="auto-generated-if-empty"
+                      />
+                    </label>
+                    <label className="field">
                       <span>Upload image (optional)</span>
                       <input
                         type="file"
@@ -640,6 +902,24 @@ export default function Products() {
                         onChange={handleFormInputChange}
                         placeholder="Where this product is typically used"
                       />
+                    </label>
+                    <label className="productsToggleField">
+                      <input
+                        type="checkbox"
+                        name="isActive"
+                        checked={adminForm.isActive}
+                        onChange={handleFormInputChange}
+                      />
+                      <span>Show this product publicly</span>
+                    </label>
+                    <label className="productsToggleField">
+                      <input
+                        type="checkbox"
+                        name="featured"
+                        checked={adminForm.featured}
+                        onChange={handleFormInputChange}
+                      />
+                      <span>Feature this product first in its category</span>
                     </label>
 
                     <div className="formActions productsAdminFormActions">
@@ -695,7 +975,7 @@ export default function Products() {
                           <div className="productsAdminItemCopy">
                             <p className="productsAdminItemName">{item.name}</p>
                             <p className="productsAdminItemMeta">
-                              {item.categoryLabel} | {item.size} | {item.type}
+                              {item.categoryLabel} | {formatProductPrice(item)} | Stock: {item.stockQty} | {item.isActive ? "Live" : "Hidden"}
                             </p>
                           </div>
                           {isAuthenticated ? (
@@ -728,6 +1008,12 @@ export default function Products() {
           Showing {totalProducts} products across {totalCategories} categories.
         </p>
 
+        {checkoutFeedback.message ? (
+          <p className={`formStatus ${checkoutFeedback.type || "success"} productsCheckoutFeedback`}>
+            {checkoutFeedback.message}
+          </p>
+        ) : null}
+
         {/* Public product catalog grouped by inferred category. */}
         {catalog.groups.map((group, groupIndex) => (
           <section className="productsCategorySection" key={group.key}>
@@ -739,34 +1025,77 @@ export default function Products() {
             </div>
 
             <div className="productsGrid">
-              {group.items.map((item, index) => (
-                <Reveal key={item.id} delay={groupIndex * 0.06 + index * 0.03}>
-                  <article className="card productsCard">
-                    <span className="productsIndex">{String(index + 1).padStart(2, "0")}</span>
-                    <div className="productsImageWrap">
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="productsImage"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <div className="productsImageFallback" aria-hidden="true">
-                          Oduzz
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="cardTitle productsTitle">{item.name}</h3>
-                    <p className="p">{item.bestFor}</p>
-                    <div className="productsMeta" aria-label={`${item.name} specifications`}>
-                      <span className="productsChip">Size: {item.size}</span>
-                      <span className="productsChip">{item.type}</span>
-                    </div>
-                  </article>
-                </Reveal>
-              ))}
+              {group.items.map((item, index) => {
+                const availability = getProductAvailability(item);
+                const whatsappUrl = buildWhatsAppUrl(
+                  encodeURIComponent(buildProductPurchaseMessage(item))
+                );
+                const canCheckoutOnline =
+                  item.source === "cloud" &&
+                  item.isActive &&
+                  item.priceAmount > 0 &&
+                  item.stockQty > 0;
+
+                return (
+                  <Reveal key={item.id} delay={groupIndex * 0.06 + index * 0.03}>
+                    <article className="card productsCard">
+                      <div className="productsCardHead">
+                        <span className="productsIndex">{String(index + 1).padStart(2, "0")}</span>
+                        {item.featured ? <span className="productsFeatured">Featured</span> : null}
+                      </div>
+                      <div className="productsImageWrap">
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="productsImage"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : (
+                          <div className="productsImageFallback" aria-hidden="true">
+                            Oduzz
+                          </div>
+                        )}
+                      </div>
+                      <div className="productsPriceRow">
+                        <strong className="productsPrice">{formatProductPrice(item)}</strong>
+                        <span className={`productsStock ${availability.toLowerCase().replace(/\s+/g, "-")}`}>
+                          {availability}
+                        </span>
+                      </div>
+                      <h3 className="cardTitle productsTitle">{item.name}</h3>
+                      <p className="p">{item.bestFor}</p>
+                      <div className="productsMeta" aria-label={`${item.name} specifications`}>
+                        <span className="productsChip">Size: {item.size}</span>
+                        <span className="productsChip">{item.type}</span>
+                      </div>
+                      <div className="productsCardActions">
+                        {canCheckoutOnline ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn primary"
+                              onClick={() => openCheckoutModal(item)}
+                            >
+                              Checkout online
+                            </button>
+                            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn outline">
+                              Buy on WhatsApp
+                            </a>
+                          </>
+                        ) : (
+                          <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn primary">
+                            {item.priceAmount > 0 && item.stockQty > 0
+                              ? "Buy on WhatsApp"
+                              : "Request availability"}
+                          </a>
+                        )}
+                      </div>
+                    </article>
+                  </Reveal>
+                );
+              })}
             </div>
           </section>
         ))}
@@ -782,6 +1111,99 @@ export default function Products() {
             </div>
           </div>
         </Reveal>
+
+        {checkoutProduct ? (
+          <div
+            className="productsCheckoutOverlay"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                closeCheckoutModal();
+              }
+            }}
+          >
+            <div className="card productsCheckoutModal" role="dialog" aria-modal="true" aria-labelledby="products-checkout-title">
+              <div className="productsCheckoutHead">
+                <div className="productsCheckoutHeadCopy">
+                  <p className="productsCheckoutKicker">Secure checkout</p>
+                  <h3 id="products-checkout-title" className="productsCheckoutTitle">
+                    {checkoutProduct.name}
+                  </h3>
+                  <p className="productsCheckoutLead">
+                    Online payments are processed with Paystack. Orders are recorded before redirect so payment verification stays traceable.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="productsCheckoutClose"
+                  onClick={closeCheckoutModal}
+                  aria-label="Close checkout"
+                >
+                  <span aria-hidden="true">+</span>
+                </button>
+              </div>
+
+              <div className="productsCheckoutMeta">
+                <span className="productsChip">{formatProductPrice(checkoutProduct)}</span>
+                <span className="productsChip">Stock: {checkoutProduct.stockQty}</span>
+                <span className="productsChip">{checkoutProduct.categoryLabel}</span>
+              </div>
+
+              <form className="form productsCheckoutForm" onSubmit={startPaystackCheckout}>
+                <label className="field">
+                  <span>Full name *</span>
+                  <input
+                    type="text"
+                    name="name"
+                    value={checkoutForm.name}
+                    onChange={handleCheckoutInputChange}
+                    placeholder="Your full name"
+                    autoComplete="name"
+                  />
+                </label>
+                <label className="field">
+                  <span>Email *</span>
+                  <input
+                    type="email"
+                    name="email"
+                    value={checkoutForm.email}
+                    onChange={handleCheckoutInputChange}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                  />
+                </label>
+                <label className="field">
+                  <span>Phone</span>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={checkoutForm.phone}
+                    onChange={handleCheckoutInputChange}
+                    placeholder="080..."
+                    autoComplete="tel"
+                  />
+                </label>
+
+                <div className="productsCheckoutActions">
+                  <button type="submit" className="btn primary" disabled={isCheckoutLoading}>
+                    {isCheckoutLoading ? "Redirecting..." : "Pay with Paystack"}
+                  </button>
+                  <a
+                    href={buildWhatsAppUrl(encodeURIComponent(buildProductPurchaseMessage(checkoutProduct)))}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn outline"
+                  >
+                    Order on WhatsApp
+                  </a>
+                </div>
+
+                {checkoutStatus.message ? (
+                  <p className={`formStatus ${checkoutStatus.type}`}>{checkoutStatus.message}</p>
+                ) : null}
+              </form>
+            </div>
+          </div>
+        ) : null}
       </Container>
     </section>
   );

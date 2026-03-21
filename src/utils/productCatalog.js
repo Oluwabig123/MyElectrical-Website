@@ -84,6 +84,7 @@ const CATEGORY_KEYWORDS = [
 ];
 
 const FALLBACK_CATEGORY = "general-electrical";
+const FALLBACK_CURRENCY = "NGN";
 
 const categoryLabelByKey = CATEGORY_DEFINITIONS.reduce((acc, category) => {
   acc[category.key] = category.label;
@@ -94,6 +95,35 @@ function sanitizeText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function sanitizeSlug(value) {
+  return sanitizeText(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+function normalizeBoolean(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "on"].includes(normalized)) return true;
+    if (["false", "0", "no", "off"].includes(normalized)) return false;
+  }
+  if (typeof value === "number") return value > 0;
+  return fallback;
+}
+
+function normalizeInteger(value, fallback = 0) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeSource(value) {
+  const source = sanitizeText(value).toLowerCase();
+  return source || "catalog";
+}
+
 function extractSizeNumber(value) {
   if (!value) return Number.POSITIVE_INFINITY;
   const normalized = String(value).replace(",", ".").toLowerCase();
@@ -102,6 +132,7 @@ function extractSizeNumber(value) {
 }
 
 function compareProducts(a, b) {
+  if (a.featured !== b.featured) return Number(b.featured) - Number(a.featured);
   const sizeA = extractSizeNumber(a.size || a.name);
   const sizeB = extractSizeNumber(b.size || b.name);
 
@@ -131,6 +162,13 @@ export function normalizeProduct(rawProduct, fallbackId) {
   const safeType = sanitizeText(rawProduct?.type) || "Electrical item";
   const safeBestFor = sanitizeText(rawProduct?.bestFor) || "General electrical use";
   const safeImageUrl = sanitizeText(rawProduct?.imageUrl);
+  const safeCurrency = sanitizeText(rawProduct?.currency).toUpperCase() || FALLBACK_CURRENCY;
+  const safePriceAmount = normalizeInteger(rawProduct?.priceAmount, 0);
+  const safeStockQty = Math.max(0, normalizeInteger(rawProduct?.stockQty, 0));
+  const safeSlug = sanitizeSlug(rawProduct?.slug) || sanitizeSlug(safeName) || sanitizeSlug(fallbackId);
+  const safeIsActive = normalizeBoolean(rawProduct?.isActive, true);
+  const safeFeatured = normalizeBoolean(rawProduct?.featured, false);
+  const safeSource = normalizeSource(rawProduct?.source);
 
   const inferredCategory = inferProductCategory({
     name: safeName,
@@ -149,22 +187,51 @@ export function normalizeProduct(rawProduct, fallbackId) {
     type: safeType,
     bestFor: safeBestFor,
     imageUrl: safeImageUrl,
+    priceAmount: safePriceAmount,
+    currency: safeCurrency,
+    stockQty: safeStockQty,
+    slug: safeSlug,
+    isActive: safeIsActive,
+    featured: safeFeatured,
+    source: safeSource,
     category: finalCategory,
     categoryLabel: getCategoryLabel(finalCategory),
   };
 }
 
-export function buildProductCatalog(products) {
+export function formatProductPrice(product) {
+  const amount = Number(product?.priceAmount || 0);
+  const currency = sanitizeText(product?.currency).toUpperCase() || FALLBACK_CURRENCY;
+  if (!Number.isFinite(amount) || amount <= 0) return "Price on request";
+
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount / 100);
+}
+
+export function getProductAvailability(product) {
+  if (!product?.isActive) return "Inactive";
+  if ((product?.stockQty || 0) <= 0) return "Out of stock";
+  if (product.stockQty <= 5) return "Low stock";
+  return "In stock";
+}
+
+export function buildProductCatalog(products, { includeInactive = false } = {}) {
   const normalizedItems = products.map((item, index) =>
     normalizeProduct(item, `product-${index + 1}`)
   );
+  const visibleItems = includeInactive
+    ? normalizedItems
+    : normalizedItems.filter((item) => item.isActive);
 
   const buckets = CATEGORY_DEFINITIONS.reduce((acc, category) => {
     acc[category.key] = [];
     return acc;
   }, {});
 
-  normalizedItems.forEach((item) => {
+  visibleItems.forEach((item) => {
     const key = buckets[item.category] ? item.category : FALLBACK_CATEGORY;
     buckets[key].push(item);
   });
@@ -179,6 +246,6 @@ export function buildProductCatalog(products) {
 
   return {
     groups,
-    items: normalizedItems,
+    items: visibleItems,
   };
 }

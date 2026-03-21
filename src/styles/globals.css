@@ -1147,7 +1147,8 @@ select:focus-visible{
 .productsAdminImagePreview{
   width: 100%;
   max-height: 180px;
-  object-fit: cover;
+  object-fit: contain;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
   display: block;
 }
 .productsAdminAutoCategory{
@@ -1168,6 +1169,27 @@ select:focus-visible{
   color: rgba(255,255,255,0.82);
   font-size: 12px;
   line-height: 1.4;
+}
+.productsToggleField{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.03);
+}
+.productsToggleField input{
+  inline-size: 16px;
+  block-size: 16px;
+  accent-color: rgba(255,212,0,0.96);
+}
+.productsToggleField span{
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.88);
 }
 .productsAdminFormActions{
   margin-top: 2px;
@@ -1215,9 +1237,9 @@ select:focus-visible{
   width: 60px;
   height: 60px;
   border-radius: 10px;
-  object-fit: cover;
+  object-fit: contain;
   border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.05);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
   flex: 0 0 auto;
 }
 .productsAdminItemCopy{
@@ -1299,22 +1321,35 @@ select:focus-visible{
   gap: 10px;
   min-height: 188px;
 }
+.productsCardHead{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .productsImageWrap{
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.03);
-  min-height: 160px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
+    rgba(255,255,255,0.03);
+  aspect-ratio: 4 / 3;
+  min-height: 0;
+  display: grid;
+  place-items: center;
 }
 .productsImage{
   width: 100%;
-  height: 160px;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
+  padding: 12px;
   display: block;
 }
 .productsImageFallback{
   width: 100%;
-  height: 160px;
+  height: 100%;
   display: grid;
   place-items: center;
   font-size: 13px;
@@ -1341,8 +1376,63 @@ select:focus-visible{
 .productsTitle{
   margin: 0;
 }
+.productsFeatured{
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,212,0,0.22);
+  background: rgba(255,212,0,0.12);
+  color: rgba(255,241,194,0.96);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 .productsCard .p{
   color: rgba(255,255,255,0.88);
+}
+.productsPriceRow{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productsPrice{
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.2;
+  color: rgba(255,255,255,0.97);
+  font-weight: 900;
+}
+.productsStock{
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.05);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.9);
+}
+.productsStock.in-stock{
+  border-color: rgba(120,224,148,0.34);
+  background: rgba(120,224,148,0.12);
+  color: rgba(214,255,223,0.96);
+}
+.productsStock.low-stock{
+  border-color: rgba(255,212,0,0.30);
+  background: rgba(255,212,0,0.10);
+  color: rgba(255,241,194,0.96);
+}
+.productsStock.out-of-stock,
+.productsStock.inactive{
+  border-color: rgba(255,122,122,0.28);
+  background: rgba(255,122,122,0.10);
+  color: rgba(255,220,220,0.94);
 }
 .productsMeta{
   display: flex;
@@ -1357,6 +1447,102 @@ select:focus-visible{
   border: 1px solid rgba(255,255,255,0.16);
   background: rgba(255,255,255,0.05);
   padding: 6px 9px;
+}
+.productsCardActions{
+  margin-top: 2px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productsCardActions > *{
+  display: inline-flex;
+}
+.productsCheckoutFeedback{
+  max-width: 720px;
+}
+.productsCheckoutOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5,8,14,0.78);
+  backdrop-filter: blur(12px);
+}
+.productsCheckoutModal{
+  width: min(560px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+.productsCheckoutHead{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.productsCheckoutHeadCopy{
+  display: grid;
+  gap: 6px;
+}
+.productsCheckoutKicker{
+  margin: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,212,0,0.9);
+}
+.productsCheckoutTitle{
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, 28px);
+  line-height: 1.14;
+}
+.productsCheckoutLead{
+  margin: 0;
+  color: rgba(255,255,255,0.82);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.productsCheckoutClose{
+  inline-size: 40px;
+  block-size: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.92);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.productsCheckoutClose:hover{
+  transform: scale(1.03);
+  border-color: rgba(255,212,0,0.3);
+  background: rgba(255,212,0,0.08);
+}
+.productsCheckoutClose span{
+  display: block;
+  font-size: 24px;
+  line-height: 1;
+  transform: rotate(45deg);
+}
+.productsCheckoutMeta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.productsCheckoutForm{
+  margin: 0;
+}
+.productsCheckoutActions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productsCheckoutActions > *{
+  display: inline-flex;
 }
 .productsFoot{
   margin-top: 16px;
@@ -2994,16 +3180,24 @@ select:focus-visible{
   .productsAdminHead .btn,
   .productsAdminAuthForm,
   .productsAdminFormActions,
-  .productsAdminItemActions{
+  .productsAdminItemActions,
+  .productsCheckoutActions{
     width: 100%;
   }
   .productsAdminFormActions .btn,
-  .productsAdminItemActions .btn{
+  .productsAdminItemActions .btn,
+  .productsCheckoutActions .btn{
     flex: 1 1 calc(50% - 4px);
     width: 100%;
   }
   .productsCategoryHead{
     align-items: flex-start;
+  }
+  .productsCheckoutOverlay{
+    padding: 16px;
+  }
+  .productsCheckoutModal{
+    padding: 18px;
   }
   .assistantComposerRow{
     grid-template-columns: 1fr;
@@ -3061,7 +3255,8 @@ select:focus-visible{
     flex-basis: 100%;
   }
   .productsAdminFormActions .btn,
-  .productsAdminItemActions .btn{
+  .productsAdminItemActions .btn,
+  .productsCheckoutActions .btn{
     flex-basis: 100%;
   }
 }
@@ -3123,6 +3318,11 @@ input:focus, textarea:focus, select:focus{ border-color: rgba(255,212,0,0.42); b
   border: 1px solid rgba(120,224,148,0.5);
   background: rgba(120,224,148,0.12);
   color: rgba(214,255,223,0.96);
+}
+.formStatus.info{
+  border: 1px solid rgba(46,233,255,0.34);
+  background: rgba(46,233,255,0.10);
+  color: rgba(224,250,255,0.96);
 }
 .formStatus.error{
   border: 1px solid rgba(255,93,93,0.5);
