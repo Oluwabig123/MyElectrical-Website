@@ -5,13 +5,14 @@ import Button from "../components/ui/Button";
 import SectionHeader from "../components/ui/SectionHeader";
 import Reveal from "../components/ui/Reveal";
 import { CONTACT, buildWhatsAppUrl } from "../data/contact";
+import { fetchOnlineProducts } from "../lib/productDirectory";
 import {
   buildProductCatalog,
+  buildProductPath,
   formatProductPrice,
   getCategoryLabel,
   getProductAvailability,
   inferProductCategory,
-  normalizeProduct,
 } from "../utils/productCatalog";
 import {
   ADMIN_PRODUCTS_TABLE,
@@ -99,29 +100,6 @@ function validateAdminPayload(payload) {
   if (!payload.imageUrl) return "Add a valid image URL or upload an image.";
   if (!payload.priceAmount) return "Add a valid product price.";
   return "";
-}
-
-// Converts Supabase rows into the normalized catalog shape used by the page UI.
-function mapCloudRowToProduct(row) {
-  return normalizeProduct(
-    {
-      id: row.id,
-      name: row.name,
-      size: row.size,
-      type: row.type,
-      bestFor: row.best_for,
-      imageUrl: row.image_url,
-      priceAmount: row.price_amount,
-      currency: row.currency,
-      stockQty: row.stock_qty,
-      slug: row.slug,
-      isActive: row.is_active,
-      featured: row.featured,
-      category: row.category,
-      source: "cloud",
-    },
-    row.id
-  );
 }
 
 function formatPriceInput(product) {
@@ -216,10 +194,7 @@ export default function Products() {
     setIsCatalogLoading(true);
     setCatalogError("");
 
-    const { data, error } = await supabase
-      .from(ADMIN_PRODUCTS_TABLE)
-      .select("id,name,size,type,best_for,image_url,price_amount,currency,stock_qty,slug,is_active,featured,category,created_at")
-      .order("created_at", { ascending: false });
+    const { products, error } = await fetchOnlineProducts({ activeOnly: false });
 
     if (error) {
       setCatalogError(formatSupabaseError(error, "Could not load cloud products."));
@@ -228,7 +203,7 @@ export default function Products() {
       return;
     }
 
-    setCloudProducts((data || []).map(mapCloudRowToProduct));
+    setCloudProducts(products);
     setIsCatalogLoading(false);
   }, []);
 
@@ -1103,19 +1078,27 @@ export default function Products() {
                             >
                               {isPaystackEnabled ? "Checkout online" : "Checkout coming soon"}
                             </button>
-                            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn outline">
-                              Buy on WhatsApp
-                            </a>
-                          </>
-                        ) : (
+                          <Link to={buildProductPath(item)} className="btn outline">
+                            View details
+                          </Link>
+                          <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn outline">
+                            Buy on WhatsApp
+                          </a>
+                        </>
+                      ) : (
+                        <>
+                          <Link to={buildProductPath(item)} className="btn outline">
+                            View details
+                          </Link>
                           <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn primary">
                             {item.priceAmount > 0 && item.stockQty > 0
                               ? "Buy on WhatsApp"
                               : "Request availability"}
                           </a>
-                        )}
-                      </div>
-                    </article>
+                        </>
+                      )}
+                    </div>
+                  </article>
                   </Reveal>
                 );
               })}

@@ -175,6 +175,98 @@ select:focus-visible{
   gap: 10px;
   flex-wrap: wrap;
 }
+.featuredProductsHome{
+  position: relative;
+}
+.featuredProductsHome::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(720px 260px at 10% 10%, rgba(255,212,0,0.08), transparent 72%),
+    radial-gradient(560px 220px at 90% 84%, rgba(46,233,255,0.06), transparent 72%);
+}
+.featuredProductsHome .container{
+  position: relative;
+  z-index: 1;
+}
+.featuredProductsHomeShell{
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: calc(var(--radius) + 4px);
+  padding: clamp(16px, 2.4vw, 22px);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)),
+    rgba(255,255,255,0.03);
+  box-shadow: var(--shadow);
+}
+.featuredProductsHomeShell .sectionHeader{
+  margin-bottom: clamp(18px, 2vw, 22px);
+}
+.featuredProductsHomeGrid{
+  display: grid;
+  gap: 16px 14px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.featuredProductsHomeCard{
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+  color: inherit;
+  text-decoration: none;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transition: transform 180ms ease;
+}
+.featuredProductsHomeCard:hover{
+  transform: translateY(-2px);
+}
+.featuredProductsHomeCard:focus-visible{
+  outline: 2px solid rgba(255,212,0,0.42);
+  outline-offset: 3px;
+}
+.featuredProductsHomeMedia{
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.015);
+  display: grid;
+  place-items: center;
+}
+.featuredProductsHomeImage{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  display: block;
+}
+.featuredProductsHomeFallback{
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.84);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)),
+    rgba(255,255,255,0.02);
+}
+.featuredProductsHomeName{
+  margin: 0;
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.42;
+  font-weight: 800;
+  color: rgba(255,255,255,0.94);
+  padding-inline: 2px;
+  text-align: center;
+}
 .storiesPreview{
   position: relative;
 }
@@ -260,6 +352,12 @@ select:focus-visible{
   .servicesPreviewGrid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .featuredProductsHomeGrid{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .featuredProductsHomeGrid > :nth-child(n + 9){
+    display: none;
+  }
   .storiesGrid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -279,6 +377,15 @@ select:focus-visible{
   }
   .servicesPreviewActions{
     width: 100%;
+  }
+  .featuredProductsHomeGrid{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .featuredProductsHomeGrid > :nth-child(n + 7){
+    display: none;
+  }
+  .featuredProductsHomeName{
+    font-size: 13px;
   }
   .storiesGrid{
     grid-template-columns: 1fr;
@@ -1318,7 +1425,7 @@ select:focus-visible{
 }
 .productsCard{
   display: grid;
-  gap: 10px;
+  gap: 12px;
   min-height: 188px;
 }
 .productsCardHead{
@@ -1329,13 +1436,11 @@ select:focus-visible{
   flex-wrap: wrap;
 }
 .productsImageWrap{
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.16);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
-    rgba(255,255,255,0.03);
-  aspect-ratio: 4 / 3;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.015);
+  aspect-ratio: 1 / 1;
   min-height: 0;
   display: grid;
   place-items: center;
@@ -1344,8 +1449,10 @@ select:focus-visible{
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 12px;
+  object-position: center center;
+  padding: 0;
   display: block;
+  margin: 0 auto;
 }
 .productsImageFallback{
   width: 100%;
@@ -1586,6 +1693,249 @@ select:focus-visible{
 }
 .productsActions > *{
   display: inline-flex;
+}
+.productDetailPage{
+  position: relative;
+}
+.productDetailPage::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(760px 280px at 10% 8%, rgba(255,212,0,0.08), transparent 72%),
+    radial-gradient(620px 260px at 92% 84%, rgba(46,233,255,0.07), transparent 74%);
+}
+.productDetailPage .container{
+  position: relative;
+  z-index: 1;
+}
+.productDetailTopbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.productDetailBackLink{
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.92);
+  font-weight: 700;
+  transition: border-color .14s ease, background-color .14s ease, transform .14s ease;
+}
+.productDetailBackLink:hover{
+  border-color: rgba(255,212,0,0.24);
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+}
+.productDetailCategory{
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.84);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.productDetailLoading,
+.productDetailMissing{
+  display: grid;
+  gap: 12px;
+}
+.productDetailMissingTitle,
+.productDetailTitle,
+.productDetailSectionTitle{
+  margin: 0;
+}
+.productDetailMissingText,
+.productDetailLead,
+.productDetailBody{
+  margin: 0;
+  color: rgba(255,255,255,0.86);
+  font-size: 15px;
+  line-height: 1.62;
+}
+.productDetailHero{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  align-items: start;
+}
+.productDetailMediaCard,
+.productDetailSummary,
+.productDetailInfo,
+.productDetailSupport{
+  display: grid;
+  gap: 14px;
+}
+.productDetailMediaCard{
+  padding: 16px;
+}
+.productDetailMedia{
+  aspect-ratio: 1 / 1;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.015);
+  display: grid;
+  place-items: center;
+}
+.productDetailImage{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  display: block;
+}
+.productDetailFallback{
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: rgba(255,255,255,0.84);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)),
+    rgba(255,255,255,0.02);
+}
+.productDetailKicker,
+.productDetailRelatedLabel,
+.productDetailFactLabel{
+  margin: 0;
+  color: rgba(255,212,0,0.9);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.productDetailTitle{
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+.productDetailPriceRow{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productDetailPrice{
+  font-size: clamp(26px, 2.6vw, 34px);
+  line-height: 1.1;
+  color: rgba(255,255,255,0.98);
+  font-weight: 900;
+}
+.productDetailActions,
+.productDetailSupportActions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productDetailActions > *,
+.productDetailSupportActions > *{
+  display: inline-flex;
+}
+.productDetailStatus{
+  margin: 0;
+}
+.productDetailSupportMeta{
+  display: grid;
+  gap: 8px;
+  color: rgba(255,255,255,0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.productDetailGrid{
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  align-items: start;
+}
+.productDetailFacts{
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.productDetailFact{
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+}
+.productDetailFact strong{
+  color: rgba(255,255,255,0.94);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.productDetailRelated{
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+.productDetailRelatedHead{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.productDetailRelatedGrid{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.productDetailRelatedCard{
+  display: grid;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+.productDetailRelatedMedia{
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.015);
+  display: grid;
+  place-items: center;
+}
+.productDetailRelatedImage{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  display: block;
+}
+.productDetailRelatedName{
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.42;
+  font-weight: 800;
+  color: rgba(255,255,255,0.94);
+}
+.productDetailRelatedPrice{
+  color: rgba(255,255,255,0.98);
+  font-size: 16px;
+  line-height: 1.3;
 }
 
 .memoryGamePage{
@@ -2479,13 +2829,13 @@ select:focus-visible{
 .assistantLayout{
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
   align-items: start;
 }
 .assistantGuide{
   display: grid;
-  gap: 16px;
-  padding: 20px;
+  gap: 14px;
+  padding: 16px;
   background:
     linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03)),
     radial-gradient(400px 220px at 14% 10%, rgba(255,212,0,0.12), transparent 72%),
@@ -2493,16 +2843,16 @@ select:focus-visible{
 }
 .assistantGuideHero{
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 .assistantGuideEyebrow{
   width: fit-content;
-  padding: 7px 10px;
+  padding: 6px 9px;
   border-radius: 999px;
   border: 1px solid rgba(255,212,0,0.18);
   background: rgba(255,212,0,0.08);
   color: rgba(255,246,195,0.96);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -2510,44 +2860,44 @@ select:focus-visible{
 .assistantGuideTitle{
   margin: 0;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  font-size: clamp(28px, 2.8vw, 36px);
+  font-size: clamp(22px, 2.1vw, 28px);
   font-weight: 700;
-  line-height: 1.06;
+  line-height: 1.1;
   letter-spacing: -0.03em;
 }
 .assistantGuideLead{
   margin: 0;
   color: rgba(255,255,255,0.82);
-  font-size: 15px;
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.58;
 }
 .assistantSignalRow{
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 .assistantSignalChip{
   display: inline-flex;
   align-items: center;
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: 30px;
+  padding: 0 10px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.05);
   color: rgba(255,255,255,0.88);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 .assistantCapabilityList{
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 .assistantCapabilityCard{
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 16px;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(7,10,18,0.38);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
@@ -2567,14 +2917,14 @@ select:focus-visible{
 }
 .assistantCapabilityTitle{
   margin: 0 0 6px;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.3;
 }
 .assistantCapabilityText{
   margin: 0;
   color: rgba(255,255,255,0.8);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
 }
 .assistantQuoteTracker{
   display: grid;
@@ -2644,7 +2994,7 @@ select:focus-visible{
 }
 .assistantGuideBlockTitle{
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
 }
 .assistantGuideBlockMeta{
@@ -2667,9 +3017,9 @@ select:focus-visible{
     linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03)),
     rgba(255,255,255,0.05);
   color: rgba(255,255,255,0.92);
-  border-radius: 16px;
-  min-height: 52px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  min-height: 48px;
+  padding: 9px 11px;
   text-align: left;
   cursor: pointer;
   transition: background-color .14s ease, border-color .14s ease, transform .14s ease, box-shadow .14s ease;
@@ -2695,13 +3045,13 @@ select:focus-visible{
 }
 .assistantGuidePanel{
   display: grid;
-  gap: 14px;
+  gap: 12px;
   border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 18px;
+  border-radius: 16px;
   background:
     linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03)),
     rgba(255,255,255,0.04);
-  padding: 14px;
+  padding: 12px;
 }
 .assistantGuidePanelTop{
   display: flex;
@@ -2720,8 +3070,8 @@ select:focus-visible{
 .assistantGuideText{
   margin: 0;
   color: rgba(255,255,255,0.84);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.55;
 }
 .assistantGuideResponse{
   flex-shrink: 0;
@@ -2776,20 +3126,24 @@ select:focus-visible{
 }
 .assistantHeadMeta{
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 .assistantHeadKicker{
   color: rgba(255,212,0,0.9);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .assistantHeadMeta strong{
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  font-size: clamp(24px, 2.2vw, 30px);
-  line-height: 1.04;
+  font-size: clamp(18px, 1.8vw, 22px);
+  line-height: 1.14;
   letter-spacing: -0.03em;
+}
+.assistantHeadMeta span{
+  font-size: 11px;
+  color: rgba(255,255,255,0.62);
 }
 .assistantHeadActions{
   display: flex;
@@ -2813,13 +3167,13 @@ select:focus-visible{
   padding: 6px 12px;
 }
 .assistantLayout .assistantPageBody{
-  min-height: 460px;
-  max-height: 62vh;
+  min-height: 540px;
+  max-height: 66vh;
 }
 .assistantPageComposer{
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 .assistantUploadPanel{
   display: flex;
@@ -2895,11 +3249,12 @@ select:focus-visible{
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
+  align-items: stretch;
 }
 .assistantInputShell{
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
-  background: rgba(255,255,255,0.04);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.06);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .assistantInputShell textarea{
@@ -2908,15 +3263,16 @@ select:focus-visible{
   outline: 0;
   background: transparent;
   color: rgba(255,255,255,0.94);
-  padding: 14px 16px;
+  padding: 16px 18px;
   font: inherit;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 .assistantInputShell textarea::placeholder{
   color: rgba(255,255,255,0.48);
 }
 .assistantSendBtn{
-  min-width: 132px;
+  min-width: 146px;
+  min-height: 100%;
 }
 .assistantComposerMeta{
   display: flex;
@@ -3059,6 +3415,13 @@ select:focus-visible{
   .aboutGrid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .productDetailHero,
+  .productDetailGrid{
+    grid-template-columns: 1fr;
+  }
+  .productDetailRelatedGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .assistantLayout{
     grid-template-columns: 1fr;
   }
@@ -3115,6 +3478,8 @@ select:focus-visible{
   .aboutFoot,
   .servicesPageFoot,
   .productsFoot,
+  .productDetailTopbar,
+  .productDetailRelatedHead,
   .projectsToolbar,
   .projectsFoot,
   .contactFoot,
@@ -3163,6 +3528,20 @@ select:focus-visible{
   .assistantHeadActions{
     width: 100%;
     justify-content: space-between;
+  }
+  .productDetailFacts{
+    grid-template-columns: 1fr;
+  }
+  .productDetailActions,
+  .productDetailSupportActions{
+    width: 100%;
+  }
+  .productDetailActions > *,
+  .productDetailSupportActions > *{
+    flex: 1 1 calc(50% - 5px);
+  }
+  .productDetailTitle{
+    font-size: clamp(24px, 8vw, 34px);
   }
   .assistantGuide{
     padding: 18px;
@@ -3248,11 +3627,18 @@ select:focus-visible{
   .projectsGrid{
     grid-template-columns: 1fr;
   }
+  .productDetailRelatedGrid{
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 560px){
   .assistantGuideAction,
   .assistantQuoteResultActions > *,
   .assistantGuideActions > *{
+    flex-basis: 100%;
+  }
+  .productDetailActions > *,
+  .productDetailSupportActions > *{
     flex-basis: 100%;
   }
   .aboutActions > *,
@@ -4194,13 +4580,13 @@ input:focus, textarea:focus, select:focus{ border-color: rgba(255,212,0,0.42); b
 .oduzzAssistantComposer{
   border-top: 1px solid rgba(255,255,255,0.08);
   display: grid;
-  gap: 10px;
-  padding: 16px 20px 20px;
+  gap: 12px;
+  padding: 18px 20px 20px;
 }
 .oduzzAssistantComposer textarea{
   resize: vertical;
-  min-height: 44px;
-  max-height: 140px;
+  min-height: 84px;
+  max-height: 180px;
 }
 .assistantPagePanel{
   max-width: 920px;

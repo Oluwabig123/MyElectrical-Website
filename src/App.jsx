@@ -9,6 +9,7 @@ const Blog = lazy(() => import("./pages/Blog.jsx"));
 const BlogArticle = lazy(() => import("./pages/BlogArticle.jsx"));
 const Academy = lazy(() => import("./pages/Academy.jsx"));
 const Products = lazy(() => import("./pages/Products.jsx"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail.jsx"));
 const Projects = lazy(() => import("./pages/Projects.jsx"));
 const Quote = lazy(() => import("./pages/Quote.jsx"));
 const Assistant = lazy(() => import("./pages/Assistant.jsx"));
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/blog/:slug" element={<DeferredPage><BlogArticle /></DeferredPage>} />
         <Route path="/academy" element={<DeferredPage><Academy /></DeferredPage>} />
         <Route path="/products" element={<DeferredPage><Products /></DeferredPage>} />
+        <Route path="/products/:slug" element={<DeferredPage><ProductDetail /></DeferredPage>} />
         <Route path="/projects" element={<DeferredPage><Projects /></DeferredPage>} />
         <Route path="/quote" element={<DeferredPage><Quote /></DeferredPage>} />
         <Route path="/assistant" element={<DeferredPage><Assistant /></DeferredPage>} />

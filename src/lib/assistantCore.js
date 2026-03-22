@@ -43,6 +43,20 @@ export function isQuoteQuestion(text) {
   return /quote|estimate|cost|price|budget|pricing/.test(normalize(text));
 }
 
+export function shouldStartSolarSizingFlow(text) {
+  const value = normalize(text);
+  return /(^|\b)(size my solar system|solar sizing|solar size|size system|calculate solar|solar calculator|solar load estimate)(\b|$)/.test(
+    value
+  );
+}
+
+export function shouldStartQuoteFlow(text) {
+  const value = normalize(text);
+  return /(^|\b)(start quote intake|start quote|quote intake|prepare quote|request quote|help me with a quote)(\b|$)/.test(
+    value
+  );
+}
+
 export function buildSolarRecommendation({ loadsWatts, location, backupHours }) {
   const rules = oduzzAssistantDoc.solarSizing;
   const assumptions = rules.assumptions;

@@ -4,6 +4,7 @@ import DeferredSection from "../components/ui/DeferredSection";
 
 import Hero from "../sections/home/Hero";
 import ServicesPreview from "../sections/home/ServicesPreview";
+import FeaturedProducts from "../sections/home/FeaturedProducts";
 
 const Stories = lazy(() => import("../sections/home/Stories"));
 const LightingShowcase = lazy(() => import("../sections/home/LightingShowcase"));
@@ -31,6 +32,7 @@ export default function Home() {
       {/* Home page sections are composed from standalone section components. */}
       <Hero />
       <ServicesPreview />
+      <FeaturedProducts />
       <DeferredSection fallback={<HomeSectionFallback minHeight={420} />}>
         <Suspense fallback={<HomeSectionFallback minHeight={420} />}>
           <Stories />

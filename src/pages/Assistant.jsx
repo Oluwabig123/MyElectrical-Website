@@ -10,11 +10,11 @@ import {
   buildSolarRecommendation,
   clampMessage,
   INITIAL_ASSISTANT_MESSAGE,
-  isQuoteQuestion,
-  isSolarQuestion,
   MAX_INPUT_CHARS,
   MAX_MESSAGES,
   normalize,
+  shouldStartQuoteFlow,
+  shouldStartSolarSizingFlow,
   toNumber,
 } from "../lib/assistantCore.js";
 import {
@@ -303,12 +303,12 @@ export default function Assistant() {
       return;
     }
 
-    if (isQuoteQuestion(raw)) {
+    if (shouldStartQuoteFlow(raw)) {
       startQuoteFlow(raw);
       return;
     }
 
-    if (isSolarQuestion(raw)) {
+    if (shouldStartSolarSizingFlow(raw)) {
       setStage("solar-loads");
       setAssistantStatus("");
       setQuoteResult(null);

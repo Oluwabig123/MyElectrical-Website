@@ -218,6 +218,11 @@ export function getProductAvailability(product) {
   return "In stock";
 }
 
+export function buildProductPath(product) {
+  const slug = sanitizeSlug(product?.slug) || sanitizeText(product?.id);
+  return slug ? `/products/${slug}` : "/products";
+}
+
 export function buildProductCatalog(products, { includeInactive = false } = {}) {
   const normalizedItems = products.map((item, index) =>
     normalizeProduct(item, `product-${index + 1}`)
@@ -248,4 +253,29 @@ export function buildProductCatalog(products, { includeInactive = false } = {}) 
     groups,
     items: visibleItems,
   };
+}
+
+export function selectMixedProducts(products, limit = 10) {
+  const safeLimit = Math.max(0, Number.parseInt(String(limit), 10) || 0);
+  if (!safeLimit) return [];
+
+  const { groups, items } = buildProductCatalog(products);
+  const pickedIds = new Set();
+  const mixed = [];
+
+  groups.forEach((group) => {
+    if (mixed.length >= safeLimit) return;
+    const candidate = group.items.find((item) => !pickedIds.has(item.id));
+    if (!candidate) return;
+    pickedIds.add(candidate.id);
+    mixed.push(candidate);
+  });
+
+  items.forEach((item) => {
+    if (mixed.length >= safeLimit || pickedIds.has(item.id)) return;
+    pickedIds.add(item.id);
+    mixed.push(item);
+  });
+
+  return mixed;
 }
