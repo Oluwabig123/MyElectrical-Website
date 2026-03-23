@@ -29,6 +29,7 @@ const productSummary = [
   "- Product availability is managed online and can change with current stock.",
   "- For a specific item, buyers should request current availability, price, and quantity.",
   "- The product page reflects only online-managed stock entries.",
+  "- Product entries now carry category, brand, description, and key feature notes for better product guidance.",
 ].join("\n");
 
 export const ASSISTANT_SYSTEM_INSTRUCTIONS = [

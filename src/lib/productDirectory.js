@@ -6,7 +6,7 @@ import {
 import { normalizeProduct } from "../utils/productCatalog";
 
 export const PRODUCT_SELECT_FIELDS =
-  "id,name,size,type,best_for,image_url,price_amount,currency,stock_qty,slug,is_active,featured,category,created_at";
+  "id,name,size,type,best_for,image_url,brand,description,key_features,price_amount,currency,stock_qty,slug,is_active,featured,category,created_at";
 
 export function mapProductRow(row) {
   return normalizeProduct(
@@ -17,6 +17,9 @@ export function mapProductRow(row) {
       type: row.type,
       bestFor: row.best_for,
       imageUrl: row.image_url,
+      brand: row.brand,
+      description: row.description,
+      keyFeatures: row.key_features,
       priceAmount: row.price_amount,
       currency: row.currency,
       stockQty: row.stock_qty,

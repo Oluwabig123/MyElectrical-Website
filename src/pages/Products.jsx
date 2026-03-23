@@ -5,6 +5,7 @@ import Button from "../components/ui/Button";
 import SectionHeader from "../components/ui/SectionHeader";
 import Reveal from "../components/ui/Reveal";
 import { CONTACT, buildWhatsAppUrl } from "../data/contact";
+import { useCart } from "../lib/cartContext";
 import { fetchOnlineProducts } from "../lib/productDirectory";
 import {
   buildProductCatalog,
@@ -13,6 +14,8 @@ import {
   getCategoryLabel,
   getProductAvailability,
   inferProductCategory,
+  isValidProductCategory,
+  PRODUCT_CATEGORY_DEFINITIONS,
 } from "../utils/productCatalog";
 import {
   ADMIN_PRODUCTS_TABLE,
@@ -23,14 +26,18 @@ import {
 
 const EMPTY_ADMIN_FORM = {
   name: "",
+  brand: "Oduzz",
   size: "",
   type: "",
   bestFor: "",
+  description: "",
+  keyFeatures: "",
   imageUrl: "",
   price: "",
   currency: "NGN",
   stockQty: "0",
   slug: "",
+  category: "",
   isActive: true,
   featured: false,
 };
@@ -40,15 +47,7 @@ const EMPTY_AUTH_FORM = {
   password: "",
 };
 
-const EMPTY_CHECKOUT_FORM = {
-  name: "",
-  email: "",
-  phone: "",
-};
-
 const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
-const PAYSTACK_UNAVAILABLE_MESSAGE =
-  "Online card payment is being finalized. Please place this order on WhatsApp for now.";
 
 // Small input helpers keep the admin payload predictable before validation.
 function sanitizeValue(value) {
@@ -74,12 +73,23 @@ function normalizeAdminPayload(formValues) {
   const parsedPrice = Number.parseFloat(String(formValues.price || "").replace(/,/g, ""));
   const safePriceAmount = Number.isFinite(parsedPrice) && parsedPrice > 0 ? Math.round(parsedPrice * 100) : 0;
   const parsedStockQty = Number.parseInt(String(formValues.stockQty || ""), 10);
+  const safeKeyFeatures = String(formValues.keyFeatures || "")
+    .split(/\r?\n/)
+    .map((value) => sanitizeValue(value))
+    .filter(Boolean)
+    .slice(0, 8);
+  const requestedCategory = sanitizeValue(formValues.category);
+  const inferredCategory = inferProductCategory(formValues);
+  const finalCategory = isValidProductCategory(requestedCategory) ? requestedCategory : inferredCategory;
 
   return {
     name: sanitizeValue(formValues.name),
+    brand: sanitizeValue(formValues.brand) || "Oduzz",
     size: sanitizeValue(formValues.size) || "N/A",
     type: sanitizeValue(formValues.type) || "Electrical item",
     bestFor: sanitizeValue(formValues.bestFor) || "General electrical use",
+    description: sanitizeValue(formValues.description),
+    keyFeatures: safeKeyFeatures,
     imageUrl: normalizeImageUrl(formValues.imageUrl),
     priceAmount: safePriceAmount,
     currency: sanitizeValue(formValues.currency).toUpperCase() || "NGN",
@@ -89,6 +99,7 @@ function normalizeAdminPayload(formValues) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80),
+    category: finalCategory,
     isActive: Boolean(formValues.isActive),
     featured: Boolean(formValues.featured),
   };
@@ -97,6 +108,7 @@ function normalizeAdminPayload(formValues) {
 function validateAdminPayload(payload) {
   if (!payload.name) return "Product name is required.";
   if (!payload.bestFor) return "Add a short best-for note.";
+  if (!payload.description) return "Add a product description.";
   if (!payload.imageUrl) return "Add a valid image URL or upload an image.";
   if (!payload.priceAmount) return "Add a valid product price.";
   return "";
@@ -105,6 +117,10 @@ function validateAdminPayload(payload) {
 function formatPriceInput(product) {
   const amount = Number(product?.priceAmount || 0);
   return amount > 0 ? String(amount / 100) : "";
+}
+
+function formatKeyFeaturesInput(product) {
+  return Array.isArray(product?.keyFeatures) ? product.keyFeatures.join("\n") : "";
 }
 
 function buildProductPurchaseMessage(product) {
@@ -121,22 +137,6 @@ function buildProductPurchaseMessage(product) {
   return lines.join("\n");
 }
 
-function validateCheckoutForm(formValues) {
-  const name = sanitizeValue(formValues.name);
-  const email = sanitizeValue(formValues.email).toLowerCase();
-  const phone = sanitizeValue(formValues.phone);
-
-  if (!name) return "Enter your name to continue.";
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return "Enter a valid email address.";
-  }
-  if (phone && phone.replace(/[^\d+]/g, "").length < 7) {
-    return "Enter a valid phone number or leave it blank.";
-  }
-
-  return "";
-}
-
 function formatSupabaseError(error, fallbackMessage) {
   if (!error) return fallbackMessage;
   const message = sanitizeValue(error.message);
@@ -147,6 +147,7 @@ function formatSupabaseError(error, fallbackMessage) {
 }
 
 export default function Products() {
+  const { addItem } = useCart();
   // Admin state, auth state, and product catalog state all live in this page.
   const [isAdminOpen, setIsAdminOpen] = React.useState(false);
   const [adminForm, setAdminForm] = React.useState(EMPTY_ADMIN_FORM);
@@ -162,14 +163,9 @@ export default function Products() {
   const [catalogError, setCatalogError] = React.useState("");
   const [formStatus, setFormStatus] = React.useState({ type: "", message: "" });
   const [authStatus, setAuthStatus] = React.useState({ type: "", message: "" });
-  const [checkoutProduct, setCheckoutProduct] = React.useState(null);
-  const [checkoutForm, setCheckoutForm] = React.useState(EMPTY_CHECKOUT_FORM);
-  const [checkoutStatus, setCheckoutStatus] = React.useState({ type: "", message: "" });
-  const [checkoutFeedback, setCheckoutFeedback] = React.useState({ type: "", message: "" });
-  const [isCheckoutLoading, setIsCheckoutLoading] = React.useState(false);
+  const [cartFeedback, setCartFeedback] = React.useState({ type: "", message: "" });
 
   const isAuthenticated = Boolean(authSession?.user);
-  const isPaystackEnabled = import.meta.env.VITE_PAYSTACK_ENABLED === "true";
 
   const catalog = React.useMemo(() => buildProductCatalog(cloudProducts), [cloudProducts]);
   const adminCatalog = React.useMemo(
@@ -177,10 +173,15 @@ export default function Products() {
     [cloudProducts]
   );
 
-  const categoryPreviewLabel = React.useMemo(() => {
+  const inferredCategoryLabel = React.useMemo(() => {
     const draftCategory = inferProductCategory(adminForm);
     return getCategoryLabel(draftCategory);
   }, [adminForm]);
+
+  const selectedCategoryLabel = React.useMemo(() => {
+    if (!adminForm.category) return "Auto-detect";
+    return getCategoryLabel(adminForm.category);
+  }, [adminForm.category]);
 
   // Loads cloud products for both the public catalog and the admin list.
   const loadCloudProducts = React.useCallback(async () => {
@@ -281,23 +282,6 @@ export default function Products() {
   function resetAdminForm() {
     setAdminForm(EMPTY_ADMIN_FORM);
     setEditingProductId(null);
-  }
-
-  function handleCheckoutInputChange(event) {
-    const { name, value } = event.target;
-    setCheckoutForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function closeCheckoutModal() {
-    if (isCheckoutLoading) return;
-    setCheckoutProduct(null);
-    setCheckoutStatus({ type: "", message: "" });
-    setCheckoutForm(EMPTY_CHECKOUT_FORM);
-  }
-
-  function openCheckoutModal(product) {
-    setCheckoutProduct(product);
-    setCheckoutStatus({ type: "", message: "" });
   }
 
   // Uploads a selected image to Supabase storage and stores its public URL in the form.
@@ -430,7 +414,6 @@ export default function Products() {
       return;
     }
 
-    const inferredCategory = inferProductCategory(payload);
     setIsSavingProduct(true);
     setFormStatus({ type: "", message: "" });
 
@@ -439,9 +422,12 @@ export default function Products() {
         .from(ADMIN_PRODUCTS_TABLE)
         .update({
           name: payload.name,
+          brand: payload.brand,
           size: payload.size,
           type: payload.type,
           best_for: payload.bestFor,
+          description: payload.description,
+          key_features: payload.keyFeatures,
           image_url: payload.imageUrl,
           price_amount: payload.priceAmount,
           currency: payload.currency,
@@ -449,7 +435,7 @@ export default function Products() {
           slug: payload.slug || null,
           is_active: payload.isActive,
           featured: payload.featured,
-          category: inferredCategory,
+          category: payload.category,
         })
         .eq("id", editingProductId);
 
@@ -464,15 +450,18 @@ export default function Products() {
 
       setFormStatus({
         type: "success",
-        message: "Cloud product updated and re-grouped automatically.",
+        message: "Cloud product updated with richer product detail.",
       });
     } else {
       const { error } = await supabase.from(ADMIN_PRODUCTS_TABLE).insert([
         {
           name: payload.name,
+          brand: payload.brand,
           size: payload.size,
           type: payload.type,
           best_for: payload.bestFor,
+          description: payload.description,
+          key_features: payload.keyFeatures,
           image_url: payload.imageUrl,
           price_amount: payload.priceAmount,
           currency: payload.currency,
@@ -480,7 +469,7 @@ export default function Products() {
           slug: payload.slug || null,
           is_active: payload.isActive,
           featured: payload.featured,
-          category: inferredCategory,
+          category: payload.category,
           created_by: authSession?.user?.id || null,
         },
       ]);
@@ -496,7 +485,7 @@ export default function Products() {
 
       setFormStatus({
         type: "success",
-        message: "Cloud product added and placed in category automatically.",
+        message: "Cloud product added with premium product detail fields.",
       });
     }
 
@@ -514,14 +503,18 @@ export default function Products() {
     setEditingProductId(productId);
     setAdminForm({
       name: selectedProduct.name,
+      brand: selectedProduct.brand || "Oduzz",
       size: selectedProduct.size,
       type: selectedProduct.type,
       bestFor: selectedProduct.bestFor,
+      description: selectedProduct.description || "",
+      keyFeatures: formatKeyFeaturesInput(selectedProduct),
       imageUrl: selectedProduct.imageUrl || "",
       price: formatPriceInput(selectedProduct),
       currency: selectedProduct.currency || "NGN",
       stockQty: String(selectedProduct.stockQty ?? 0),
       slug: selectedProduct.slug || "",
+      category: selectedProduct.category || "",
       isActive: selectedProduct.isActive,
       featured: selectedProduct.featured,
     });
@@ -565,117 +558,14 @@ export default function Products() {
     loadCloudProducts();
   }
 
-  async function startPaystackCheckout(event) {
-    event.preventDefault();
-
-    if (!checkoutProduct) return;
-
-    if (!isPaystackEnabled) {
-      setCheckoutStatus({ type: "info", message: PAYSTACK_UNAVAILABLE_MESSAGE });
-      return;
-    }
-
-    const validationError = validateCheckoutForm(checkoutForm);
-    if (validationError) {
-      setCheckoutStatus({ type: "error", message: validationError });
-      return;
-    }
-
-    setIsCheckoutLoading(true);
-    setCheckoutStatus({ type: "", message: "" });
-
-    try {
-      const response = await fetch("/api/create-paystack-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId: checkoutProduct.id,
-          customerName: sanitizeValue(checkoutForm.name),
-          customerEmail: sanitizeValue(checkoutForm.email),
-          customerPhone: sanitizeValue(checkoutForm.phone),
-        }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-
-      if (!response.ok || !payload?.ok || !payload?.authorizationUrl) {
-        setCheckoutStatus({
-          type: "error",
-          message: payload?.error || "Could not start checkout right now.",
-        });
-        setIsCheckoutLoading(false);
-        return;
-      }
-
-      if (typeof window !== "undefined") {
-        window.location.href = payload.authorizationUrl;
-      }
-    } catch (error) {
-      setCheckoutStatus({
-        type: "error",
-        message: error?.message || "Could not start checkout right now.",
-      });
-      setIsCheckoutLoading(false);
-    }
+  function handleAddToCart(product) {
+    if (!product || product.stockQty <= 0) return;
+    addItem(product, 1);
+    setCartFeedback({
+      type: "success",
+      message: `${product.name} added to cart. Review it when you're ready.`,
+    });
   }
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    const params = new URLSearchParams(window.location.search);
-    const checkoutGateway = params.get("checkout");
-    const reference = params.get("reference") || params.get("trxref");
-
-    if (checkoutGateway !== "paystack" || !reference) {
-      return undefined;
-    }
-
-    let isActive = true;
-
-    async function verifyPayment() {
-      setCheckoutFeedback({ type: "info", message: "Confirming payment..." });
-
-      try {
-        const response = await fetch(
-          `/api/verify-paystack-payment?reference=${encodeURIComponent(reference)}`,
-          {
-            method: "GET",
-          }
-        );
-        const payload = await response.json().catch(() => ({}));
-
-        if (!isActive) return;
-
-        setCheckoutFeedback({
-          type: payload?.verified ? "success" : "error",
-          message:
-            payload?.message ||
-            (payload?.verified ? "Payment confirmed." : payload?.error || "Could not confirm payment."),
-        });
-      } catch (error) {
-        if (!isActive) return;
-        setCheckoutFeedback({
-          type: "error",
-          message: error?.message || "Could not confirm payment.",
-        });
-      } finally {
-        params.delete("checkout");
-        params.delete("reference");
-        params.delete("trxref");
-        const nextSearch = params.toString();
-        const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
-        window.history.replaceState({}, "", nextUrl);
-      }
-    }
-
-    verifyPayment();
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
 
   const totalProducts = catalog.items.length;
   const totalCategories = catalog.groups.length;
@@ -763,7 +653,10 @@ export default function Products() {
                 {isSupabaseConfigured && isAuthenticated ? (
                   <form className="form productsAdminForm" onSubmit={handleAdminSubmit}>
                     <p className="productsAdminAutoCategory">
-                      Auto category: <strong>{categoryPreviewLabel}</strong>
+                      Auto category: <strong>{inferredCategoryLabel}</strong>
+                    </p>
+                    <p className="productsAdminAutoCategory">
+                      Category in use: <strong>{selectedCategoryLabel}</strong>
                     </p>
                     <p className="productsAdminAuthMeta">
                       Signed in as {authSession?.user?.email || "admin"}
@@ -776,6 +669,16 @@ export default function Products() {
                         value={adminForm.name}
                         onChange={handleFormInputChange}
                         placeholder="e.g. 12W LED panel light"
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Brand</span>
+                      <input
+                        type="text"
+                        name="brand"
+                        value={adminForm.brand}
+                        onChange={handleFormInputChange}
+                        placeholder="e.g. Lagostar"
                       />
                     </label>
                     <label className="field">
@@ -797,6 +700,17 @@ export default function Products() {
                         onChange={handleFormInputChange}
                         placeholder="e.g. LED fixture, Copper single core"
                       />
+                    </label>
+                    <label className="field">
+                      <span>Category</span>
+                      <select name="category" value={adminForm.category} onChange={handleFormInputChange}>
+                        <option value="">Auto-detect from product details</option>
+                        {PRODUCT_CATEGORY_DEFINITIONS.map((category) => (
+                          <option key={category.key} value={category.key}>
+                            {category.label}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
                       <span>Image URL *</span>
@@ -879,6 +793,26 @@ export default function Products() {
                         placeholder="Where this product is typically used"
                       />
                     </label>
+                    <label className="field">
+                      <span>Description *</span>
+                      <textarea
+                        rows={4}
+                        name="description"
+                        value={adminForm.description}
+                        onChange={handleFormInputChange}
+                        placeholder="Short product description for the detail page and assistant context"
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Key features</span>
+                      <textarea
+                        rows={4}
+                        name="keyFeatures"
+                        value={adminForm.keyFeatures}
+                        onChange={handleFormInputChange}
+                        placeholder={"One feature per line\nPure copper conductor\nSuitable for domestic wiring"}
+                      />
+                    </label>
                     <label className="productsToggleField">
                       <input
                         type="checkbox"
@@ -951,7 +885,7 @@ export default function Products() {
                           <div className="productsAdminItemCopy">
                             <p className="productsAdminItemName">{item.name}</p>
                             <p className="productsAdminItemMeta">
-                              {item.categoryLabel} | {formatProductPrice(item)} | Stock: {item.stockQty} | {item.isActive ? "Live" : "Hidden"}
+                              {item.brand} | {item.categoryLabel} | {formatProductPrice(item)} | Stock: {item.stockQty} | {item.isActive ? "Live" : "Hidden"}
                             </p>
                           </div>
                           {isAuthenticated ? (
@@ -984,9 +918,9 @@ export default function Products() {
           Showing {totalProducts} products across {totalCategories} categories.
         </p>
 
-        {checkoutFeedback.message ? (
-          <p className={`formStatus ${checkoutFeedback.type || "success"} productsCheckoutFeedback`}>
-            {checkoutFeedback.message}
+        {cartFeedback.message ? (
+          <p className={`formStatus ${cartFeedback.type || "success"} productsCheckoutFeedback`}>
+            {cartFeedback.message} <Link to="/cart">View cart</Link>
           </p>
         ) : null}
 
@@ -1025,14 +959,7 @@ export default function Products() {
             <div className="productsGrid">
               {group.items.map((item, index) => {
                 const availability = getProductAvailability(item);
-                const whatsappUrl = buildWhatsAppUrl(
-                  encodeURIComponent(buildProductPurchaseMessage(item))
-                );
-                const canCheckoutOnline =
-                  item.source === "cloud" &&
-                  item.isActive &&
-                  item.priceAmount > 0 &&
-                  item.stockQty > 0;
+                const canAddToCart = item.isActive && item.priceAmount > 0 && item.stockQty > 0;
 
                 return (
                   <Reveal key={item.id} delay={groupIndex * 0.06 + index * 0.03}>
@@ -1069,36 +996,34 @@ export default function Products() {
                         <span className="productsChip">{item.type}</span>
                       </div>
                       <div className="productsCardActions">
-                        {canCheckoutOnline ? (
+                        {canAddToCart ? (
                           <>
-                            <button
-                              type="button"
-                              className="btn primary"
-                              onClick={() => openCheckoutModal(item)}
-                            >
-                              {isPaystackEnabled ? "Checkout online" : "Checkout coming soon"}
+                            <button type="button" className="btn primary" onClick={() => handleAddToCart(item)}>
+                              Add to cart
                             </button>
-                          <Link to={buildProductPath(item)} className="btn outline">
-                            View details
-                          </Link>
-                          <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn outline">
-                            Buy on WhatsApp
-                          </a>
-                        </>
-                      ) : (
-                        <>
-                          <Link to={buildProductPath(item)} className="btn outline">
-                            View details
-                          </Link>
-                          <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn primary">
-                            {item.priceAmount > 0 && item.stockQty > 0
-                              ? "Buy on WhatsApp"
-                              : "Request availability"}
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </article>
+                            <Link to={buildProductPath(item)} className="btn outline">
+                              View details
+                            </Link>
+                          </>
+                        ) : (
+                          <>
+                            <Link to={buildProductPath(item)} className="btn outline">
+                              View details
+                            </Link>
+                            <a
+                              href={buildWhatsAppUrl(
+                                encodeURIComponent(buildProductPurchaseMessage(item))
+                              )}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn primary"
+                            >
+                              Request availability
+                            </a>
+                          </>
+                        )}
+                      </div>
+                    </article>
                   </Reveal>
                 );
               })}
@@ -1118,112 +1043,6 @@ export default function Products() {
           </div>
         </Reveal>
 
-        {checkoutProduct ? (
-          <div
-            className="productsCheckoutOverlay"
-            onClick={(event) => {
-              if (event.target === event.currentTarget) {
-                closeCheckoutModal();
-              }
-            }}
-          >
-            <div className="card productsCheckoutModal" role="dialog" aria-modal="true" aria-labelledby="products-checkout-title">
-              <div className="productsCheckoutHead">
-                <div className="productsCheckoutHeadCopy">
-                  <p className="productsCheckoutKicker">Secure checkout</p>
-                  <h3 id="products-checkout-title" className="productsCheckoutTitle">
-                    {checkoutProduct.name}
-                  </h3>
-                  <p className="productsCheckoutLead">
-                    {isPaystackEnabled
-                      ? "Online payments are processed with Paystack. Orders are recorded before redirect so payment verification stays traceable."
-                      : "Online card payment is being finalized. Use WhatsApp for this order while the checkout option is being completed."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="productsCheckoutClose"
-                  onClick={closeCheckoutModal}
-                  aria-label="Close checkout"
-                >
-                  <span aria-hidden="true">+</span>
-                </button>
-              </div>
-
-              <div className="productsCheckoutMeta">
-                <span className="productsChip">{formatProductPrice(checkoutProduct)}</span>
-                <span className="productsChip">Stock: {checkoutProduct.stockQty}</span>
-                <span className="productsChip">{checkoutProduct.categoryLabel}</span>
-              </div>
-
-              <form className="form productsCheckoutForm" onSubmit={startPaystackCheckout}>
-                <label className="field">
-                  <span>Full name *</span>
-                  <input
-                    type="text"
-                    name="name"
-                    value={checkoutForm.name}
-                    onChange={handleCheckoutInputChange}
-                    placeholder="Your full name"
-                    autoComplete="name"
-                  />
-                </label>
-                <label className="field">
-                  <span>Email *</span>
-                  <input
-                    type="email"
-                    name="email"
-                    value={checkoutForm.email}
-                    onChange={handleCheckoutInputChange}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                  />
-                </label>
-                <label className="field">
-                  <span>Phone</span>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={checkoutForm.phone}
-                    onChange={handleCheckoutInputChange}
-                    placeholder="080..."
-                    autoComplete="tel"
-                  />
-                </label>
-
-                <div className="productsCheckoutActions">
-                  <button
-                    type="submit"
-                    className="btn primary"
-                    disabled={!isPaystackEnabled || isCheckoutLoading}
-                  >
-                    {!isPaystackEnabled
-                      ? "Paystack unavailable"
-                      : isCheckoutLoading
-                      ? "Redirecting..."
-                      : "Pay with Paystack"}
-                  </button>
-                  <a
-                    href={buildWhatsAppUrl(encodeURIComponent(buildProductPurchaseMessage(checkoutProduct)))}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn outline"
-                  >
-                    Order on WhatsApp
-                  </a>
-                </div>
-
-                {!isPaystackEnabled ? (
-                  <p className="formStatus info">{PAYSTACK_UNAVAILABLE_MESSAGE}</p>
-                ) : null}
-
-                {checkoutStatus.message ? (
-                  <p className={`formStatus ${checkoutStatus.type}`}>{checkoutStatus.message}</p>
-                ) : null}
-              </form>
-            </div>
-          </div>
-        ) : null}
       </Container>
     </section>
   );

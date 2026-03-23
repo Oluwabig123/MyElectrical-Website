@@ -1,4 +1,4 @@
-const CATEGORY_DEFINITIONS = [
+export const PRODUCT_CATEGORY_DEFINITIONS = [
   { key: "cables-wiring", label: "Cables & Wiring" },
   { key: "lighting", label: "Lighting" },
   { key: "protection-control", label: "Protection & Control" },
@@ -86,7 +86,7 @@ const CATEGORY_KEYWORDS = [
 const FALLBACK_CATEGORY = "general-electrical";
 const FALLBACK_CURRENCY = "NGN";
 
-const categoryLabelByKey = CATEGORY_DEFINITIONS.reduce((acc, category) => {
+const categoryLabelByKey = PRODUCT_CATEGORY_DEFINITIONS.reduce((acc, category) => {
   acc[category.key] = category.label;
   return acc;
 }, {});
@@ -119,6 +119,25 @@ function normalizeInteger(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function normalizeStringList(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeText(item))
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/\r?\n|,/)
+      .map((item) => sanitizeText(item))
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+
+  return [];
+}
+
 function normalizeSource(value) {
   const source = sanitizeText(value).toLowerCase();
   return source || "catalog";
@@ -141,7 +160,15 @@ function compareProducts(a, b) {
 }
 
 export function inferProductCategory(product) {
-  const text = [product.name, product.type, product.bestFor, product.size]
+  const text = [
+    product.name,
+    product.brand,
+    product.type,
+    product.bestFor,
+    product.size,
+    product.description,
+    ...(Array.isArray(product?.keyFeatures) ? product.keyFeatures : []),
+  ]
     .map((value) => sanitizeText(value).toLowerCase())
     .join(" ");
 
@@ -156,12 +183,19 @@ export function getCategoryLabel(categoryKey) {
   return categoryLabelByKey[categoryKey] || categoryLabelByKey[FALLBACK_CATEGORY];
 }
 
+export function isValidProductCategory(categoryKey) {
+  return Boolean(categoryLabelByKey[sanitizeText(categoryKey)]);
+}
+
 export function normalizeProduct(rawProduct, fallbackId) {
   const safeName = sanitizeText(rawProduct?.name) || "Unnamed product";
   const safeSize = sanitizeText(rawProduct?.size) || "N/A";
   const safeType = sanitizeText(rawProduct?.type) || "Electrical item";
   const safeBestFor = sanitizeText(rawProduct?.bestFor) || "General electrical use";
   const safeImageUrl = sanitizeText(rawProduct?.imageUrl);
+  const safeBrand = sanitizeText(rawProduct?.brand) || "Oduzz";
+  const safeDescription = sanitizeText(rawProduct?.description);
+  const safeKeyFeatures = normalizeStringList(rawProduct?.keyFeatures);
   const safeCurrency = sanitizeText(rawProduct?.currency).toUpperCase() || FALLBACK_CURRENCY;
   const safePriceAmount = normalizeInteger(rawProduct?.priceAmount, 0);
   const safeStockQty = Math.max(0, normalizeInteger(rawProduct?.stockQty, 0));
@@ -187,6 +221,9 @@ export function normalizeProduct(rawProduct, fallbackId) {
     type: safeType,
     bestFor: safeBestFor,
     imageUrl: safeImageUrl,
+    brand: safeBrand,
+    description: safeDescription,
+    keyFeatures: safeKeyFeatures,
     priceAmount: safePriceAmount,
     currency: safeCurrency,
     stockQty: safeStockQty,
@@ -231,7 +268,7 @@ export function buildProductCatalog(products, { includeInactive = false } = {}) 
     ? normalizedItems
     : normalizedItems.filter((item) => item.isActive);
 
-  const buckets = CATEGORY_DEFINITIONS.reduce((acc, category) => {
+  const buckets = PRODUCT_CATEGORY_DEFINITIONS.reduce((acc, category) => {
     acc[category.key] = [];
     return acc;
   }, {});
@@ -241,7 +278,7 @@ export function buildProductCatalog(products, { includeInactive = false } = {}) 
     buckets[key].push(item);
   });
 
-  const groups = CATEGORY_DEFINITIONS
+  const groups = PRODUCT_CATEGORY_DEFINITIONS
     .map((category) => ({
       key: category.key,
       label: category.label,

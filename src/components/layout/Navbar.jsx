@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import Container from "./Container.jsx";
 import Button from "../ui/Button.jsx";
+import { useCart } from "../../lib/cartContext.jsx";
 
 const navItems = [
   { to: "/services", label: "Services" },
@@ -15,6 +16,7 @@ const navItems = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const headerRef = useRef(null);
+  const { totalItems } = useCart();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -66,6 +68,14 @@ export default function Navbar() {
         </nav>
 
         <div className="navCtas">
+          <NavLink
+            to="/cart"
+            className={({ isActive }) => `navCartLink ${isActive ? "active" : ""}`}
+            aria-label={`Cart with ${totalItems} item${totalItems === 1 ? "" : "s"}`}
+          >
+            <span>Cart</span>
+            <span className="navCartCount">{totalItems}</span>
+          </NavLink>
           <Link to="/quote" className="navTopQuote">
             <Button variant="primary">Request Quote</Button>
           </Link>
@@ -94,6 +104,14 @@ export default function Navbar() {
                 {n.label}
               </NavLink>
             ))}
+            <NavLink
+              to="/cart"
+              className={({ isActive }) => `navMobileLink navMobileCart ${isActive ? "active" : ""}`}
+              onClick={() => setOpen(false)}
+            >
+              <span>Cart</span>
+              <span className="navCartCount">{totalItems}</span>
+            </NavLink>
             <Link to="/quote" onClick={() => setOpen(false)}>
               <Button variant="primary" style={{ width: "100%" }}>Request Quote</Button>
             </Link>

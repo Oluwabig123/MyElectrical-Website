@@ -9,6 +9,9 @@ create table if not exists public.admin_products (
   type text not null default 'Electrical item',
   best_for text not null,
   image_url text,
+  brand text not null default 'Oduzz',
+  description text not null default '',
+  key_features jsonb not null default '[]'::jsonb,
   price_amount integer not null default 0,
   currency text not null default 'NGN',
   stock_qty integer not null default 0,
@@ -23,6 +26,15 @@ create table if not exists public.admin_products (
 
 alter table public.admin_products
 add column if not exists image_url text;
+
+alter table public.admin_products
+add column if not exists brand text not null default 'Oduzz';
+
+alter table public.admin_products
+add column if not exists description text not null default '';
+
+alter table public.admin_products
+add column if not exists key_features jsonb not null default '[]'::jsonb;
 
 alter table public.admin_products
 add column if not exists price_amount integer not null default 0;

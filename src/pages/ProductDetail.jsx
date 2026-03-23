@@ -4,15 +4,13 @@ import Container from "../components/layout/Container";
 import Reveal from "../components/ui/Reveal";
 import SEO from "../components/ui/SEO";
 import { CONTACT, buildWhatsAppUrl } from "../data/contact";
+import { useCart } from "../lib/cartContext";
 import { fetchOnlineProducts } from "../lib/productDirectory";
 import {
   buildProductPath,
   formatProductPrice,
   getProductAvailability,
 } from "../utils/productCatalog";
-
-const PAYSTACK_UNAVAILABLE_MESSAGE =
-  "Online card payment is being finalized. Please place this order on WhatsApp for now.";
 
 function sanitizeText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -50,14 +48,15 @@ function buildRelatedProducts(products, currentProduct, limit = 4) {
 
 export default function ProductDetail() {
   const { slug = "" } = useParams();
+  const { addItem } = useCart();
   const [product, setProduct] = React.useState(null);
   const [relatedProducts, setRelatedProducts] = React.useState([]);
   const [status, setStatus] = React.useState("loading");
-
-  const isPaystackEnabled = import.meta.env.VITE_PAYSTACK_ENABLED === "true";
+  const [cartStatus, setCartStatus] = React.useState({ type: "", message: "" });
 
   React.useEffect(() => {
     let isMounted = true;
+    setCartStatus({ type: "", message: "" });
 
     async function loadProduct() {
       setStatus("loading");
@@ -96,6 +95,12 @@ export default function ProductDetail() {
     if (!product) return "";
     return buildWhatsAppUrl(encodeURIComponent(buildProductPurchaseMessage(product)));
   }, [product]);
+
+  function handleAddToCart() {
+    if (!product || product.stockQty <= 0) return;
+    addItem(product, 1);
+    setCartStatus({ type: "success", message: `${product.name} added to cart.` });
+  }
 
   return (
     <section className="section productDetailPage">
@@ -183,22 +188,28 @@ export default function ProductDetail() {
                   </div>
 
                   <div className="productsMeta" aria-label={`${product.name} specifications`}>
+                    <span className="productsChip">Brand: {product.brand}</span>
                     <span className="productsChip">Size: {product.size}</span>
                     <span className="productsChip">{product.type}</span>
                     <span className="productsChip">{product.categoryLabel}</span>
                   </div>
 
                   <div className="productDetailActions">
-                    <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn primary">
-                      Buy on WhatsApp
-                    </a>
-                    <button type="button" className="btn outline" disabled={!isPaystackEnabled}>
-                      {isPaystackEnabled ? "Checkout online" : "Checkout coming soon"}
+                    <button
+                      type="button"
+                      className="btn primary"
+                      onClick={handleAddToCart}
+                      disabled={product.stockQty <= 0}
+                    >
+                      {product.stockQty > 0 ? "Add to cart" : "Out of stock"}
                     </button>
+                    <Link to="/cart" className="btn outline">
+                      View cart
+                    </Link>
                   </div>
 
-                  {!isPaystackEnabled ? (
-                    <p className="formStatus info productDetailStatus">{PAYSTACK_UNAVAILABLE_MESSAGE}</p>
+                  {cartStatus.message ? (
+                    <p className={`formStatus ${cartStatus.type} productDetailStatus`}>{cartStatus.message}</p>
                   ) : null}
 
                   <div className="productDetailSupportMeta">
@@ -214,10 +225,14 @@ export default function ProductDetail() {
                 <article className="card productDetailInfo">
                   <h2 className="productDetailSectionTitle">Product details</h2>
                   <p className="productDetailBody">
-                    {product.name} is currently listed in the {product.categoryLabel.toLowerCase()} category.
-                    Use the size and type notes below to confirm fit before ordering.
+                    {product.description ||
+                      `${product.name} is currently listed in the ${product.categoryLabel.toLowerCase()} category. Use the size and type notes below to confirm fit before ordering.`}
                   </p>
                   <div className="productDetailFacts">
+                    <div className="productDetailFact">
+                      <span className="productDetailFactLabel">Brand</span>
+                      <strong>{product.brand}</strong>
+                    </div>
                     <div className="productDetailFact">
                       <span className="productDetailFactLabel">Best for</span>
                       <strong>{product.bestFor}</strong>
@@ -235,6 +250,17 @@ export default function ProductDetail() {
                       <strong>{getProductAvailability(product)}</strong>
                     </div>
                   </div>
+
+                  {product.keyFeatures?.length ? (
+                    <div className="productDetailFeatureBlock">
+                      <h3 className="productDetailFeatureTitle">Key features</h3>
+                      <ul className="productDetailFeatureList">
+                        {product.keyFeatures.map((feature) => (
+                          <li key={feature}>{feature}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </article>
               </Reveal>
 
