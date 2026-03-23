@@ -71,7 +71,7 @@ export default function FeaturedProducts() {
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
-                        alt={product.name}
+                        alt={product.categoryLabel}
                         className="featuredProductsHomeImage"
                         loading="lazy"
                         decoding="async"
@@ -82,7 +82,7 @@ export default function FeaturedProducts() {
                       </div>
                     )}
                   </div>
-                  <h3 className="featuredProductsHomeName">{product.name}</h3>
+                  <h3 className="featuredProductsHomeName">{product.categoryLabel}</h3>
                 </Link>
               </Reveal>
             ))}

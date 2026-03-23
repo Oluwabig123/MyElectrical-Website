@@ -151,6 +151,7 @@ export default function Products() {
   // Admin state, auth state, and product catalog state all live in this page.
   const [isAdminOpen, setIsAdminOpen] = React.useState(false);
   const [adminForm, setAdminForm] = React.useState(EMPTY_ADMIN_FORM);
+  const [categoryFilter, setCategoryFilter] = React.useState("");
   const [authForm, setAuthForm] = React.useState(EMPTY_AUTH_FORM);
   const [editingProductId, setEditingProductId] = React.useState(null);
   const [cloudProducts, setCloudProducts] = React.useState([]);
@@ -182,6 +183,47 @@ export default function Products() {
     if (!adminForm.category) return "Auto-detect";
     return getCategoryLabel(adminForm.category);
   }, [adminForm.category]);
+
+  const groupedAdminCategoryOptions = React.useMemo(() => {
+    const query = sanitizeValue(categoryFilter).toLowerCase();
+    const filteredCategories = PRODUCT_CATEGORY_DEFINITIONS.filter((category) => {
+      if (!query) return true;
+      return (
+        category.label.toLowerCase().includes(query) ||
+        String(category.group || "").toLowerCase().includes(query)
+      );
+    });
+
+    const selectedCategory = PRODUCT_CATEGORY_DEFINITIONS.find(
+      (category) => category.key === adminForm.category
+    );
+    const includeSelectedOutsideFilter =
+      selectedCategory && !filteredCategories.some((category) => category.key === selectedCategory.key);
+    const categoriesForDisplay = includeSelectedOutsideFilter
+      ? [selectedCategory, ...filteredCategories]
+      : filteredCategories;
+
+    const groups = categoriesForDisplay.reduce((acc, category) => {
+      const groupLabel =
+        includeSelectedOutsideFilter && category.key === selectedCategory?.key
+          ? "Current selection"
+          : category.group || "Other";
+
+      if (!acc[groupLabel]) acc[groupLabel] = [];
+      if (!acc[groupLabel].some((item) => item.key === category.key)) {
+        acc[groupLabel].push(category);
+      }
+      return acc;
+    }, {});
+
+    return Object.entries(groups).map(([label, items]) => ({ label, items }));
+  }, [adminForm.category, categoryFilter]);
+
+  const visibleAdminCategoryCount = React.useMemo(
+    () =>
+      groupedAdminCategoryOptions.reduce((total, group) => total + group.items.length, 0),
+    [groupedAdminCategoryOptions]
+  );
 
   // Loads cloud products for both the public catalog and the admin list.
   const loadCloudProducts = React.useCallback(async () => {
@@ -272,6 +314,7 @@ export default function Products() {
   function handleFormInputChange(event) {
     const { name, value, type, checked } = event.target;
     setAdminForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    if (name === "category") setCategoryFilter("");
   }
 
   function handleAuthInputChange(event) {
@@ -281,6 +324,7 @@ export default function Products() {
 
   function resetAdminForm() {
     setAdminForm(EMPTY_ADMIN_FORM);
+    setCategoryFilter("");
     setEditingProductId(null);
   }
 
@@ -518,6 +562,7 @@ export default function Products() {
       isActive: selectedProduct.isActive,
       featured: selectedProduct.featured,
     });
+    setCategoryFilter("");
     setFormStatus({ type: "", message: "" });
   }
 
@@ -702,15 +747,37 @@ export default function Products() {
                       />
                     </label>
                     <label className="field">
+                      <span>Find category</span>
+                      <input
+                        type="search"
+                        value={categoryFilter}
+                        onChange={(event) => setCategoryFilter(event.target.value)}
+                        placeholder="Filter electrical or CCTV categories"
+                      />
+                    </label>
+                    <label className="field">
                       <span>Category</span>
                       <select name="category" value={adminForm.category} onChange={handleFormInputChange}>
                         <option value="">Auto-detect from product details</option>
-                        {PRODUCT_CATEGORY_DEFINITIONS.map((category) => (
-                          <option key={category.key} value={category.key}>
-                            {category.label}
+                        {groupedAdminCategoryOptions.length ? (
+                          groupedAdminCategoryOptions.map((group) => (
+                            <optgroup key={group.label} label={`${group.label} (${group.items.length})`}>
+                              {group.items.map((category) => (
+                                <option key={category.key} value={category.key}>
+                                  {category.label}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No categories match this filter
                           </option>
-                        ))}
+                        )}
                       </select>
+                      <small className="productsAdminCategoryHint">
+                        Showing {visibleAdminCategoryCount} of {PRODUCT_CATEGORY_DEFINITIONS.length} categories.
+                      </small>
                     </label>
                     <label className="field">
                       <span>Image URL *</span>

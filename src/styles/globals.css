@@ -1315,6 +1315,13 @@ select:focus-visible{
   font-size: 12px;
   line-height: 1.4;
 }
+.productsAdminCategoryHint{
+  display: block;
+  margin-top: 8px;
+  color: rgba(255,255,255,0.72);
+  font-size: 12px;
+  line-height: 1.4;
+}
 .productsToggleField{
   display: flex;
   align-items: center;

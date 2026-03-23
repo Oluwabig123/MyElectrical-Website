@@ -303,7 +303,7 @@ export default function ProductDetail() {
                           {item.imageUrl ? (
                             <img
                               src={item.imageUrl}
-                              alt={item.name}
+                              alt={item.categoryLabel}
                               className="productDetailRelatedImage"
                               loading="lazy"
                               decoding="async"
@@ -314,7 +314,7 @@ export default function ProductDetail() {
                             </div>
                           )}
                         </div>
-                        <h3 className="productDetailRelatedName">{item.name}</h3>
+                        <h3 className="productDetailRelatedName">{item.categoryLabel}</h3>
                         <strong className="productDetailRelatedPrice">{formatProductPrice(item)}</strong>
                       </Link>
                     ))}
