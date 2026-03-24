@@ -137,6 +137,149 @@ function buildProductPurchaseMessage(product) {
   return lines.join("\n");
 }
 
+function normalizeCardCopyText(value) {
+  return sanitizeValue(value).replace(/\s+/g, " ");
+}
+
+function ensureSentence(value) {
+  const text = normalizeCardCopyText(value).replace(/[.!?]+$/, "");
+  if (!text) return "";
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}.`;
+}
+
+function joinListWithAnd(items) {
+  if (items.length <= 1) return items[0] || "";
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+function buildProductTagline(product) {
+  const description = normalizeCardCopyText(product?.description);
+  const firstDescriptionSentence = description.split(/[.!?]/).find((part) => sanitizeValue(part));
+
+  if (firstDescriptionSentence) {
+    const shortDescription = normalizeCardCopyText(firstDescriptionSentence);
+    if (shortDescription.length >= 28 && shortDescription.length <= 88) {
+      return ensureSentence(shortDescription);
+    }
+  }
+
+  const useCases = normalizeCardCopyText(product?.bestFor)
+    .split("|")
+    .map((value) => sanitizeValue(value).toLowerCase())
+    .filter(Boolean)
+    .slice(0, 3);
+  const productContext = `${product?.name || ""} ${product?.type || ""}`.toLowerCase();
+
+  if (useCases.length > 0) {
+    if (/socket|outlet/.test(productContext)) {
+      return ensureSentence(`Confident power access for ${joinListWithAnd(useCases)}`);
+    }
+    if (/switch/.test(productContext)) {
+      return ensureSentence(`Smooth control built for ${joinListWithAnd(useCases)}`);
+    }
+    if (/cable|wire/.test(productContext)) {
+      return ensureSentence(`Dependable current delivery for ${joinListWithAnd(useCases)}`);
+    }
+    if (/light|lamp|bulb|led|flood/.test(productContext)) {
+      return ensureSentence(`Clean illumination for ${joinListWithAnd(useCases)}`);
+    }
+    return ensureSentence(`Designed for ${joinListWithAnd(useCases)}`);
+  }
+
+  const typeLabel = normalizeCardCopyText(product?.type).toLowerCase();
+  if (typeLabel && typeLabel !== "electrical item") {
+    return ensureSentence(`Built for dependable ${typeLabel} performance`);
+  }
+
+  return "Built for dependable daily performance.";
+}
+
+function buildFallbackProductHighlights(product) {
+  const highlightSet = new Map();
+  const pushHighlight = (value) => {
+    const normalized = ensureSentence(value).slice(0, -1);
+    if (!normalized) return;
+    const key = normalized.toLowerCase();
+    if (!highlightSet.has(key)) {
+      highlightSet.set(key, normalized);
+    }
+  };
+  const productContext = [
+    product?.name,
+    product?.type,
+    product?.size,
+    product?.bestFor,
+    product?.description,
+    ...(Array.isArray(product?.keyFeatures) ? product.keyFeatures : []),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (/fire/.test(productContext)) pushHighlight("Fire-resistant material");
+  if (/shock/.test(productContext)) pushHighlight("Shock protection");
+  if (/durable|durability|lasting|long-lasting|long lasting/.test(productContext)) {
+    pushHighlight("Built for lasting service");
+  }
+  if (/socket|outlet/.test(productContext)) {
+    if (/double|dual|2 gang|2-gang|two gang|two-gang/.test(productContext)) {
+      pushHighlight("Convenient multi-point power access");
+    }
+    if (/universal/.test(productContext)) pushHighlight("Flexible for mixed plug use");
+    pushHighlight("Clean wall-mounted finish");
+    pushHighlight("Made for repeated daily use");
+  } else if (/switch/.test(productContext)) {
+    pushHighlight("Responsive switching feel");
+    pushHighlight("Clean wall-mounted finish");
+    pushHighlight("Built for everyday operation");
+  } else if (/cable|wire/.test(productContext)) {
+    pushHighlight("Durable outer insulation");
+    pushHighlight("Organized cable routing");
+    pushHighlight("Made for neat installations");
+  } else if (/breaker|mcb|distribution|panel|isolator|rcbo/.test(productContext)) {
+    pushHighlight("Clear circuit control");
+    pushHighlight("Installation-ready form factor");
+    pushHighlight("Built for dependable operation");
+  } else if (/light|lamp|bulb|led|flood/.test(productContext)) {
+    pushHighlight("Clean modern light output");
+    pushHighlight("Low-maintenance service life");
+    pushHighlight("Suited to contemporary spaces");
+  }
+
+  if (/commercial|industrial/.test(productContext)) pushHighlight("Suitable for demanding workspaces");
+  if (/office|workspace/.test(productContext)) pushHighlight("Works well in professional interiors");
+  if (/home|residential/.test(productContext)) pushHighlight("Fits modern residential spaces");
+
+  pushHighlight("Reliable for daily electrical use");
+  pushHighlight("Installation-ready finish");
+  pushHighlight("Made for lasting performance");
+
+  return Array.from(highlightSet.values()).slice(0, 3);
+}
+
+function buildProductHighlights(product) {
+  const directHighlights = Array.isArray(product?.keyFeatures)
+    ? product.keyFeatures
+        .map((value) => normalizeCardCopyText(value).replace(/[.!?]+$/, ""))
+        .filter(Boolean)
+        .filter((value, index, values) => values.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+        .slice(0, 3)
+    : [];
+
+  if (directHighlights.length >= 3) return directHighlights;
+
+  const fallbackHighlights = buildFallbackProductHighlights(product);
+  const mergedHighlights = [...directHighlights];
+
+  fallbackHighlights.forEach((highlight) => {
+    if (!mergedHighlights.some((item) => item.toLowerCase() === highlight.toLowerCase())) {
+      mergedHighlights.push(highlight);
+    }
+  });
+
+  return mergedHighlights.slice(0, 3);
+}
+
 function formatSupabaseError(error, fallbackMessage) {
   if (!error) return fallbackMessage;
   const message = sanitizeValue(error.message);
@@ -1027,12 +1170,20 @@ export default function Products() {
               {group.items.map((item, index) => {
                 const availability = getProductAvailability(item);
                 const canAddToCart = item.isActive && item.priceAmount > 0 && item.stockQty > 0;
+                const productTagline = buildProductTagline(item);
+                const productHighlights = buildProductHighlights(item);
+                const productSpecs = [
+                  item.size && item.size !== "N/A" ? `Size: ${item.size}` : "",
+                  item.type && item.type !== "Electrical item" ? item.type : "",
+                ].filter(Boolean);
 
                 return (
                   <Reveal key={item.id} delay={groupIndex * 0.06 + index * 0.03}>
                     <article className="card productsCard">
                       <div className="productsCardHead">
-                        <span className="productsIndex">{String(index + 1).padStart(2, "0")}</span>
+                        <span className="productsCollectionLabel">
+                          {item.featured ? "Premium pick" : `${group.label} collection`}
+                        </span>
                         {item.featured ? <span className="productsFeatured">Featured</span> : null}
                       </div>
                       <div className="productsImageWrap">
@@ -1056,12 +1207,28 @@ export default function Products() {
                           {availability}
                         </span>
                       </div>
-                      <h3 className="cardTitle productsTitle">{item.name}</h3>
-                      <p className="p">{item.bestFor}</p>
-                      <div className="productsMeta" aria-label={`${item.name} specifications`}>
-                        <span className="productsChip">Size: {item.size}</span>
-                        <span className="productsChip">{item.type}</span>
+                      <div className="productsTitleBlock">
+                        <h3 className="cardTitle productsTitle">{item.name}</h3>
+                        <p className="productsTagline">{productTagline}</p>
                       </div>
+                      {productHighlights.length > 0 ? (
+                        <ul className="productsHighlightList" aria-label={`${item.name} highlights`}>
+                          {productHighlights.map((highlight) => (
+                            <li key={highlight} className="productsHighlight">
+                              {highlight}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {productSpecs.length > 0 ? (
+                        <div className="productsMeta" aria-label={`${item.name} specifications`}>
+                          {productSpecs.map((spec) => (
+                            <span key={spec} className="productsChip">
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                       <div className="productsCardActions">
                         {canAddToCart ? (
                           <>
@@ -1069,13 +1236,13 @@ export default function Products() {
                               Add to cart
                             </button>
                             <Link to={buildProductPath(item)} className="btn outline">
-                              View details
+                              View specifications
                             </Link>
                           </>
                         ) : (
                           <>
                             <Link to={buildProductPath(item)} className="btn outline">
-                              View details
+                              View specifications
                             </Link>
                             <a
                               href={buildWhatsAppUrl(
