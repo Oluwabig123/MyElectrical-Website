@@ -1,0 +1,44 @@
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.06) 20%,
+    rgba(255, 255, 255, 0.42) 48%,
+    rgba(255, 255, 255, 0.06) 78%
+  );
+  transform: translateX(-100%);
+  animation: shimmer 1.05s ease-in-out infinite;
+}
+
+.line {
+  display: block;
+  border-radius: 999px;
+  background: rgba(191, 206, 229, 0.24);
+}
+
+.title {
+  width: 78%;
+  height: 14px;
+}
+
+.body {
+  width: 58%;
+  height: 12px;
+}
+
+.meta {
+  width: 36%;
+  height: 11px;
+}
+
+.cta {
+  width: 30%;
+  height: 12px;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

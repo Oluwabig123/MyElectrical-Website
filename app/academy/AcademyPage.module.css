@@ -1,0 +1,134 @@
+.academyPage {
+  position: relative;
+}
+
+.academyPage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.3;
+  background:
+    radial-gradient(720px 280px at 8% 8%, rgba(255, 212, 0, 0.09), transparent 72%),
+    radial-gradient(620px 260px at 92% 84%, rgba(46, 233, 255, 0.07), transparent 74%);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+.introCard {
+  display: grid;
+  gap: 12px;
+}
+
+.lead {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 15px;
+  line-height: 1.68;
+}
+
+.audienceGrid,
+.trackGrid,
+.outcomeGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.resourceGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.audienceCard,
+.trackCard,
+.resourceCard,
+.outcomeCard {
+  display: grid;
+  gap: 10px;
+}
+
+.sectionBlock {
+  margin-top: 18px;
+}
+
+.sectionIntro {
+  margin-bottom: 14px;
+  max-width: 760px;
+}
+
+.audienceTitle,
+.trackTitle {
+  margin: 0;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 212, 0, 0.26);
+  background: rgba(255, 212, 0, 0.1);
+  color: rgba(255, 245, 196, 0.96);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pillAccent {
+  border-color: rgba(46, 233, 255, 0.22);
+  background: rgba(46, 233, 255, 0.12);
+  color: rgba(219, 252, 255, 0.95);
+}
+
+.trackList {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.88);
+  display: grid;
+  gap: 8px;
+}
+
+.trackOutcome {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.foot {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.summary {
+  margin: 0;
+  color: rgba(214, 223, 238, 0.82);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 920px) {
+  .audienceGrid,
+  .trackGrid,
+  .outcomeGrid,
+  .resourceGrid {
+    grid-template-columns: 1fr;
+  }
+}

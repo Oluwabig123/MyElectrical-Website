@@ -1,0 +1,86 @@
+.toolbar {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 24px;
+}
+
+.toolbarMain {
+  display: grid;
+  align-items: flex-end;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.summary {
+  margin: 0;
+  color: rgba(214, 223, 238, 0.82);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.searchField {
+  display: grid;
+  gap: 8px;
+  min-width: min(100%, 320px);
+}
+
+.searchLabel {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.emptyState {
+  display: grid;
+  gap: 14px;
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.skeletonCard {
+  pointer-events: none;
+  overflow: hidden;
+  border: 1px solid var(--editorial-border);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 32px rgba(17, 17, 17, 0.04);
+}
+
+.skeletonMedia {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-bottom: 1px solid var(--editorial-border);
+  background:
+    linear-gradient(180deg, rgba(248, 248, 248, 0.94), rgba(235, 235, 235, 0.92)),
+    linear-gradient(180deg, #f7f7f7 0%, #ececec 100%);
+}
+
+.skeletonBody {
+  display: grid;
+  gap: 10px;
+  padding: 24px;
+}
+
+@media (max-width: 720px) {
+  .toolbarMain {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .searchField {
+    min-width: 0;
+  }
+}

@@ -1,0 +1,36 @@
+.toolbar {
+  display: grid;
+  align-items: flex-end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  margin: 0 0 24px;
+}
+
+.summary {
+  margin: 0;
+  color: rgba(214, 223, 238, 0.82);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.filtersWrap {
+  margin: 0 0 24px;
+}
+
+.emptyState {
+  display: grid;
+  gap: 14px;
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}

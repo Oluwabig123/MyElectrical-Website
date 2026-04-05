@@ -1,0 +1,60 @@
+.hero {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: stretch;
+  margin-top: 24px;
+}
+
+.mediaCard,
+.bodyCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.bodyCard {
+  padding: clamp(20px, 3vw, 28px);
+}
+
+.factsGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.factCard {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px;
+}
+
+.factLabel {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.quote {
+  margin: 22px 0 0;
+  padding-left: 16px;
+  border-left: 3px solid var(--brand);
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.relatedSection {
+  margin-top: 36px;
+}
+
+@media (max-width: 920px) {
+  .hero,
+  .factsGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,131 @@
+.quotePage {
+  position: relative;
+}
+
+.quotePage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.3;
+  background:
+    radial-gradient(760px 260px at 12% 8%, rgba(255, 212, 0, 0.09), transparent 72%),
+    radial-gradient(620px 240px at 90% 80%, rgba(46, 233, 255, 0.07), transparent 74%);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+.layout {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: start;
+}
+
+.info {
+  display: grid;
+  gap: 10px;
+}
+
+.infoTitle {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.infoLead {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.checklist {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.checklist li::marker {
+  color: rgba(255, 212, 0, 0.92);
+}
+
+.infoPanel {
+  margin-top: 2px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.infoPanelTitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.infoActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.infoActions > * {
+  display: inline-flex;
+}
+
+.form {
+  padding: clamp(14px, 2.2vw, 18px);
+}
+
+.form :global(.formActions) > * {
+  display: inline-flex;
+}
+
+.uploadButton {
+  width: fit-content;
+}
+
+@media (max-width: 920px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .infoActions,
+  .form :global(.formActions) {
+    width: 100%;
+  }
+
+  .infoActions > *,
+  .form :global(.formActions) > * {
+    flex: 1 1 calc(50% - 5px);
+  }
+
+  .infoActions :global(.btn),
+  .form :global(.formActions) :global(.btn) {
+    width: 100%;
+  }
+
+  .uploadButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .infoActions > *,
+  .form :global(.formActions) > * {
+    flex-basis: 100%;
+  }
+}

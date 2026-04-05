@@ -1,0 +1,265 @@
+.aboutPage {
+  position: relative;
+}
+
+.aboutPage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.3;
+  background:
+    radial-gradient(760px 300px at 12% 10%, rgba(255, 212, 0, 0.11), transparent 72%),
+    radial-gradient(620px 260px at 90% 86%, rgba(46, 233, 255, 0.08), transparent 74%);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+.hero {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: start;
+}
+
+.heroCopy {
+  display: grid;
+  gap: 20px;
+}
+
+.leadStack {
+  display: grid;
+  gap: 12px;
+}
+
+.lead {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.89);
+  font-size: 16px;
+  line-height: 1.72;
+  max-width: 64ch;
+}
+
+.statGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.statCard {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.statLabel {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.statValue {
+  color: rgba(255, 255, 255, 0.97);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.heroActions {
+  margin-top: 4px;
+}
+
+.heroCard {
+  display: grid;
+  overflow: hidden;
+  padding: 0;
+}
+
+.heroMedia {
+  position: relative;
+  min-height: 280px;
+}
+
+.heroImage {
+  object-fit: cover;
+}
+
+.heroPanel {
+  display: grid;
+  gap: 14px;
+  padding: clamp(20px, 3vw, 28px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(3, 8, 20, 0.92);
+}
+
+.panelKicker {
+  margin: 0;
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: clamp(24px, 3.4vw, 34px);
+  line-height: 1.08;
+}
+
+.checklist {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.62;
+}
+
+.sectionIntro {
+  max-width: 760px;
+  margin: 0 0 16px;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.point {
+  display: grid;
+  gap: 10px;
+  min-height: 180px;
+}
+
+.pointIndex {
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 5px 9px;
+}
+
+.pointTitle {
+  margin: 0;
+}
+
+.point :global(.p) {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.missionCard {
+  margin-top: 24px;
+}
+
+.missionNote {
+  display: grid;
+  align-content: start;
+  border-left: 2px solid rgba(255, 212, 0, 0.24);
+  padding-left: 16px;
+}
+
+.modelGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 20px;
+}
+
+.modelCard {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 18px;
+}
+
+.modelStep {
+  width: fit-content;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.serviceGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.serviceCard {
+  min-height: 100%;
+}
+
+.foot {
+  margin-top: 24px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(135deg, rgba(255, 212, 0, 0.08), rgba(46, 233, 255, 0.04)),
+    rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow);
+}
+
+.note {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 62ch;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.actions > * {
+  display: inline-flex;
+}
+
+@media (max-width: 920px) {
+  .hero,
+  .statGrid,
+  .grid,
+  .modelGrid,
+  .serviceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroMedia {
+    min-height: 220px;
+  }
+
+  .foot {
+    padding: 16px;
+  }
+
+  .actions {
+    width: 100%;
+  }
+}

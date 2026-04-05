@@ -1,0 +1,53 @@
+.grid {
+  align-items: stretch;
+}
+
+.card {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.active {
+  border-color: rgba(255, 212, 0, 0.34);
+  box-shadow:
+    0 24px 52px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(255, 212, 0, 0.14);
+}
+
+.media {
+  position: relative;
+  min-height: 220px;
+  overflow: hidden;
+}
+
+.mediaLarge {
+  min-height: 100%;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.body {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.cardSkeleton {
+  pointer-events: none;
+}
+
+.mediaSkeleton {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(248, 248, 248, 0.94), rgba(235, 235, 235, 0.92)),
+    linear-gradient(180deg, #f7f7f7 0%, #ececec 100%);
+}
+
+.bodySkeleton {
+  gap: 10px;
+}
