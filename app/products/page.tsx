@@ -4,7 +4,6 @@ import ProductsCatalogClient from "@/components/products/ProductsCatalogClient";
 import { buildProductCatalog } from "@/lib/product-catalog";
 import { fetchOnlineProducts } from "@/lib/product-directory";
 import { buildMetadata } from "@/lib/seo";
-import { isSupabaseConfigured } from "@/lib/supabase-client";
 import { buildProductListSchema } from "@/lib/structured-data";
 
 export const dynamic = "force-dynamic";
@@ -25,11 +24,9 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function ProductsPage() {
-  const { products, error } = await fetchOnlineProducts();
+  const { products, error, source } = await fetchOnlineProducts();
   const catalog = buildProductCatalog(products);
-  const catalogError = !isSupabaseConfigured
-    ? "Product cloud sync is disabled. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to load live stock."
-    : (error?.message ?? "");
+  const catalogError = source === "starter" ? "" : (error?.message ?? "");
 
   return (
     <>

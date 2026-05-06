@@ -4,6 +4,7 @@ import {
   supabase,
 } from "@/lib/supabase-client";
 import { normalizeProduct, type Product } from "@/lib/product-catalog";
+import { starterProducts } from "@/data/starter-products";
 
 export const PRODUCT_SELECT_FIELDS =
   "id,name,size,type,best_for,image_url,brand,description,key_features,price_amount,currency,stock_qty,slug,is_active,featured,category,created_at";
@@ -53,9 +54,30 @@ export function mapProductRow(row: ProductRow): Product {
   );
 }
 
+const starterCatalogProducts = starterProducts.map((product, index) =>
+  normalizeProduct(product, product.id || `starter-product-${index + 1}`),
+);
+
+function getStarterProducts({ activeOnly = true }: { activeOnly?: boolean } = {}) {
+  return activeOnly
+    ? starterCatalogProducts.filter((product) => product.isActive)
+    : starterCatalogProducts;
+}
+
+function dedupeProductsBySlug(products: Product[]) {
+  const seenKeys = new Set<string>();
+
+  return products.filter((product) => {
+    const key = product.slug || product.id;
+    if (!key || seenKeys.has(key)) return false;
+    seenKeys.add(key);
+    return true;
+  });
+}
+
 export async function fetchOnlineProducts({ activeOnly = true }: { activeOnly?: boolean } = {}) {
   if (!isSupabaseConfigured || !supabase) {
-    return { products: [] as Product[], error: null };
+    return { products: getStarterProducts({ activeOnly }), error: null, source: "starter" as const };
   }
 
   let query = supabase
@@ -70,25 +92,56 @@ export async function fetchOnlineProducts({ activeOnly = true }: { activeOnly?: 
 
   const { data, error } = await query;
 
+  const cloudProducts = error
+    ? []
+    : dedupeProductsBySlug(((data ?? []) as ProductRow[]).map(mapProductRow));
+
+  if (cloudProducts.length === 0) {
+    return {
+      products: getStarterProducts({ activeOnly }),
+      error,
+      source: "starter" as const,
+    };
+  }
+
   return {
-    products: error ? [] : ((data ?? []) as ProductRow[]).map(mapProductRow),
+    products: cloudProducts,
     error,
+    source: "cloud" as const,
   };
 }
 
 export async function fetchOnlineProductBySlug(slug: string) {
+  const safeSlug = String(slug || "").trim();
+  const starterProduct =
+    getStarterProducts().find((product) => product.slug === safeSlug) ?? null;
+
   if (!isSupabaseConfigured || !supabase) {
-    return { product: null as Product | null, error: null };
+    return { product: starterProduct, error: null, source: "starter" as const };
   }
 
   const { data, error } = await supabase
     .from(ADMIN_PRODUCTS_TABLE)
     .select(PRODUCT_SELECT_FIELDS)
-    .eq("slug", String(slug || "").trim())
-    .maybeSingle();
+    .eq("slug", safeSlug)
+    .eq("is_active", true)
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  const productRow = Array.isArray(data) ? data[0] : null;
+
+  if (error || !productRow) {
+    return {
+      product: starterProduct,
+      error,
+      source: starterProduct ? ("starter" as const) : ("cloud" as const),
+    };
+  }
 
   return {
-    product: error || !data ? null : mapProductRow(data as ProductRow),
+    product: mapProductRow(productRow as ProductRow),
     error,
+    source: "cloud" as const,
   };
 }

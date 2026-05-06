@@ -89,8 +89,8 @@ export default function AcademyPage() {
               What the academy can teach
             </h2>
             <p className="p">
-              These tracks make the page feel like a real learning destination instead of a single
-              generic sales block.
+              Choose a track that matches what you want to understand before a project, repair,
+              or training conversation.
             </p>
           </div>
 
@@ -125,11 +125,11 @@ export default function AcademyPage() {
           <div className={cn("sectionHeader", styles.sectionIntro)}>
             <div className="kicker">Resources</div>
             <h2 className="h2" id="academy-resources-title">
-              Formats this can support next
+              Resources coming into the hub
             </h2>
             <p className="p">
-              These resource lanes make the hub flexible enough for articles, downloads, short
-              classes, or workshop announcements.
+              These resource lanes will support practical guides, downloads, short classes, and
+              workshop announcements as the academy grows.
             </p>
           </div>
 
@@ -172,8 +172,8 @@ export default function AcademyPage() {
         <Reveal delay={0.14}>
           <div className={styles.foot}>
             <p className={styles.summary}>
-              Next layer after this hub: lesson detail pages, downloadable guides, workshop signups,
-              and lead capture tied to each learning track.
+              Need help applying any of these ideas to a real site? Start with the assistant,
+              read a practical article, or request a quote with your project details.
             </p>
             <div className="seoActionRow">
               <Link href="/blog" className="btn outline">

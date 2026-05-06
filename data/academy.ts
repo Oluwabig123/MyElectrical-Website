@@ -1,10 +1,10 @@
 export const academyIntro = {
-  title: "A learning hub, not just a landing page",
+  title: "Learn safer electrical decisions before work begins",
   subtitle:
-    "Structured tracks, resource ideas, and audience-specific education paths that build trust before conversion.",
+    "Practical electrical learning for homeowners, business owners, and beginners who want clearer decisions before installation, repair, or solar planning.",
   lead: [
-    "The academy gives Oduzz a stronger position in the market by teaching first. It creates a place for clear homeowner guidance, pre-quote education, and beginner-friendly electrical learning.",
-    "This is structured as a hub so it can grow into lessons, checklists, workshop updates, and short training series without redesigning the page later.",
+    "The academy is built to help clients understand safety, load planning, lighting decisions, solar backup, and project preparation in plain language.",
+    "Use the tracks below as a starting point before requesting a quote, asking the assistant a question, or preparing details for a site visit.",
   ],
 } as const;
 
@@ -42,7 +42,7 @@ export const academyTracks = [
       "Safe extension use, socket awareness, and quick home checks",
       "When a small symptom needs professional attention",
     ],
-    outcome: "Clients ask better questions and spot problems earlier.",
+    outcome: "Ask better questions and spot problems earlier.",
   },
   {
     title: "Solar and Inverter Planning Fundamentals",
@@ -56,7 +56,7 @@ export const academyTracks = [
       "How backup hours affect battery and inverter decisions",
       "Simple maintenance habits that protect system lifespan",
     ],
-    outcome: "Leads come in with clearer expectations and better sizing conversations.",
+    outcome: "Prepare clearer expectations before a solar or inverter quote.",
   },
   {
     title: "Electrical Trade Readiness",
@@ -70,35 +70,35 @@ export const academyTracks = [
       "Clean routing, neat finishing, and labeling habits",
       "Protection thinking and why shortcuts create future faults",
     ],
-    outcome: "The brand earns trust as a teacher, not only an installer.",
+    outcome: "Build better site awareness before practical training or apprenticeship work.",
   },
 ] as const;
 
 export const academyResources = [
   {
     type: "Checklist",
-    status: "Ready next",
+    status: "Available soon",
     title: "Pre-quote project checklist",
     summary:
       "A downloadable checklist covering location, service type, load notes, and photos clients should gather before requesting a quote.",
   },
   {
     type: "Guide",
-    status: "Ready next",
+    status: "Available soon",
     title: "Homeowner safety starter guide",
     summary:
       "A short educational guide that helps clients understand overload warning signs, maintenance timing, and safe appliance behavior.",
   },
   {
     type: "Mini class",
-    status: "Scalable",
+    status: "Planned",
     title: "Solar sizing explained simply",
     summary:
       "A short class or video series that translates sizing concepts into plain language for first-time solar buyers.",
   },
   {
     type: "Workshop",
-    status: "Scalable",
+    status: "Planned",
     title: "Beginner electrical workshop announcements",
     summary:
       "A slot for future training dates, workshop invitations, or apprentice-facing sessions without changing the page structure.",
@@ -119,6 +119,6 @@ export const academyOutcomes = [
   {
     title: "Room to scale content later",
     summary:
-      "This structure can grow into lessons, downloads, events, or article funnels without redesigning the academy page.",
+      "The academy can grow into lessons, downloads, events, and article series as client questions become clearer.",
   },
 ] as const;
