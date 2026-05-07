@@ -18,6 +18,46 @@ export type ServiceArea = {
 
 export const serviceAreas: ServiceArea[] = [
   {
+    slug: "ikorodu",
+    name: "Ikorodu",
+    title: "Electrical services and material support in Ikorodu, Lagos",
+    summary:
+      "Oduzz supports Ikorodu homes, shops, and commercial spaces with wiring upgrades, lighting work, maintenance, and electrical material guidance.",
+    intro:
+      "Ikorodu remains one of Oduzz's strongest operating zones. Projects often combine upgrades, extensions, and corrective work where existing circuits need better protection and cleaner routing. Oduzz helps clients make safer installation and material decisions from scope to handover.",
+    focusKeywords: [
+      "electrical company in Ikorodu",
+      "electrician Ikorodu Lagos",
+      "electrical installation Ikorodu",
+      "electrical materials supplier Ikorodu",
+    ],
+    mapQuery: "Ikorodu, Lagos",
+    nearbyAreas: ["Igbogbo", "Ipakodo", "Ogolonto", "Ikorodu GRA"],
+    serviceLines: [
+      "Residential and commercial wiring corrections",
+      "Fault diagnosis and electrical maintenance",
+      "Lighting finishing and interior fitting support",
+      "Solar and inverter backup consultations",
+    ],
+    faqs: [
+      {
+        question: "Do you provide same-area support across Ikorodu neighborhoods?",
+        answer:
+          "Yes. Oduzz supports multiple Ikorodu neighborhoods based on schedule and project scope, including residential and commercial requests.",
+      },
+      {
+        question: "Can I combine installation service with material guidance in Ikorodu?",
+        answer:
+          "Yes. You can request both installation and practical material selection support to reduce mismatch and avoid weak substitutions.",
+      },
+      {
+        question: "How quickly can Ikorodu requests be assessed?",
+        answer:
+          "Share location, issue details, and clear photos through WhatsApp or the quote page to speed up initial assessment.",
+      },
+    ],
+  },
+  {
     slug: "lekki",
     name: "Lekki",
     title: "Electrical installation and materials support in Lekki, Lagos",
@@ -134,6 +174,86 @@ export const serviceAreas: ServiceArea[] = [
         question: "How do I start a project conversation for VI?",
         answer:
           "Share your location, project type, and expected timeline through WhatsApp or the quote page so planning can start with real constraints.",
+      },
+    ],
+  },
+  {
+    slug: "ikeja",
+    name: "Ikeja",
+    title: "Electrical installation and upgrade support in Ikeja, Lagos",
+    summary:
+      "Oduzz supports Ikeja offices, shops, and residential spaces with structured wiring, lighting systems, and dependable electrical maintenance support.",
+    intro:
+      "Ikeja projects often require commercial reliability with cleaner finishing and clear timelines. Oduzz helps clients align protection, circuit routing, and finishing quality so installations are easier to maintain over time.",
+    focusKeywords: [
+      "electrical contractor Ikeja Lagos",
+      "electrical installation Ikeja",
+      "commercial electrician Ikeja",
+      "electrical maintenance Ikeja",
+    ],
+    mapQuery: "Ikeja, Lagos",
+    nearbyAreas: ["Alausa", "Opebi", "GRA Ikeja", "Maryland"],
+    serviceLines: [
+      "Commercial wiring upgrades and distribution planning",
+      "Lighting systems and feature installation",
+      "Routine fault checks and maintenance support",
+      "Material guidance for reliable office fit-outs",
+    ],
+    faqs: [
+      {
+        question: "Do you handle office and retail electrical fit-outs in Ikeja?",
+        answer:
+          "Yes. Oduzz supports office and retail projects with practical planning for routing, protection, and finishing.",
+      },
+      {
+        question: "Can you inspect and correct existing unstable circuits?",
+        answer:
+          "Yes. We assess circuit behavior, protection settings, and termination quality before proposing corrections.",
+      },
+      {
+        question: "Do you support urgent maintenance requests in Ikeja?",
+        answer:
+          "Urgent requests are reviewed by schedule and severity. Sharing accurate issue details early helps faster triage.",
+      },
+    ],
+  },
+  {
+    slug: "surulere",
+    name: "Surulere",
+    title: "Residential and commercial electrical services in Surulere, Lagos",
+    summary:
+      "Oduzz supports Surulere properties with wiring upgrades, lighting installation, fault diagnosis, and practical product guidance.",
+    intro:
+      "Surulere properties often involve renovation, extension loads, and mixed old/new electrical systems. Oduzz helps clients modernize safely with cleaner routing, balanced circuit planning, and better installation quality.",
+    focusKeywords: [
+      "electrical company Surulere Lagos",
+      "wiring services Surulere",
+      "lighting installation Surulere",
+      "electrician Surulere",
+    ],
+    mapQuery: "Surulere, Lagos",
+    nearbyAreas: ["Bode Thomas", "Adeniran Ogunsanya", "Aguda", "Eric Moore"],
+    serviceLines: [
+      "Wiring upgrades for renovation projects",
+      "Distribution and protection correction work",
+      "Lighting finishing and switch control setup",
+      "Installation and material planning consultations",
+    ],
+    faqs: [
+      {
+        question: "Can you work with renovation teams in Surulere?",
+        answer:
+          "Yes. Oduzz works with homeowners and contractors during renovation phases to align electrical scope with finishing work.",
+      },
+      {
+        question: "Do you provide support for both homes and small businesses?",
+        answer:
+          "Yes. Service coverage includes residential, office, and small commercial spaces based on project needs.",
+      },
+      {
+        question: "How do I start an electrical project in Surulere?",
+        answer:
+          "Send your location, service type, timeline, and site photos through WhatsApp or the quote form to begin.",
       },
     ],
   },

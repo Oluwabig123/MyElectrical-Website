@@ -5,9 +5,11 @@ import { notFound } from "next/navigation";
 import Container from "@/components/layout/Container";
 import cardStyles from "@/components/projects/ProjectCard.module.css";
 import JsonLd from "@/components/seo/JsonLd";
+import { getServicePageBySlug } from "@/data/service-pages";
 import { buildProjectPath, getAllProjectSlugs, getAllProjects, getProjectBySlug } from "@/lib/projects";
-import { buildMetadata } from "@/lib/seo";
-import { buildProjectSchema } from "@/lib/structured-data";
+import { buildCollectionPath, type ProductCategoryKey, resolveProductCategory } from "@/lib/product-catalog";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
+import { buildFaqSchema, buildProjectSchema } from "@/lib/structured-data";
 import styles from "./ProjectDetailPage.module.css";
 
 type PageProps = {
@@ -16,6 +18,40 @@ type PageProps = {
 
 function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
+}
+
+const PROJECT_RELATIONS: Record<string, { serviceSlug: string; categoryKey: ProductCategoryKey }> = {
+  solar: {
+    serviceSlug: "solar-inverter-installation",
+    categoryKey: "power-backup-solar",
+  },
+  wiring: {
+    serviceSlug: "residential-commercial-wiring",
+    categoryKey: "wiring-cables",
+  },
+  lighting: {
+    serviceSlug: "lighting-interior-finishing",
+    categoryKey: "lighting",
+  },
+};
+
+function getProjectFaqs(project: { title: string; location: string; category: string; duration: string }) {
+  return [
+    {
+      question: `Can Oduzz deliver a similar ${project.category.toLowerCase()} project in ${project.location}?`,
+      answer:
+        "Yes. Similar projects can be scoped based on your site conditions, load needs, and finishing expectations.",
+    },
+    {
+      question: `How long does a project like this usually take?`,
+      answer: `Typical duration depends on scope, but this featured project was completed in ${project.duration}.`,
+    },
+    {
+      question: `How do I request a quote for similar work?`,
+      answer:
+        "Share your location, project type, timeline, and clear site photos through WhatsApp or the quote page for faster planning.",
+    },
+  ];
 }
 
 export function generateStaticParams() {
@@ -57,10 +93,15 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const relatedProjects = getAllProjects()
     .filter((item) => item.slug !== project.slug)
     .slice(0, 3);
+  const relation = PROJECT_RELATIONS[project.category.toLowerCase()];
+  const relatedService = relation ? getServicePageBySlug(relation.serviceSlug) : null;
+  const relatedCategory = relation ? resolveProductCategory(relation.categoryKey) : null;
+  const projectFaqs = getProjectFaqs(project);
+  const faqSchema = buildFaqSchema(projectFaqs, { id: `${absoluteUrl(buildProjectPath(project))}#faq` });
 
   return (
     <section className="section seoPage">
-      <JsonLd data={buildProjectSchema(project)} />
+      <JsonLd data={[...buildProjectSchema(project), faqSchema]} />
       <Container>
         <Link href="/projects" className="productDetailBackLink">
           Back to projects
@@ -149,6 +190,40 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             </div>
           </div>
         ) : null}
+
+        <section className="seoContentSection">
+          <h2 className="h2">Related service and product paths</h2>
+          <div className="seoActionRow">
+            {relatedService ? (
+              <Link href={`/services/${relatedService.slug}`} className="btn outline">
+                {relatedService.shortTitle}
+              </Link>
+            ) : null}
+            {relatedCategory ? (
+              <Link href={buildCollectionPath(relatedCategory.key)} className="btn outline">
+                {relatedCategory.label}
+              </Link>
+            ) : null}
+            <Link href="/projects" className="btn outline">
+              More case studies
+            </Link>
+            <Link href="/quote" className="btn primary">
+              Request similar work
+            </Link>
+          </div>
+        </section>
+
+        <section className="seoContentSection">
+          <h2 className="h2">Project FAQs</h2>
+          <div className="seoCardGrid">
+            {projectFaqs.map((faq) => (
+              <article key={faq.question} className="card seoInfoCard">
+                <h3 className="cardTitle">{faq.question}</h3>
+                <p className="p">{faq.answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
       </Container>
     </section>
   );

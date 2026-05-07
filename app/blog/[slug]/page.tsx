@@ -90,7 +90,7 @@ const BLOG_RELATION_RULES: Array<{
   categoryKey: ProductCategoryKey;
 }> = [
   {
-    keywords: ["wiring", "inspection", "safety", "maintenance"],
+    keywords: ["wiring", "inspection", "safety", "maintenance", "planning", "checklist"],
     serviceSlug: "residential-commercial-wiring",
     categoryKey: "wiring-cables",
   },
@@ -108,6 +108,11 @@ const BLOG_RELATION_RULES: Array<{
     keywords: ["cctv", "security", "camera"],
     serviceSlug: "cctv-security-systems",
     categoryKey: "cctv-cameras",
+  },
+  {
+    keywords: ["materials", "quality", "original", "fake"],
+    serviceSlug: "fault-diagnosis-maintenance",
+    categoryKey: "electrical-accessories",
   },
 ];
 

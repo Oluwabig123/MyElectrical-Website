@@ -26,7 +26,7 @@ export default function LocationsPage() {
           as="h1"
           kicker="Service Areas"
           title="Electrical support across key Lagos locations"
-          subtitle="Find localized pages for Lekki, Ajah, and Victoria Island to match your project location and service needs."
+          subtitle="Find localized pages across Lagos so your quote and service scope can match your exact project location."
         />
 
         <div className="seoCardGrid">

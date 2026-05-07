@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import BlogNewsletterCta from "@/components/blog/BlogNewsletterCta";
 import Container from "@/components/layout/Container";
+import { servicePages } from "@/data/service-pages";
 import { BLOG_IMAGE_GALLERY } from "@/data/blog-image-gallery";
 import {
   ALL_BLOG_CATEGORY,
@@ -34,15 +35,16 @@ type SupplementalStory = {
 };
 
 export const metadata: Metadata = buildMetadata({
-  title: "Journal",
+  title: "Electrical Blog and Guides for Lagos Projects",
   description:
-    "A refined editorial blog layout for lighting, wiring, solar, and installation stories.",
+    "Read practical electrical guides from Oduzz on wiring safety, lighting layout, solar and inverter planning, and quality material decisions for Lagos projects.",
   path: "/blog",
   keywords: [
-    "electrical blog design",
-    "lighting stories",
-    "solar ideas",
-    "wiring journal",
+    "electrical blog Lagos",
+    "wiring safety checklist",
+    "solar inverter planning guide",
+    "lighting installation tips",
+    "electrical materials quality guide",
   ],
   image: "/blog/chandelier-installation.jpg",
 });
@@ -148,9 +150,14 @@ export default async function BlogPage({ searchParams }: PageProps) {
 
   const introLinks = [
     { href: "/", label: "Home" },
+    { href: "/services", label: "Services" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
+  const serviceTopicLinks = servicePages.slice(0, 6).map((service) => ({
+    href: `/services/${service.slug}`,
+    label: service.shortTitle,
+  }));
 
   return (
     <div className="pb-20 pt-8 md:pb-28 md:pt-12">
@@ -330,6 +337,23 @@ export default async function BlogPage({ searchParams }: PageProps) {
                   </Link>
                 );
               })}
+            </div>
+          </div>
+
+          <div className="mt-8 border-t border-[color:var(--editorial-border)] pt-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c8a300]">
+              Service topics
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {serviceTopicLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-full border border-[color:var(--editorial-border)] bg-[#fffdf9] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5c564c] transition duration-200 hover:border-[#c9b084] hover:text-[#2a241d]"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
           </div>
         </section>
