@@ -161,6 +161,10 @@
   line-height: 1.2;
 }
 
+.panelItemLink {
+  color: inherit;
+}
+
 .panelItemText {
   margin: 0;
   color: rgba(255, 255, 255, 0.68);
@@ -483,6 +487,12 @@
   color: rgba(255, 255, 255, 0.68);
   font-size: 14px;
   line-height: 1.66;
+}
+
+.supportCardLink {
+  width: fit-content;
+  color: rgba(255, 212, 0, 0.95);
+  font-weight: 800;
 }
 
 .benefitSection {

@@ -7,6 +7,7 @@ import {
   absoluteUrl,
 } from "@/lib/seo";
 import { CONTACT, CONTACT_LINKS } from "@/data/contact";
+import type { FaqItem } from "@/data/service-areas";
 import { resolveBlogVisual } from "@/lib/blog-editorial";
 import { getProductAvailability, type Product } from "@/lib/product-catalog";
 import type { BlogPost } from "@/lib/blog-shared";
@@ -213,4 +214,49 @@ export function buildProjectSchema(project: ProjectRecord): JsonLdObject[] {
       },
     },
   ];
+}
+
+export function buildFaqSchema(faqs: FaqItem[], { id }: { id?: string } = {}): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    ...(id ? { "@id": id } : {}),
+    mainEntity: faqs.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}
+
+export function buildServiceSchema({
+  path,
+  name,
+  description,
+  serviceType,
+  areaServed = BUSINESS_LOCATION,
+}: {
+  path: string;
+  name: string;
+  description: string;
+  serviceType: string;
+  areaServed?: string;
+}): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${absoluteUrl(path)}#service`,
+    name,
+    description,
+    areaServed,
+    serviceType,
+    provider: {
+      "@type": "LocalBusiness",
+      name: SITE_NAME,
+      url: absoluteUrl("/"),
+    },
+  };
 }

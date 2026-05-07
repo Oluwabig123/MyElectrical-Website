@@ -136,7 +136,11 @@ export default function ServicesPage() {
                   {heroServices.map((service) => (
                     <article key={service.title} className={styles.panelListItem}>
                       <div>
-                        <p className={styles.panelItemTitle}>{service.title}</p>
+                        <p className={styles.panelItemTitle}>
+                          <Link href={`/services/${service.slug}`} className={styles.panelItemLink}>
+                            {service.title}
+                          </Link>
+                        </p>
                         <p className={styles.panelItemText}>{service.detail}</p>
                       </div>
                     </article>
@@ -200,8 +204,8 @@ export default function ServicesPage() {
                       <h3 className={styles.featureTitle}>{service.title}</h3>
                       <p className={styles.featureDesc}>{service.desc}</p>
                       <p className={styles.featureDetail}>{service.detail}</p>
-                      <Link href="/quote" className={styles.featureLink}>
-                        Plan this service
+                      <Link href={`/services/${service.slug}`} className={styles.featureLink}>
+                        View service details
                       </Link>
                     </div>
                   </article>
@@ -248,6 +252,9 @@ export default function ServicesPage() {
                       <p className={styles.supportCardEyebrow}>{service.eyebrow}</p>
                       <h3 className={styles.supportCardTitle}>{service.title}</h3>
                       <p className={styles.supportCardText}>{service.detail}</p>
+                      <Link href={`/services/${service.slug}`} className={styles.supportCardLink}>
+                        View service page
+                      </Link>
                     </div>
                   </article>
                 ))}

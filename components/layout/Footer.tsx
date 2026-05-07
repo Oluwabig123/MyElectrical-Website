@@ -10,6 +10,7 @@ const quickLinks = [
   { href: "/academy", label: "Academy" },
   { href: "/products", label: "Products" },
   { href: "/projects", label: "Projects" },
+  { href: "/locations", label: "Service Areas" },
   { href: "/assistant", label: "Assistant" },
   { href: "/about", label: "About" },
   { href: "/quote", label: "Request Quote" },

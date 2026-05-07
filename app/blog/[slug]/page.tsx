@@ -8,6 +8,7 @@ import BlogTableOfContents from "@/components/blog/BlogTableOfContents";
 import MarkdownContent from "@/components/blog/MarkdownContent";
 import Container from "@/components/layout/Container";
 import JsonLd from "@/components/seo/JsonLd";
+import { getServicePageBySlug } from "@/data/service-pages";
 import {
   extractMarkdownHeadings,
   formatBlogDate,
@@ -21,6 +22,8 @@ import {
   getRelatedBlogPosts,
   resolveBlogVisual,
 } from "@/lib/blog-editorial";
+import type { BlogPost } from "@/lib/blog-shared";
+import { buildCollectionPath, type ProductCategoryKey, resolveProductCategory } from "@/lib/product-catalog";
 import { buildMetadata } from "@/lib/seo";
 import { buildBlogArticleSchema } from "@/lib/structured-data";
 
@@ -76,6 +79,78 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+type RelatedRoute = {
+  label: string;
+  href: string;
+};
+
+const BLOG_RELATION_RULES: Array<{
+  keywords: string[];
+  serviceSlug: string;
+  categoryKey: ProductCategoryKey;
+}> = [
+  {
+    keywords: ["wiring", "inspection", "safety", "maintenance"],
+    serviceSlug: "residential-commercial-wiring",
+    categoryKey: "wiring-cables",
+  },
+  {
+    keywords: ["lighting", "ceiling", "finishing"],
+    serviceSlug: "lighting-interior-finishing",
+    categoryKey: "lighting",
+  },
+  {
+    keywords: ["solar", "inverter", "energy"],
+    serviceSlug: "solar-inverter-installation",
+    categoryKey: "power-backup-solar",
+  },
+  {
+    keywords: ["cctv", "security", "camera"],
+    serviceSlug: "cctv-security-systems",
+    categoryKey: "cctv-cameras",
+  },
+];
+
+function resolveRelatedRoutes(post: BlogPost) {
+  const tokens = [post.category, ...post.tags]
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+  const serviceLinks: RelatedRoute[] = [];
+  const collectionLinks: RelatedRoute[] = [];
+  const serviceSeen = new Set<string>();
+  const collectionSeen = new Set<string>();
+
+  BLOG_RELATION_RULES.forEach((rule) => {
+    const isMatch = rule.keywords.some((keyword) =>
+      tokens.some((token) => token.includes(keyword) || keyword.includes(token)),
+    );
+    if (!isMatch) return;
+
+    const service = getServicePageBySlug(rule.serviceSlug);
+    if (service && !serviceSeen.has(service.slug)) {
+      serviceSeen.add(service.slug);
+      serviceLinks.push({
+        label: service.shortTitle,
+        href: `/services/${service.slug}`,
+      });
+    }
+
+    const category = resolveProductCategory(rule.categoryKey);
+    if (category && !collectionSeen.has(category.key)) {
+      collectionSeen.add(category.key);
+      collectionLinks.push({
+        label: category.label,
+        href: buildCollectionPath(category.key),
+      });
+    }
+  });
+
+  return {
+    serviceLinks: serviceLinks.slice(0, 2),
+    collectionLinks: collectionLinks.slice(0, 2),
+  };
+}
+
 export default async function BlogArticlePage({ params }: PageProps) {
   const { slug } = await params;
   const [post, allPosts] = await Promise.all([getBlogPostBySlug(slug), getAllBlogPosts()]);
@@ -87,6 +162,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
   const relatedPosts = getRelatedBlogPosts(allPosts, post, 3);
   const leadParagraph = extractArticleLead(post.content, post.excerpt);
   const articleTip = extractArticleTip(post.content, post.excerpt);
+  const relatedRoutes = resolveRelatedRoutes(post);
 
   return (
     <article className="pb-20 pt-8 md:pb-28 md:pt-12">
@@ -209,6 +285,34 @@ export default async function BlogArticlePage({ params }: PageProps) {
                   ))}
                 </div>
               </div>
+
+              {relatedRoutes.serviceLinks.length > 0 || relatedRoutes.collectionLinks.length > 0 ? (
+                <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.58)] p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7a5c2e]">
+                    Related services and products
+                  </p>
+                  <div className="mt-4 space-y-2">
+                    {relatedRoutes.serviceLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="block rounded-2xl border border-[color:var(--editorial-border)] bg-[#fffdf9] px-3 py-2 text-sm font-medium text-[#2a241d] transition duration-200 hover:border-[#c9b084]"
+                      >
+                        Service: {item.label}
+                      </Link>
+                    ))}
+                    {relatedRoutes.collectionLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="block rounded-2xl border border-[color:var(--editorial-border)] bg-[#fffdf9] px-3 py-2 text-sm font-medium text-[#2a241d] transition duration-200 hover:border-[#c9b084]"
+                      >
+                        Products: {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               {relatedPosts.length > 0 ? (
                 <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.58)] p-5">

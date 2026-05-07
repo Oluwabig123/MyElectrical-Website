@@ -6,15 +6,17 @@ import ProductCard from "@/components/products/ProductCard";
 import journeyStyles from "@/components/products/ProductJourney.module.css";
 import JsonLd from "@/components/seo/JsonLd";
 import SmartImage from "@/components/ui/SmartImage";
+import { getServicePageBySlug } from "@/data/service-pages";
 import {
   buildCollectionPath,
   buildProductPath,
   buildProductCatalog,
+  type ProductCategoryKey,
   resolveProductCategory,
 } from "@/lib/product-catalog";
 import { fetchOnlineProducts } from "@/lib/product-directory";
-import { buildMetadata } from "@/lib/seo";
-import { buildProductListSchema } from "@/lib/structured-data";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
+import { buildFaqSchema, buildProductListSchema } from "@/lib/structured-data";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -26,12 +28,52 @@ function cn(...classNames: Array<string | false | null | undefined>) {
 
 export const dynamic = "force-dynamic";
 
+const CATEGORY_SERVICE_MAP: Partial<Record<ProductCategoryKey, string>> = {
+  lighting: "lighting-interior-finishing",
+  "switches-sockets": "smart-home-systems",
+  "wiring-cables": "residential-commercial-wiring",
+  "conduits-trunking": "residential-commercial-wiring",
+  "circuit-protection": "fault-diagnosis-maintenance",
+  "distribution-boards-panels": "residential-commercial-wiring",
+  "smart-home-automation": "smart-home-systems",
+  "power-backup-solar": "solar-inverter-installation",
+  "cctv-cameras": "cctv-security-systems",
+  dvr: "cctv-security-systems",
+  nvr: "cctv-security-systems",
+  "ip-cameras": "cctv-security-systems",
+  "analog-cameras": "cctv-security-systems",
+  "wireless-cctv": "cctv-security-systems",
+  "cctv-kits": "cctv-security-systems",
+  "poe-equipment": "cctv-security-systems",
+};
+
 function buildCollectionDescription(label: string, group: string) {
   if (group === "Security & CCTV") {
     return `A curated edit of ${label.toLowerCase()} for residential, commercial, and site security projects.`;
   }
 
   return `A curated selection of ${label.toLowerCase()} for cleaner comparison and confident project decisions.`;
+}
+
+function buildCollectionFaqs(label: string) {
+  const labelLower = label.toLowerCase();
+  return [
+    {
+      question: `How do I choose the right ${labelLower} for my project?`,
+      answer:
+        "Start with your actual load, installation environment, and reliability needs. Oduzz can help narrow options so selected products match project scope.",
+    },
+    {
+      question: `Do you support installation guidance for ${labelLower}?`,
+      answer:
+        "Yes. You can request service guidance alongside product selection so accessories, protection, and routing decisions stay aligned.",
+    },
+    {
+      question: `Can I request a quote for ${labelLower} and related materials together?`,
+      answer:
+        "Yes. Share your location, required quantities, and project timeline through WhatsApp or the quote page for faster support.",
+    },
+  ];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -102,10 +144,13 @@ export default async function CollectionPage({ params }: PageProps) {
     ...group.items.filter((item) => item.featured),
     ...group.items.filter((item) => !item.featured),
   ].slice(0, 3);
+  const collectionFaqs = buildCollectionFaqs(category.label);
+  const faqSchema = buildFaqSchema(collectionFaqs, { id: `${absoluteUrl(buildCollectionPath(category.key))}#faq` });
+  const relatedService = getServicePageBySlug(CATEGORY_SERVICE_MAP[category.key] ?? "");
 
   return (
     <>
-      <JsonLd data={buildProductListSchema(group.items)} />
+      <JsonLd data={[buildProductListSchema(group.items), faqSchema]} />
 
       <section className={cn("section", journeyStyles.page)}>
         <Container className={journeyStyles.container}>
@@ -190,6 +235,40 @@ export default async function CollectionPage({ params }: PageProps) {
                 />
               ))}
             </div>
+
+            <section className="seoContentSection">
+              <h2 className="h2">Frequently asked questions about {category.label.toLowerCase()}</h2>
+              <div className="seoCardGrid">
+                {collectionFaqs.map((faq) => (
+                  <article key={faq.question} className="card seoInfoCard">
+                    <h3 className="cardTitle">{faq.question}</h3>
+                    <p className="p">{faq.answer}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="seoContentSection">
+              <div className="seoContentCard">
+                <h2 className="h2">Related service and reading</h2>
+                <div className="seoActionRow">
+                  {relatedService ? (
+                    <Link href={`/services/${relatedService.slug}`} className="btn outline">
+                      {relatedService.shortTitle}
+                    </Link>
+                  ) : null}
+                  <Link href="/services" className="btn outline">
+                    All services
+                  </Link>
+                  <Link href="/blog" className="btn outline">
+                    Read related guides
+                  </Link>
+                  <Link href="/quote" className="btn primary">
+                    Request quote
+                  </Link>
+                </div>
+              </div>
+            </section>
           </div>
         </Container>
       </section>

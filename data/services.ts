@@ -1,5 +1,6 @@
 export const services = [
   {
+    slug: "residential-commercial-wiring",
     eyebrow: "Power Systems",
     title: "Residential & Commercial Wiring",
     desc: "Safe conduit wiring with balanced loads and clean finishing.",
@@ -8,6 +9,7 @@ export const services = [
     alt: "Premium electrical wiring installation with organized conduit routing and a clean distribution board.",
   },
   {
+    slug: "fault-diagnosis-maintenance",
     eyebrow: "Diagnostics",
     title: "Fault Diagnosis & Maintenance",
     desc: "Fast fault checks, repairs, and preventive maintenance.",
@@ -16,6 +18,7 @@ export const services = [
     alt: "Electrical technician performing fault diagnosis with a multimeter on an organized breaker panel.",
   },
   {
+    slug: "solar-inverter-installation",
     eyebrow: "Energy Backup",
     title: "Solar & Inverter Installation",
     desc: "Correct sizing, clean mounting, and proper protection setup.",
@@ -24,6 +27,7 @@ export const services = [
     alt: "Premium solar panel and inverter installation with clean cable management on a modern building.",
   },
   {
+    slug: "cctv-security-systems",
     eyebrow: "Security",
     title: "CCTV & Security Systems",
     desc: "Clean camera routing, correct placement, and remote viewing setup.",
@@ -32,6 +36,7 @@ export const services = [
     alt: "Premium CCTV camera installation on a modern property exterior at dusk.",
   },
   {
+    slug: "smart-home-systems",
     eyebrow: "Automation",
     title: "Smart Home Systems",
     desc: "Smart switches, lighting control, and secure automation setup.",
@@ -40,6 +45,7 @@ export const services = [
     alt: "Elegant smart home switch integrated into a warm contemporary interior.",
   },
   {
+    slug: "lighting-interior-finishing",
     eyebrow: "Finishing",
     title: "Lighting & Interior Finishing",
     desc: "POP lines, chandeliers, and decorative lighting with safe terminations.",

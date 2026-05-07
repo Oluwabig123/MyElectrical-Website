@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Container from "@/components/layout/Container";
 import CTAQuoteStrip from "@/sections/home/CTAQuoteStrip";
 import FeaturedProducts from "@/sections/home/FeaturedProducts";
@@ -8,19 +9,24 @@ import ServicesPreview from "@/sections/home/ServicesPreview";
 import Stories from "@/sections/home/Stories";
 import WhyOduzz from "@/sections/home/WhyOduzz";
 import DeferredSection from "@/components/ui/DeferredSection";
+import JsonLd from "@/components/seo/JsonLd";
+import { homeFaqs, serviceAreas } from "@/data/service-areas";
 import { buildMetadata } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/seo";
+import { buildFaqSchema } from "@/lib/structured-data";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Electrical Services & Products in Lagos Nigeria",
+  title: "Electrical Company in Lagos | Installation & Materials Supplier",
   description:
-    "Oduzz Electrical Concept provides electrical services and carefully selected products in Lagos, Nigeria, helping residential and commercial clients choose safe, durable cables, lighting systems, sockets, fittings, and installation solutions.",
+    "Oduzz Electrical Concept provides electrical installation services, lighting systems, cables, switches, and verified electrical materials for residential and commercial projects in Lagos, Nigeria.",
   path: "/",
   keywords: [
-    "electrical services Lagos Nigeria",
-    "electrical products Lagos",
-    "electrical installation Lagos",
-    "cables and wires Nigeria",
-    "lighting systems Lagos",
+    "electrical company in Lagos",
+    "electrical installation company Lagos",
+    "electrical materials supplier Lagos",
+    "electrical contractor Nigeria",
+    "lighting installation Lagos",
+    "cables and wires Lagos Nigeria",
   ],
   image: "/hero/wiring.webp",
 });
@@ -36,8 +42,13 @@ function HomeSectionFallback({ minHeight = 320 }: { minHeight?: number }) {
 }
 
 export default function HomePage() {
+  const homeFaqSchema = buildFaqSchema(homeFaqs, {
+    id: `${absoluteUrl("/")}#homepage-faq`,
+  });
+
   return (
     <>
+      <JsonLd data={homeFaqSchema} />
       <Hero />
       <ServicesPreview />
       <FeaturedProducts />
@@ -57,7 +68,9 @@ export default function HomePage() {
         <Container>
           <div className="seoContentCard">
             <p className="kicker">Why Oduzz</p>
-            <h1 className="h2">Electrical services and verified products for Lagos projects</h1>
+            <h2 className="h2">
+              Electrical installation services and verified electrical materials in Lagos
+            </h2>
             <div className="seoContentGrid">
               <p className="p">
                 Oduzz Electrical Concept supports residential and commercial projects with installation
@@ -70,6 +83,30 @@ export default function HomePage() {
                 for premium components, then install substandard alternatives. Oduzz reduces that risk by
                 guiding clients toward suitable products and transparent purchasing decisions.
               </p>
+            </div>
+            <div className="seoChipRow" aria-label="Service areas">
+              {serviceAreas.map((area) => (
+                <Link key={area.slug} href={`/locations/${area.slug}`} className="btn outline">
+                  Electrical services in {area.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      <section className="section seoContentSection">
+        <Container>
+          <div className="seoContentCard">
+            <p className="kicker">FAQ</p>
+            <h2 className="h2">Frequently asked questions about Oduzz Electrical Concept</h2>
+            <div className="seoCardGrid">
+              {homeFaqs.map((faq) => (
+                <article key={faq.question} className="card seoInfoCard">
+                  <h3 className="cardTitle">{faq.question}</h3>
+                  <p className="p">{faq.answer}</p>
+                </article>
+              ))}
             </div>
           </div>
         </Container>
