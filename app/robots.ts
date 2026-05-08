@@ -2,6 +2,9 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
+  const canonicalBase = SITE_URL.replace(/\/+$/g, "");
+  const host = new URL(canonicalBase).host;
+
   return {
     rules: [
       {
@@ -10,7 +13,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/api"],
       },
     ],
-    sitemap: `${SITE_URL.replace(/\/+$/g, "")}/sitemap.xml`,
-    host: SITE_URL.replace(/\/+$/g, ""),
+    sitemap: `${canonicalBase}/sitemap.xml`,
+    host,
   };
 }

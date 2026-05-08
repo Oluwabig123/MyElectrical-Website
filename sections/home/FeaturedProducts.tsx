@@ -51,8 +51,8 @@ export default async function FeaturedProducts() {
         <div className="featuredProductsHomeShell">
           <SectionHeader
             kicker="Shop solar, CCTV, and lighting supplies"
-            title="Shop Categories"
-            subtitle="Explore our best-selling product categories."
+            title="Electrical materials for cleaner installs"
+            subtitle="Browse the categories clients ask for most when planning wiring, lighting, CCTV, and backup power."
           />
 
           <div className="featuredProductsHomeGrid">
@@ -90,7 +90,7 @@ export default async function FeaturedProducts() {
 
           <div className="featuredProductsHomeFoot">
             <Link href="/products" className="btn primary featuredProductsHomeCta">
-              Browse All Products -&gt;
+              Browse All Products
             </Link>
           </div>
         </div>

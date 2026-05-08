@@ -8,7 +8,7 @@ import OduzzAssistantWidget from "@/components/layout/OduzzAssistantWidget";
 import TopAdBar from "@/components/layout/TopAdBar";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_NAME, SITE_URL, DEFAULT_OG_IMAGE, BUSINESS_DESCRIPTION, DEFAULT_KEYWORDS } from "@/lib/seo";
-import { buildLocalBusinessSchema } from "@/lib/structured-data";
+import { buildLocalBusinessSchema, buildOrganizationSchema, buildWebsiteSchema } from "@/lib/structured-data";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -71,7 +71,7 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-canvas font-sans text-ink">
         <AppProviders>
-          <JsonLd data={buildLocalBusinessSchema()} />
+          <JsonLd data={[buildOrganizationSchema(), buildWebsiteSchema(), buildLocalBusinessSchema()]} />
           <a className="skip" href="#content">
             Skip to content
           </a>

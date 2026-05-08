@@ -84,6 +84,34 @@ export function buildLocalBusinessSchema(): JsonLdObject {
   };
 }
 
+export function buildOrganizationSchema(): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": absoluteUrl("/#organization"),
+    name: SITE_NAME,
+    url: absoluteUrl("/"),
+    logo: absoluteUrl("/oduzz-logo-transparent.webp"),
+    email: CONTACT.email,
+    telephone: CONTACT.phoneE164,
+    sameAs: [CONTACT_LINKS.whatsapp],
+  };
+}
+
+export function buildWebsiteSchema(): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": absoluteUrl("/#website"),
+    url: absoluteUrl("/"),
+    name: SITE_NAME,
+    publisher: {
+      "@id": absoluteUrl("/#organization"),
+    },
+    inLanguage: "en-NG",
+  };
+}
+
 export function buildProductSchema(product: Product): JsonLdObject {
   const price = toKoboCurrencyAmount(product);
 

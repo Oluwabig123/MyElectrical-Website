@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Container from "@/components/layout/Container";
+import JsonLd from "@/components/seo/JsonLd";
 import SectionHeader from "@/components/ui/SectionHeader";
 import Reveal from "@/components/ui/Reveal";
 import { CONTACT, CONTACT_LINKS } from "@/data/contact";
-import { buildMetadata } from "@/lib/seo";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
+import { buildFaqSchema } from "@/lib/structured-data";
 
 export const metadata: Metadata = buildMetadata({
   title: "Contact Oduzz Electrical Concept in Lagos",
@@ -18,10 +20,48 @@ export const metadata: Metadata = buildMetadata({
   ],
 });
 
+const contactFaqs = [
+  {
+    question: "What details should I send for a faster electrical quote?",
+    answer:
+      "Send your location, service type, urgency, and clear project photos. If available, include load details and timeline.",
+  },
+  {
+    question: "Can Oduzz support both installation and material guidance?",
+    answer:
+      "Yes. Oduzz supports installation services and practical guidance on suitable electrical materials for each project.",
+  },
+  {
+    question: "Which locations do you commonly support?",
+    answer:
+      "Core support is across Lagos, including Ikorodu and wider service requests based on scope and schedule.",
+  },
+] as const;
+
 export default function ContactPage() {
+  const faqSchema = buildFaqSchema([...contactFaqs], {
+    id: `${absoluteUrl("/contact")}#faq`,
+  });
+
+  const contactPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "@id": `${absoluteUrl("/contact")}#contact-page`,
+    url: absoluteUrl("/contact"),
+    name: "Contact Oduzz Electrical Concept",
+    description:
+      "Contact page for electrical installation, product guidance, and project quote support in Lagos, Nigeria.",
+    mainEntity: {
+      "@type": "Organization",
+      "@id": `${absoluteUrl("/")}#organization`,
+    },
+  };
+
   return (
     <section className="section seoPage">
       <Container>
+        <JsonLd data={[contactPageSchema, faqSchema]} />
+
         <SectionHeader
           as="h1"
           kicker="Contact"
@@ -79,6 +119,18 @@ export default function ContactPage() {
             </div>
           </div>
         </Reveal>
+
+        <section className="seoContentSection">
+          <h2 className="h2">Frequently asked questions</h2>
+          <div className="seoCardGrid">
+            {contactFaqs.map((faq) => (
+              <article key={faq.question} className="card seoInfoCard">
+                <h3 className="cardTitle">{faq.question}</h3>
+                <p className="p">{faq.answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
       </Container>
     </section>
   );

@@ -138,7 +138,7 @@ export default function LightingShowcase() {
         <SectionHeader
           kicker="Featured"
           title="Services and Product Highlights"
-          subtitle="An image-led horizontal slider for fittings, lighting services, and showcase ideas."
+          subtitle="Lighting finishes, fitting ideas, and recent installation details from Oduzz projects."
         />
 
         <Reveal>
