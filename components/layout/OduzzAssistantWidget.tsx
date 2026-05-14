@@ -18,14 +18,19 @@ export default function OduzzAssistantWidget() {
 
     if (hasSeenPrompt) return undefined;
 
-    setShowPrompt(true);
+    const showTimer = window.setTimeout(() => {
+      setShowPrompt(true);
+    }, 0);
     window.sessionStorage.setItem(storageKey, "true");
 
     const timer = window.setTimeout(() => {
       setShowPrompt(false);
     }, 3600);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(timer);
+    };
   }, []);
 
   if (isHiddenRoute) return null;

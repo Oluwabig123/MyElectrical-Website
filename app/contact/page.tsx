@@ -3,6 +3,7 @@ import Container from "@/components/layout/Container";
 import JsonLd from "@/components/seo/JsonLd";
 import SectionHeader from "@/components/ui/SectionHeader";
 import Reveal from "@/components/ui/Reveal";
+import FaqAccordion from "@/components/ui/FaqAccordion";
 import { CONTACT, CONTACT_LINKS } from "@/data/contact";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildFaqSchema } from "@/lib/structured-data";
@@ -122,14 +123,7 @@ export default function ContactPage() {
 
         <section className="seoContentSection">
           <h2 className="h2">Frequently asked questions</h2>
-          <div className="seoCardGrid">
-            {contactFaqs.map((faq) => (
-              <article key={faq.question} className="card seoInfoCard">
-                <h3 className="cardTitle">{faq.question}</h3>
-                <p className="p">{faq.answer}</p>
-              </article>
-            ))}
-          </div>
+          <FaqAccordion items={[...contactFaqs]} />
         </section>
       </Container>
     </section>

@@ -208,8 +208,12 @@ export default function MemoryGameClient() {
   const timerPercent = timerMax > 0 ? (timerValue / timerMax) * 100 : 0;
 
   useEffect(() => {
-    setBestProgress(readSavedProgress());
-    setHasLoadedProgress(true);
+    const timer = window.setTimeout(() => {
+      setBestProgress(readSavedProgress());
+      setHasLoadedProgress(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -218,18 +222,22 @@ export default function MemoryGameClient() {
   }, [bestProgress, hasLoadedProgress]);
 
   useEffect(() => {
-    setBestProgress((prev) => {
-      const next = {
-        bestScore: Math.max(prev.bestScore, game.totalScore),
-        bestStage: isWon ? Math.max(prev.bestStage, game.stage) : prev.bestStage,
-      };
+    const timer = window.setTimeout(() => {
+      setBestProgress((prev) => {
+        const next = {
+          bestScore: Math.max(prev.bestScore, game.totalScore),
+          bestStage: isWon ? Math.max(prev.bestStage, game.stage) : prev.bestStage,
+        };
 
-      if (next.bestScore === prev.bestScore && next.bestStage === prev.bestStage) {
-        return prev;
-      }
+        if (next.bestScore === prev.bestScore && next.bestStage === prev.bestStage) {
+          return prev;
+        }
 
-      return next;
-    });
+        return next;
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [game.totalScore, game.stage, isWon]);
 
   useEffect(() => {

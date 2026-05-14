@@ -14,6 +14,14 @@ type UseInfiniteBatchingOptions = {
   triggerOffsetPx?: number;
 };
 
+function buildResetSignature(resetKeys: readonly unknown[]) {
+  try {
+    return JSON.stringify(resetKeys);
+  } catch {
+    return resetKeys.map((item) => String(item)).join("|");
+  }
+}
+
 export function useInfiniteBatching({
   totalCount,
   batchSize,
@@ -23,6 +31,7 @@ export function useInfiniteBatching({
   triggerOffsetPx = DEFAULT_TRIGGER_OFFSET_PX,
 }: UseInfiniteBatchingOptions) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const resetSignature = buildResetSignature(resetKeys);
   const [visibleCount, setVisibleCount] = useState(() =>
     Math.min(Math.max(initialVisibleCount, 0), totalCount),
   );
@@ -37,9 +46,13 @@ export function useInfiniteBatching({
   }, [totalCount, visibleCount]);
 
   useEffect(() => {
-    setVisibleCount(Math.min(Math.max(initialVisibleCount, 0), totalCount));
-    setIsLoadingMore(false);
-  }, [initialVisibleCount, totalCount, ...resetKeys]);
+    const timer = window.setTimeout(() => {
+      setVisibleCount(Math.min(Math.max(initialVisibleCount, 0), totalCount));
+      setIsLoadingMore(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [initialVisibleCount, totalCount, resetSignature]);
 
   useEffect(() => {
     if (!hasMoreItems || isLoadingMore) return undefined;

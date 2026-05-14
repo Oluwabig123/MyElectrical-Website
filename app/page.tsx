@@ -9,6 +9,7 @@ import ServicesPreview from "@/sections/home/ServicesPreview";
 import Stories from "@/sections/home/Stories";
 import WhyOduzz from "@/sections/home/WhyOduzz";
 import DeferredSection from "@/components/ui/DeferredSection";
+import FaqAccordion from "@/components/ui/FaqAccordion";
 import JsonLd from "@/components/seo/JsonLd";
 import { homeFaqs, serviceAreas } from "@/data/service-areas";
 import { buildMetadata } from "@/lib/seo";
@@ -66,25 +67,39 @@ export default function HomePage() {
       </DeferredSection>
       <section className="section seoContentSection">
         <Container>
-          <div className="seoContentCard">
-            <p className="kicker">Why Oduzz</p>
-            <h2 className="h2">
-              Electrical installation services and verified electrical materials in Lagos
-            </h2>
-            <div className="seoContentGrid">
-              <p className="p">
-                Oduzz Electrical Concept supports residential and commercial projects with installation
-                services and carefully selected electrical materials. From wiring and lighting to
-                sockets, fittings, and power accessories, the focus is safety, authenticity, and long-term
-                performance.
-              </p>
-              <p className="p">
-                That matters in Lagos because many projects fail at the material stage: technicians bill
-                for premium components, then install substandard alternatives. Oduzz reduces that risk by
-                guiding clients toward suitable products and transparent purchasing decisions.
+          <div className="seoContentCard homeApproachCard">
+            <div className="homeApproachHead">
+              <p className="kicker">Our approach</p>
+              <h2 className="h2">
+                Electrical installation services and verified electrical materials in Lagos
+              </h2>
+              <p className="p homeApproachLead">
+                Oduzz supports residential and commercial projects with a simple operating standard:
+                plan safely, source correctly, and execute cleanly.
               </p>
             </div>
-            <div className="seoChipRow" aria-label="Service areas">
+
+            <div className="homeApproachGrid">
+              <article className="homeApproachPane">
+                <p className="homeApproachLabel">How we work</p>
+                <p className="p">
+                  Installation and materials decisions are treated as one system. From wiring and
+                  lighting to sockets, fittings, and power accessories, selections are made for safety,
+                  authenticity, and long-term performance.
+                </p>
+              </article>
+
+              <article className="homeApproachPane">
+                <p className="homeApproachLabel">Why it matters</p>
+                <p className="p">
+                  Many projects fail at the material stage: premium components are billed, then
+                  substandard alternatives are installed. Oduzz reduces that risk through practical
+                  guidance and transparent purchasing direction.
+                </p>
+              </article>
+            </div>
+
+            <div className="seoChipRow homeApproachAreas" aria-label="Service areas">
               {serviceAreas.map((area) => (
                 <Link key={area.slug} href={`/locations/${area.slug}`} className="btn outline">
                   Electrical services in {area.name}
@@ -100,14 +115,7 @@ export default function HomePage() {
           <div className="seoContentCard">
             <p className="kicker">FAQ</p>
             <h2 className="h2">Frequently asked questions about Oduzz Electrical Concept</h2>
-            <div className="seoCardGrid">
-              {homeFaqs.map((faq) => (
-                <article key={faq.question} className="card seoInfoCard">
-                  <h3 className="cardTitle">{faq.question}</h3>
-                  <p className="p">{faq.answer}</p>
-                </article>
-              ))}
-            </div>
+            <FaqAccordion items={homeFaqs} />
           </div>
         </Container>
       </section>

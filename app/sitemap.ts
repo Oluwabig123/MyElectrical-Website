@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllBlogSlugs } from "@/lib/blog";
 import { buildCollectionPath, buildProductCatalog, buildProductPath } from "@/lib/product-catalog";
-import { fetchOnlineProducts } from "@/lib/product-directory";
+import { fetchOnlineProductsCached } from "@/lib/product-directory-server";
 import { getAllProjectSlugs } from "@/lib/projects";
 import { absoluteUrl } from "@/lib/seo";
 import { serviceAreas } from "@/data/service-areas";
@@ -10,7 +10,7 @@ import { servicePages } from "@/data/service-pages";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogSlugs = await getAllBlogSlugs();
   const projectSlugs = getAllProjectSlugs();
-  const { products } = await fetchOnlineProducts();
+  const { products } = await fetchOnlineProductsCached();
   const productCatalog = buildProductCatalog(products);
   const now = new Date();
 

@@ -5,6 +5,7 @@ import ProductBreadcrumbs from "@/components/products/ProductBreadcrumbs";
 import ProductCard from "@/components/products/ProductCard";
 import journeyStyles from "@/components/products/ProductJourney.module.css";
 import JsonLd from "@/components/seo/JsonLd";
+import FaqAccordion from "@/components/ui/FaqAccordion";
 import SmartImage from "@/components/ui/SmartImage";
 import { getServicePageBySlug } from "@/data/service-pages";
 import {
@@ -14,7 +15,7 @@ import {
   type ProductCategoryKey,
   resolveProductCategory,
 } from "@/lib/product-catalog";
-import { fetchOnlineProducts } from "@/lib/product-directory";
+import { fetchOnlineProductsCached } from "@/lib/product-directory-server";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildFaqSchema, buildProductListSchema } from "@/lib/structured-data";
 
@@ -25,8 +26,6 @@ type PageProps = {
 function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
 }
-
-export const dynamic = "force-dynamic";
 
 const CATEGORY_SERVICE_MAP: Partial<Record<ProductCategoryKey, string>> = {
   lighting: "lighting-interior-finishing",
@@ -107,7 +106,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CollectionPage({ params }: PageProps) {
   const { slug } = await params;
   const category = resolveProductCategory(slug);
-  const { products } = await fetchOnlineProducts();
+  const { products } = await fetchOnlineProductsCached();
   const catalog = buildProductCatalog(products);
   const group = category ? catalog.groups.find((item) => item.key === category.key) : null;
 
@@ -238,14 +237,7 @@ export default async function CollectionPage({ params }: PageProps) {
 
             <section className="seoContentSection">
               <h2 className="h2">Frequently asked questions about {category.label.toLowerCase()}</h2>
-              <div className="seoCardGrid">
-                {collectionFaqs.map((faq) => (
-                  <article key={faq.question} className="card seoInfoCard">
-                    <h3 className="cardTitle">{faq.question}</h3>
-                    <p className="p">{faq.answer}</p>
-                  </article>
-                ))}
-              </div>
+              <FaqAccordion items={collectionFaqs} />
             </section>
 
             <section className="seoContentSection">

@@ -96,14 +96,6 @@ export async function fetchOnlineProducts({ activeOnly = true }: { activeOnly?: 
     ? []
     : dedupeProductsBySlug(((data ?? []) as ProductRow[]).map(mapProductRow));
 
-  if (cloudProducts.length === 0) {
-    return {
-      products: getStarterProducts({ activeOnly }),
-      error,
-      source: "starter" as const,
-    };
-  }
-
   return {
     products: cloudProducts,
     error,
@@ -113,10 +105,10 @@ export async function fetchOnlineProducts({ activeOnly = true }: { activeOnly?: 
 
 export async function fetchOnlineProductBySlug(slug: string) {
   const safeSlug = String(slug || "").trim();
-  const starterProduct =
-    getStarterProducts().find((product) => product.slug === safeSlug) ?? null;
 
   if (!isSupabaseConfigured || !supabase) {
+    const starterProduct =
+      getStarterProducts().find((product) => product.slug === safeSlug) ?? null;
     return { product: starterProduct, error: null, source: "starter" as const };
   }
 
@@ -132,11 +124,7 @@ export async function fetchOnlineProductBySlug(slug: string) {
   const productRow = Array.isArray(data) ? data[0] : null;
 
   if (error || !productRow) {
-    return {
-      product: starterProduct,
-      error,
-      source: starterProduct ? ("starter" as const) : ("cloud" as const),
-    };
+    return { product: null, error, source: "cloud" as const };
   }
 
   return {

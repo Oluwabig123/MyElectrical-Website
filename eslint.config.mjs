@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local Playwright browser downloads (generated binary assets)
+    ".playwright-browsers/**",
   ]),
 ]);
 

@@ -11,7 +11,10 @@ import {
   buildProductTagline,
   type Product,
 } from "@/lib/product-catalog";
-import { fetchOnlineProductBySlug, fetchOnlineProducts } from "@/lib/product-directory";
+import {
+  fetchOnlineProductBySlugCached,
+  fetchOnlineProductsCached,
+} from "@/lib/product-directory-server";
 import { buildMetadata } from "@/lib/seo";
 import { isSupabaseConfigured } from "@/lib/supabase-client";
 import { buildProductSchema } from "@/lib/structured-data";
@@ -24,8 +27,6 @@ type PageProps = {
 function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
 }
-
-export const dynamic = "force-dynamic";
 
 function sanitizeSlug(value: string) {
   return String(value || "").trim().toLowerCase();
@@ -50,7 +51,7 @@ function buildRelatedProducts(products: Product[], currentProduct: Product, limi
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const safeSlug = sanitizeSlug(slug);
-  const { product } = await fetchOnlineProductBySlug(safeSlug);
+  const { product } = await fetchOnlineProductBySlugCached(safeSlug);
 
   if (!product) {
     return buildMetadata({
@@ -83,8 +84,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const safeSlug = sanitizeSlug(slug);
   const [{ product, error }, { products }] = await Promise.all([
-    fetchOnlineProductBySlug(safeSlug),
-    fetchOnlineProducts(),
+    fetchOnlineProductBySlugCached(safeSlug),
+    fetchOnlineProductsCached(),
   ]);
 
   if (product) {

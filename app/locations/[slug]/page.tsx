@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Container from "@/components/layout/Container";
 import JsonLd from "@/components/seo/JsonLd";
+import FaqAccordion from "@/components/ui/FaqAccordion";
 import { CONTACT_LINKS } from "@/data/contact";
 import { getServiceAreaBySlug, serviceAreas } from "@/data/service-areas";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
@@ -112,14 +113,7 @@ export default async function ServiceAreaPage({ params }: PageProps) {
 
         <section className="seoContentSection">
           <h2 className="h2">Frequently asked questions for {area.name}</h2>
-          <div className="seoCardGrid">
-            {area.faqs.map((faq) => (
-              <article key={faq.question} className="card seoInfoCard">
-                <h3 className="cardTitle">{faq.question}</h3>
-                <p className="p">{faq.answer}</p>
-              </article>
-            ))}
-          </div>
+          <FaqAccordion items={area.faqs} />
         </section>
 
         <section className="seoContentSection">

@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import JsonLd from "@/components/seo/JsonLd";
 import ProductsCatalogClient from "@/components/products/ProductsCatalogClient";
 import { buildProductCatalog } from "@/lib/product-catalog";
-import { fetchOnlineProducts } from "@/lib/product-directory";
+import { fetchOnlineProductsCached } from "@/lib/product-directory-server";
 import { buildMetadata } from "@/lib/seo";
 import { buildProductListSchema } from "@/lib/structured-data";
-
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = buildMetadata({
   title: "Electrical Products in Lagos | Cables, Lighting, Sockets",
@@ -24,7 +22,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function ProductsPage() {
-  const { products, error, source } = await fetchOnlineProducts();
+  const { products, error, source } = await fetchOnlineProductsCached();
   const catalog = buildProductCatalog(products);
   const catalogError = source === "starter" ? "" : (error?.message ?? "");
 

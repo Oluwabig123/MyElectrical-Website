@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Container from "@/components/layout/Container";
 import cardStyles from "@/components/projects/ProjectCard.module.css";
 import JsonLd from "@/components/seo/JsonLd";
+import FaqAccordion from "@/components/ui/FaqAccordion";
 import { getServicePageBySlug } from "@/data/service-pages";
 import { buildProjectPath, getAllProjectSlugs, getAllProjects, getProjectBySlug } from "@/lib/projects";
 import { buildCollectionPath, type ProductCategoryKey, resolveProductCategory } from "@/lib/product-catalog";
@@ -215,14 +216,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
         <section className="seoContentSection">
           <h2 className="h2">Project FAQs</h2>
-          <div className="seoCardGrid">
-            {projectFaqs.map((faq) => (
-              <article key={faq.question} className="card seoInfoCard">
-                <h3 className="cardTitle">{faq.question}</h3>
-                <p className="p">{faq.answer}</p>
-              </article>
-            ))}
-          </div>
+          <FaqAccordion items={projectFaqs} />
         </section>
       </Container>
     </section>

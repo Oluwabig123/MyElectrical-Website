@@ -4,7 +4,7 @@ import Container from "@/components/layout/Container";
 import Reveal from "@/components/ui/Reveal";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { buildCollectionPath, buildProductCatalog } from "@/lib/product-catalog";
-import { fetchOnlineProducts } from "@/lib/product-directory";
+import { fetchOnlineProductsCached } from "@/lib/product-directory-server";
 
 type CategoryCard = {
   id: string;
@@ -17,7 +17,7 @@ type CategoryCard = {
 };
 
 export default async function FeaturedProducts() {
-  const { products } = await fetchOnlineProducts();
+  const { products } = await fetchOnlineProductsCached();
   const { groups } = buildProductCatalog(products);
   const categoryCards = groups
     .flatMap<CategoryCard>((group) => {

@@ -151,6 +151,16 @@ function formatSupabaseError(
   return message || fallbackMessage;
 }
 
+async function revalidateProductsCache() {
+  try {
+    await fetch("/api/admin/revalidate-products", {
+      method: "POST",
+    });
+  } catch {
+    // Non-blocking: product mutation already succeeded in Supabase.
+  }
+}
+
 export default function ProductsAdminManager() {
   const router = useRouter();
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -256,30 +266,42 @@ export default function ProductsAdminManager() {
     let isMounted = true;
 
     if (!isSupabaseConfigured || !supabase) {
-      setIsAuthenticated(false);
-      setAuthSessionEmail("");
-      setIsAuthLoading(false);
-      return undefined;
+      const timer = window.setTimeout(() => {
+        if (!isMounted) return;
+        setIsAuthenticated(false);
+        setAuthSessionEmail("");
+        setIsAuthLoading(false);
+      }, 0);
+
+      return () => {
+        isMounted = false;
+        window.clearTimeout(timer);
+      };
     }
 
-    supabase.auth
-      .getSession()
-      .then(({ data, error }) => {
-        if (!isMounted) return;
-        if (error) {
-          setAuthStatus({
-            type: "error",
-            message: formatSupabaseError(error, "Could not check admin session."),
-          });
-        }
-        setIsAuthenticated(Boolean(data.session?.user));
-        setAuthSessionEmail(data.session?.user?.email || "");
-      })
-      .finally(() => {
-        if (isMounted) setIsAuthLoading(false);
-      });
+    const supabaseClient = supabase;
+    const bootstrapTimer = window.setTimeout(() => {
+      if (!isMounted) return;
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      supabaseClient.auth
+        .getSession()
+        .then(({ data, error }) => {
+          if (!isMounted) return;
+          if (error) {
+            setAuthStatus({
+              type: "error",
+              message: formatSupabaseError(error, "Could not check admin session."),
+            });
+          }
+          setIsAuthenticated(Boolean(data.session?.user));
+          setAuthSessionEmail(data.session?.user?.email || "");
+        })
+        .finally(() => {
+          if (isMounted) setIsAuthLoading(false);
+        });
+    }, 0);
+
+    const { data: authListener } = supabaseClient.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
       setIsAuthenticated(Boolean(session?.user));
       setAuthSessionEmail(session?.user?.email || "");
@@ -290,12 +312,19 @@ export default function ProductsAdminManager() {
 
     return () => {
       isMounted = false;
+      window.clearTimeout(bootstrapTimer);
       authListener.subscription.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
-    void loadCloudProducts();
+    const timer = window.setTimeout(() => {
+      void loadCloudProducts();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [loadCloudProducts]);
 
   useEffect(() => {
@@ -514,6 +543,7 @@ export default function ProductsAdminManager() {
         type: "success",
         message: "Cloud product updated.",
       });
+      await revalidateProductsCache();
     } else {
       const { error } = await supabase.from(ADMIN_PRODUCTS_TABLE).insert([
         {
@@ -548,6 +578,7 @@ export default function ProductsAdminManager() {
         type: "success",
         message: "Cloud product added.",
       });
+      await revalidateProductsCache();
     }
 
     resetAdminForm();
@@ -609,6 +640,7 @@ export default function ProductsAdminManager() {
     }
 
     setFormStatus({ type: "success", message: "Cloud product removed." });
+    await revalidateProductsCache();
     setDeletingProductId("");
     await loadCloudProducts();
     router.refresh();
