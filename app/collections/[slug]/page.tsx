@@ -143,6 +143,15 @@ export default async function CollectionPage({ params }: PageProps) {
     ...group.items.filter((item) => item.featured),
     ...group.items.filter((item) => !item.featured),
   ].slice(0, 3);
+  const featuredCount = group.items.filter((item) => item.featured).length;
+  const collectionModeValue =
+    group.items.length >= 4 ? "Stocked" : group.items.length >= 2 ? "Curated" : "Special";
+  const collectionModeLabel =
+    group.items.length >= 4
+      ? "Stocked collection"
+      : group.items.length >= 2
+        ? "Curated edit"
+        : "Special-order reference";
   const collectionFaqs = buildCollectionFaqs(category.label);
   const faqSchema = buildFaqSchema(collectionFaqs, { id: `${absoluteUrl(buildCollectionPath(category.key))}#faq` });
   const relatedService = getServicePageBySlug(CATEGORY_SERVICE_MAP[category.key] ?? "");
@@ -163,11 +172,21 @@ export default async function CollectionPage({ params }: PageProps) {
 
             <div className="productCollectionHero">
               <div className="productCollectionHeroCopy">
-                <p className={journeyStyles.eyebrow}>{category.group}</p>
+                <p className={journeyStyles.eyebrow}>{category.group} | {collectionModeLabel}</p>
                 <h1 className={cn(journeyStyles.display, journeyStyles.displayCollection)}>{category.label}</h1>
                 <p className={cn(journeyStyles.lead, "productCollectionHeroLead")}>
                   {buildCollectionDescription(category.label, category.group)}
                 </p>
+                <div className={journeyStyles.actions}>
+                  {relatedService ? (
+                    <Link href={`/services/${relatedService.slug}`} className="btn outline">
+                      Pair with {relatedService.shortTitle}
+                    </Link>
+                  ) : null}
+                  <Link href="/quote" className="btn primary">
+                    Request quote
+                  </Link>
+                </div>
               </div>
 
               <div className={journeyStyles.stats}>
@@ -176,8 +195,12 @@ export default async function CollectionPage({ params }: PageProps) {
                   <span className={journeyStyles.statLabel}>Products</span>
                 </div>
                 <div className={journeyStyles.stat}>
-                  <strong className={journeyStyles.statValue}>{spotlightProducts.length}</strong>
+                  <strong className={journeyStyles.statValue}>{featuredCount}</strong>
                   <span className={journeyStyles.statLabel}>Featured picks</span>
+                </div>
+                <div className={journeyStyles.stat}>
+                  <strong className={journeyStyles.statValue}>{collectionModeValue}</strong>
+                  <span className={journeyStyles.statLabel}>Collection mode</span>
                 </div>
               </div>
             </div>
@@ -217,6 +240,9 @@ export default async function CollectionPage({ params }: PageProps) {
               <div className={journeyStyles.catalogToolbarCopy}>
                 <p className={journeyStyles.eyebrow}>Collection catalog</p>
                 <h2 className={journeyStyles.catalogTitle}>Browse {category.label.toLowerCase()}</h2>
+                <p className={journeyStyles.catalogFeedback}>
+                  Review these products as part of the wider installation decision, not as isolated items.
+                </p>
               </div>
               <Link href="/products" className={journeyStyles.catalogReset}>
                 View all products

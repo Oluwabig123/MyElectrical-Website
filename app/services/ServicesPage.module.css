@@ -401,6 +401,14 @@
   margin-bottom: 18px;
 }
 
+.processDivider {
+  display: grid;
+  gap: 10px;
+  max-width: 720px;
+  margin-bottom: 18px;
+  padding-top: 8px;
+}
+
 .processCard {
   display: grid;
   gap: 12px;

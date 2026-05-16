@@ -1,5 +1,6 @@
 export const services = [
   {
+    tier: "flagship",
     slug: "residential-commercial-wiring",
     eyebrow: "Power Systems",
     title: "Residential & Commercial Wiring",
@@ -9,6 +10,7 @@ export const services = [
     alt: "Premium electrical wiring installation with organized conduit routing and a clean distribution board.",
   },
   {
+    tier: "support",
     slug: "fault-diagnosis-maintenance",
     eyebrow: "Diagnostics",
     title: "Fault Diagnosis & Maintenance",
@@ -18,6 +20,7 @@ export const services = [
     alt: "Electrical technician performing fault diagnosis with a multimeter on an organized breaker panel.",
   },
   {
+    tier: "flagship",
     slug: "solar-inverter-installation",
     eyebrow: "Energy Backup",
     title: "Solar & Inverter Installation",
@@ -27,6 +30,7 @@ export const services = [
     alt: "Premium solar panel and inverter installation with clean cable management on a modern building.",
   },
   {
+    tier: "support",
     slug: "cctv-security-systems",
     eyebrow: "Security",
     title: "CCTV & Security Systems",
@@ -36,6 +40,7 @@ export const services = [
     alt: "Premium CCTV camera installation on a modern property exterior at dusk.",
   },
   {
+    tier: "support",
     slug: "smart-home-systems",
     eyebrow: "Automation",
     title: "Smart Home Systems",
@@ -45,6 +50,7 @@ export const services = [
     alt: "Elegant smart home switch integrated into a warm contemporary interior.",
   },
   {
+    tier: "flagship",
     slug: "lighting-interior-finishing",
     eyebrow: "Finishing",
     title: "Lighting & Interior Finishing",

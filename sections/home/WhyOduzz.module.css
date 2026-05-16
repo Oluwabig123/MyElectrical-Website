@@ -62,6 +62,41 @@
   line-height: 1.74;
 }
 
+.assurance {
+  max-width: 56ch;
+  margin-top: 2px;
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    rgba(10, 15, 26, 0.56);
+  display: grid;
+  gap: 10px;
+}
+
+.assuranceLabel {
+  color: rgba(247, 251, 255, 0.95);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.assuranceList {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 7px;
+  color: rgba(192, 207, 228, 0.88);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.assuranceList li::marker {
+  color: rgba(255, 212, 0, 0.92);
+}
+
 .actions {
   margin-top: 10px;
   display: flex;
@@ -161,6 +196,11 @@
 
   .actions :global(.btn) {
     width: 100%;
+  }
+
+  .assurance {
+    padding: 14px;
+    border-radius: 16px;
   }
 
   .row {

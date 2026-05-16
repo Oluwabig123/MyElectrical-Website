@@ -5,20 +5,26 @@ import styles from "./WhyOduzz.module.css";
 
 const principles = [
   {
-    title: "Safety-Led Electrical Decisions",
+    title: "Verified Material Guidance",
     description:
-      "Protection devices, cable sizing, and routing choices are planned before work starts so reliability is built in, not patched later.",
+      "Clients get practical direction on brands, cable sizes, accessories, and protection choices so the installed result matches the budgeted standard.",
   },
   {
-    title: "Clean Site Discipline",
+    title: "Protection-First Planning",
     description:
-      "Installations are executed with tidy routing and precise finishing so the handover looks organized and performs predictably.",
+      "Distribution, cable routing, and load decisions are reviewed before finishing starts, which reduces avoidable corrections later.",
   },
   {
-    title: "Transparent Project Communication",
+    title: "Cleaner Handover Standards",
     description:
-      "Clients get clear progress updates and practical next steps, which reduces delays and keeps scope decisions aligned.",
+      "The end result is expected to look tidy, test properly, and feel easy for the client to inspect with confidence.",
   },
+] as const;
+
+const handoverChecks = [
+  "Protection devices selected for the real load path",
+  "Routing and fittings aligned with the final finish",
+  "Clear updates before scope changes affect cost or timeline",
 ] as const;
 
 export default function WhyOduzz() {
@@ -29,12 +35,20 @@ export default function WhyOduzz() {
           <Reveal delay={0.03}>
             <div className={styles.intro}>
               <p className={styles.kicker}>Why Oduzz</p>
-              <h2 className={styles.title}>Built for safe installs, clean delivery, and trusted follow-through</h2>
+              <h2 className={styles.title}>Built for clients who care how the work ends, not just how it starts</h2>
               <p className={styles.lead}>
-                Oduzz supports residential and commercial projects with a practical operating standard:
-                do the safety work properly, keep execution neat, and communicate clearly at every
-                stage.
+                Premium electrical work is usually judged at handover. Oduzz tries to earn trust by
+                making safer technical decisions early, protecting finish quality during execution,
+                and keeping project communication clear while the work is still moving.
               </p>
+              <div className={styles.assurance}>
+                <span className={styles.assuranceLabel}>What clients usually inspect at handover</span>
+                <ul className={styles.assuranceList}>
+                  {handoverChecks.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
               <div className={styles.actions}>
                 <Link href="/quote" className="btn primary">
                   Start your project

@@ -121,6 +121,34 @@ export default function ContactPage() {
           </div>
         </Reveal>
 
+        <Reveal delay={0.16}>
+          <div className="seoContentCard">
+            <h2 className="h2">What happens after you reach out</h2>
+            <div className="seoContentGrid">
+              <div>
+                <p className="p">
+                  First response is used to confirm location, scope, urgency, and whether a quick
+                  quote, a clarification call, or a site visit is the right next step.
+                </p>
+                <p className="p">
+                  If your request involves materials too, Oduzz can help narrow suitable brands,
+                  sizes, and protection choices before purchase decisions are locked in.
+                </p>
+              </div>
+              <div>
+                <p className="p">
+                  The fastest first message usually includes your area in Lagos, the service type,
+                  the problem or project goal, preferred timing, and any clear site photos.
+                </p>
+                <p className="p">
+                  That gives the team enough context to respond with practical next steps instead of
+                  generic back-and-forth.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+
         <section className="seoContentSection">
           <h2 className="h2">Frequently asked questions</h2>
           <FaqAccordion items={[...contactFaqs]} />

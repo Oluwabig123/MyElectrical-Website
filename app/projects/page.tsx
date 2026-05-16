@@ -40,20 +40,20 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
         <SectionHeader
           as="h1"
           kicker="Projects"
-          title="Electrical installations delivered across Lagos"
-          subtitle="Browse completed project snapshots covering wiring, lighting, solar, and electrical finishing work."
+          title="Electrical case studies delivered across Lagos"
+          subtitle="Browse selected installations covering wiring, lighting, solar, and finishing work with scope, duration, and outcome context."
         />
 
         <div className="seoContentCard seoIntroCard">
           <div className="seoContentGrid">
             <p className="p">
-              These projects show the type of work Oduzz Electrical Concept delivers in Lagos:
-              cleaner routing, better protection choices, balanced lighting layouts, and more dependable
-              power systems.
+              These case studies show the type of work Oduzz Electrical Concept delivers in Lagos:
+              cleaner routing, better protection choices, balanced lighting layouts, and more
+              dependable power systems.
             </p>
             <p className="p">
-              They also demonstrate the business approach behind the installations: practical material
-              selection, neat execution, and outcomes that are easy for clients to inspect and trust.
+              They also show how the work is judged: scope clarity, finishing quality, safer
+              planning, and outcomes clients can inspect with confidence at handover.
             </p>
           </div>
         </div>

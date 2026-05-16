@@ -167,9 +167,12 @@ export default function ProjectsGridClient({
                   <p className="kicker">{project.category}</p>
                   <h2 className="cardTitle">{project.title}</h2>
                   <p className="p">{project.summary}</p>
-                  <p className="seoMetaLine">{project.location}</p>
+                  <p className="seoMetaLine">
+                    {project.location} | {project.duration} | {project.scope}
+                  </p>
+                  <p className="projectOutcome">{project.outcome}</p>
                   <Link href={buildProjectPath(project)} className="btn outline">
-                    View project
+                    View case study
                   </Link>
                 </div>
               </article>

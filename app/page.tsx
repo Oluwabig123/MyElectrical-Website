@@ -4,6 +4,7 @@ import Container from "@/components/layout/Container";
 import CTAQuoteStrip from "@/sections/home/CTAQuoteStrip";
 import FeaturedProducts from "@/sections/home/FeaturedProducts";
 import Hero from "@/sections/home/Hero";
+import HomeTrustBand from "@/sections/home/HomeTrustBand";
 import LightingShowcase from "@/sections/home/LightingShowcase";
 import ServicesPreview from "@/sections/home/ServicesPreview";
 import Stories from "@/sections/home/Stories";
@@ -17,9 +18,9 @@ import { absoluteUrl } from "@/lib/seo";
 import { buildFaqSchema } from "@/lib/structured-data";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Electrical Company in Lagos | Installation & Materials Supplier",
+  title: "Premium Electrical Installations in Lagos | Oduzz Electrical Concept",
   description:
-    "Oduzz Electrical Concept provides electrical installation services, lighting systems, cables, switches, and verified electrical materials for residential and commercial projects in Lagos, Nigeria.",
+    "Oduzz Electrical Concept delivers premium electrical installations, lighting systems, solar setup, CCTV, and verified materials for residential and commercial projects in Lagos, Nigeria.",
   path: "/",
   keywords: [
     "electrical company in Lagos",
@@ -51,8 +52,8 @@ export default function HomePage() {
     <>
       <JsonLd data={homeFaqSchema} />
       <Hero />
+      <HomeTrustBand />
       <ServicesPreview />
-      <FeaturedProducts />
       <DeferredSection fallback={<HomeSectionFallback minHeight={420} />}>
         <Stories />
       </DeferredSection>
@@ -65,17 +66,19 @@ export default function HomePage() {
       <DeferredSection fallback={<HomeSectionFallback minHeight={220} />}>
         <CTAQuoteStrip />
       </DeferredSection>
+      <FeaturedProducts />
       <section className="section seoContentSection">
         <Container>
           <div className="seoContentCard homeApproachCard">
             <div className="homeApproachHead">
               <p className="kicker">Our approach</p>
               <h2 className="h2">
-                Electrical installation services and verified electrical materials in Lagos
+                Premium electrical installation services and verified materials in Lagos
               </h2>
               <p className="p homeApproachLead">
-                Oduzz supports residential and commercial projects with a simple operating standard:
-                plan safely, source correctly, and execute cleanly.
+                Oduzz supports residential and commercial projects with a tighter operating
+                standard: plan safely, source correctly, execute cleanly, and hand over with
+                confidence.
               </p>
             </div>
 

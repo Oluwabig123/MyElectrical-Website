@@ -12,7 +12,7 @@ export default function Stories() {
         <SectionHeader
           kicker="Proof of work"
           title="Recent projects"
-          subtitle="A few completed jobs."
+          subtitle="Selected installations that show cleaner finishing, safer execution, and stronger handover quality."
         />
 
         <div className="storiesGrid">
@@ -21,9 +21,18 @@ export default function Stories() {
               <article className="card storiesCard">
                 <ParallaxImage src={project.image} alt={project.title} height={260} />
                 <div className="storiesCardBody">
+                  <p className="kicker">{project.category}</p>
                   <div className="cardTitle">{project.title}</div>
                   <p className="p">{project.summary}</p>
+                  <p className="seoMetaLine">
+                    {project.location} | {project.duration} | {project.scope}
+                  </p>
                   {project.outcome ? <p className="projectOutcome">{project.outcome}</p> : null}
+                  <div className="storiesActions">
+                    <Link href={`/projects/${project.id}`} className="btn outline">
+                      View case study
+                    </Link>
+                  </div>
                 </div>
               </article>
             </Reveal>
@@ -33,7 +42,7 @@ export default function Stories() {
         <Reveal delay={0.12}>
           <div className="storiesActions">
             <Link href="/projects" className="btn outline">
-              View projects
+              View all case studies
             </Link>
           </div>
         </Reveal>

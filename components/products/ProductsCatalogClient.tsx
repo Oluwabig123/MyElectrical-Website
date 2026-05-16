@@ -23,6 +23,12 @@ type ProductsCatalogClientProps = {
   totalCategories: number;
   catalogError?: string;
   title?: string;
+  eyebrow?: string;
+  intro?: string;
+  stats?: Array<{
+    value: string;
+    label: string;
+  }>;
 };
 
 function cn(...classNames: Array<string | false | null | undefined>) {
@@ -34,6 +40,9 @@ export default function ProductsCatalogClient({
   totalCategories,
   catalogError = "",
   title = "Products",
+  eyebrow = "Products",
+  intro = "",
+  stats = [],
 }: ProductsCatalogClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -162,7 +171,43 @@ export default function ProductsCatalogClient({
       <Container className={journeyStyles.container}>
         <div className={cn(journeyStyles.shell, journeyStyles.catalogShell)}>
           <div className={journeyStyles.storeIntro}>
+            <p className={journeyStyles.eyebrow}>{eyebrow}</p>
             <h1 className={journeyStyles.storeTitle}>{title}</h1>
+            {intro ? <p className={journeyStyles.lead}>{intro}</p> : null}
+            {stats.length > 0 ? (
+              <div className={journeyStyles.stats}>
+                {stats.map((item) => (
+                  <div key={item.label} className={journeyStyles.stat}>
+                    <strong className={journeyStyles.statValue}>{item.value}</strong>
+                    <span className={journeyStyles.statLabel}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className={journeyStyles.supportStrip}>
+          <div className={journeyStyles.supportStripCopy}>
+            <p className={journeyStyles.eyebrow}>Catalog guidance</p>
+            <h2 className={journeyStyles.catalogTitle}>
+              {activeCategory
+                ? `Use ${visibleGroups[0]?.label.toLowerCase() || "this collection"} with the wider installation scope in mind`
+                : "Start with your service scope, then narrow materials with more confidence"}
+            </h2>
+            <p className={journeyStyles.catalogFeedback}>
+              {activeCategory
+                ? `${visibleProducts.length} product${visibleProducts.length === 1 ? "" : "s"} currently match this collection view.`
+                : `${visibleProducts.length} active products are grouped into ${groups.length} collections so product decisions can follow the real project path.`}
+            </p>
+          </div>
+          <div className={journeyStyles.actions}>
+            <Link href="/services" className="btn outline">
+              Browse services
+            </Link>
+            <Link href="/quote" className="btn primary">
+              Request guided quote
+            </Link>
           </div>
         </div>
 

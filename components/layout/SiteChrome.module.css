@@ -19,6 +19,7 @@
 .topAdBarInner {
   display: flex;
   align-items: center;
+  justify-content: center;
   min-height: var(--top-ad-height);
 }
 
@@ -30,26 +31,36 @@
 .topAdBarTrack {
   display: flex;
   align-items: center;
-  gap: 34px;
-  width: max-content;
-  min-width: 100%;
-  animation: topAdMarquee 46s linear infinite;
-  will-change: transform;
-}
-
-.topAdBar:hover .topAdBarTrack,
-.topAdBar:focus-within .topAdBarTrack {
-  animation-play-state: paused;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  flex-wrap: wrap;
+  text-align: center;
 }
 
 .topAdBarLink {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  white-space: nowrap;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 212, 0, 0.22);
+  background: rgba(255, 212, 0, 0.08);
   font-size: 12px;
+  font-weight: 700;
   line-height: 1;
   color: rgba(255, 255, 255, 0.88);
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease;
+}
+
+.topAdBarLink:hover {
+  color: rgba(255, 255, 255, 0.96);
+  border-color: rgba(255, 212, 0, 0.38);
+  background: rgba(255, 212, 0, 0.12);
 }
 
 .topAdBarLabel {

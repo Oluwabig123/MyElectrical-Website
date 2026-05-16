@@ -6,15 +6,15 @@ import styles from "@/components/layout/SiteChrome.module.css";
 
 const quickLinks = [
   { href: "/services", label: "Services" },
+  { href: "/projects", label: "Projects" },
+  { href: "/products", label: "Products" },
+  { href: "/locations", label: "Service Areas" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+  { href: "/quote", label: "Request Quote" },
   { href: "/blog", label: "Blog" },
   { href: "/academy", label: "Academy" },
-  { href: "/products", label: "Products" },
-  { href: "/projects", label: "Projects" },
-  { href: "/locations", label: "Service Areas" },
   { href: "/assistant", label: "Assistant" },
-  { href: "/about", label: "About" },
-  { href: "/quote", label: "Request Quote" },
-  { href: "/contact", label: "Contact" },
 ] as const;
 
 export default function Footer() {

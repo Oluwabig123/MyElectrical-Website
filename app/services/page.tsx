@@ -23,9 +23,9 @@ export const metadata: Metadata = buildMetadata({
 });
 
 const heroHighlights = [
-  "Wiring upgrades",
-  "Solar backup systems",
-  "Lighting finishing",
+  "Flagship installation work",
+  "Verified material guidance",
+  "Residential and commercial delivery",
 ] as const;
 
 const sectors = [
@@ -78,9 +78,10 @@ const heroImage = {
   alt: "Oduzz electrical installation work in progress with clean professional finishing.",
 } as const;
 
-const heroServices = services.slice(0, 3);
-const featureServices = [services[0], services[2], services[5]] as const;
-const supportServices = [services[1], services[3], services[4]] as const;
+const flagshipServices = services.filter((service) => service.tier === "flagship");
+const supportServices = services.filter((service) => service.tier === "support");
+const heroServices = flagshipServices;
+const featureServices = flagshipServices;
 
 export default function ServicesPage() {
   return (
@@ -123,7 +124,7 @@ export default function ServicesPage() {
               </div>
 
               <aside className={styles.heroPanel}>
-                <p className={styles.panelLabel}>Most requested scope</p>
+                <p className={styles.panelLabel}>Flagship service lines</p>
                 <div className={styles.panelPills}>
                   {heroHighlights.map((item) => (
                     <span key={item} className={styles.panelPill}>
@@ -149,8 +150,10 @@ export default function ServicesPage() {
 
                 <div className={styles.panelFoot}>
                   <div>
-                    <p className={styles.panelMetaLabel}>Coverage</p>
-                    <p className={styles.panelMetaValue}>Lagos residential and commercial projects</p>
+                    <p className={styles.panelMetaLabel}>Hierarchy</p>
+                    <p className={styles.panelMetaValue}>
+                      Core installation work first, then diagnostics, security, and smart control support.
+                    </p>
                   </div>
                   <Link href="/quote" className={styles.panelLink}>
                     Start project
@@ -175,11 +178,11 @@ export default function ServicesPage() {
 
           <section className={styles.featureSection}>
             <div className={styles.sectionIntro}>
-              <p className={styles.sectionLabel}>Premium service coverage</p>
-              <h2 className={styles.sectionTitle}>Installation quality starts before the first cable is fixed.</h2>
+              <p className={styles.sectionLabel}>Flagship electrical work</p>
+              <h2 className={styles.sectionTitle}>Installation quality starts with the core systems clients feel every day.</h2>
               <p className={styles.sectionSummary}>
-                Oduzz combines execution with material judgment, so the finished work looks better,
-                performs better, and lasts better.
+                These are the main service lines Oduzz should be known for: wiring, backup power,
+                and lighting finishing handled with stronger planning and cleaner execution.
               </p>
             </div>
 
@@ -233,6 +236,14 @@ export default function ServicesPage() {
                     <p className={styles.processCardText}>{item.text}</p>
                   </article>
                 ))}
+              </div>
+
+              <div className={styles.processDivider}>
+                <p className={styles.processLabel}>Supporting service scope</p>
+                <p className={styles.processSummary}>
+                  Diagnostics, CCTV, and smart control work are still available, but they support
+                  the broader installation standard instead of competing with it.
+                </p>
               </div>
 
               <div className={styles.supportGrid}>

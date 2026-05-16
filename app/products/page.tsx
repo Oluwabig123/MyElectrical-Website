@@ -25,6 +25,8 @@ export default async function ProductsPage() {
   const { products, error, source } = await fetchOnlineProductsCached();
   const catalog = buildProductCatalog(products);
   const catalogError = source === "starter" ? "" : (error?.message ?? "");
+  const curatedCollections = catalog.groups.filter((group) => group.items.length >= 2).length;
+  const featuredProducts = catalog.items.filter((item) => item.featured).length;
 
   return (
     <>
@@ -33,7 +35,14 @@ export default async function ProductsPage() {
         groups={catalog.groups}
         totalCategories={catalog.groups.length}
         catalogError={catalogError}
-        title="Products"
+        title="Verified products and project materials"
+        eyebrow="Curated supply"
+        intro="The catalog is organized around real installation paths so wiring accessories, lighting components, backup power items, and control products can be reviewed with more context and less guesswork."
+        stats={[
+          { value: String(catalog.items.length), label: "Active products" },
+          { value: String(curatedCollections), label: "Curated collections" },
+          { value: String(featuredProducts), label: "Featured picks" },
+        ]}
       />
     </>
   );

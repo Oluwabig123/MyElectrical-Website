@@ -173,21 +173,37 @@ export default function QuoteClient({
         <SectionHeader
           kicker="Request Quote"
           title="Request a quote"
-          subtitle="Share your job details for a quick estimate and schedule."
+          subtitle="Share your scope clearly and Oduzz can respond with a faster, more practical next step."
         />
 
         <div className={styles.layout}>
           <aside className={cn("card", styles.info)} aria-label="Quote preparation tips">
             <div className={styles.infoTitle}>Before you submit</div>
-            <p className={styles.infoLead}>Include enough details so we can estimate faster.</p>
+            <p className={styles.infoLead}>
+              The better the first brief, the faster the team can move from enquiry to useful
+              guidance.
+            </p>
             <ul className={styles.checklist}>
               <li>Service type and job location.</li>
               <li>Short description of your current setup or the job scope.</li>
               <li>Urgency level, budget direction, and photos if available.</li>
             </ul>
 
+            <div className={styles.timeline}>
+              <p className={styles.timelineTitle}>What happens next</p>
+              <ol className={styles.timelineList}>
+                <li>Oduzz reviews the brief, photos, and location details.</li>
+                <li>You get a practical response path: clarification, rough quote, or site visit.</li>
+                <li>Scope and material direction are aligned before execution begins.</li>
+              </ol>
+            </div>
+
             <div className={styles.infoPanel}>
               <p className={styles.infoPanelTitle}>Need immediate assistance?</p>
+              <p className={styles.infoPanelText}>
+                For urgent faults or timing-sensitive jobs, call directly or send a quick WhatsApp
+                message with photos.
+              </p>
               <div className={styles.infoActions}>
                 <a className="btn outline" href={CONTACT_LINKS.phone}>
                   Call

@@ -58,6 +58,21 @@ const starterCatalogProducts = starterProducts.map((product, index) =>
   normalizeProduct(product, product.id || `starter-product-${index + 1}`),
 );
 
+function isStarterFallbackEnabled() {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+
+  const explicitSetting = String(process.env.ENABLE_STARTER_FALLBACK || "")
+    .trim()
+    .toLowerCase();
+  if (explicitSetting === "true") return true;
+  if (explicitSetting === "false") return false;
+
+  // In local/dev, keep fallback enabled by default for easier setup.
+  return true;
+}
+
 function getStarterProducts({ activeOnly = true }: { activeOnly?: boolean } = {}) {
   return activeOnly
     ? starterCatalogProducts.filter((product) => product.isActive)
@@ -77,7 +92,18 @@ function dedupeProductsBySlug(products: Product[]) {
 
 export async function fetchOnlineProducts({ activeOnly = true }: { activeOnly?: boolean } = {}) {
   if (!isSupabaseConfigured || !supabase) {
-    return { products: getStarterProducts({ activeOnly }), error: null, source: "starter" as const };
+    if (isStarterFallbackEnabled()) {
+      return { products: getStarterProducts({ activeOnly }), error: null, source: "starter" as const };
+    }
+
+    return {
+      products: [] as Product[],
+      error: {
+        message:
+          "Supabase is not configured for this environment. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, then redeploy.",
+      },
+      source: "cloud" as const,
+    };
   }
 
   let query = supabase
@@ -107,6 +133,17 @@ export async function fetchOnlineProductBySlug(slug: string) {
   const safeSlug = String(slug || "").trim();
 
   if (!isSupabaseConfigured || !supabase) {
+    if (!isStarterFallbackEnabled()) {
+      return {
+        product: null,
+        error: {
+          message:
+            "Supabase is not configured for this environment. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, then redeploy.",
+        },
+        source: "cloud" as const,
+      };
+    }
+
     const starterProduct =
       getStarterProducts().find((product) => product.slug === safeSlug) ?? null;
     return { product: starterProduct, error: null, source: "starter" as const };

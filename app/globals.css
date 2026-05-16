@@ -299,6 +299,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .servicesPreviewIndex,
@@ -319,10 +320,59 @@ button {
   margin: 0;
 }
 
+.servicesPreviewEyebrow {
+  color: rgba(255, 223, 134, 0.9);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .servicesPreviewCard .p,
 .whyOduzzCard .p,
 .storiesCard .p {
   color: rgba(255, 255, 255, 0.88);
+}
+
+.servicesPreviewSupport {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.servicesPreviewSupportLabel {
+  margin: 0;
+  color: rgba(255, 241, 199, 0.88);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.servicesPreviewSupportTrack {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.servicesPreviewSupportChip {
+  display: grid;
+  gap: 3px;
+  min-width: 196px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.025);
+  color: rgba(248, 251, 255, 0.94);
+}
+
+.servicesPreviewSupportChip small {
+  color: rgba(195, 208, 231, 0.78);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .servicesPreviewFoot,
@@ -1127,6 +1177,11 @@ button {
     width: 100%;
   }
 
+  .servicesPreviewSupportTrack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
   .featuredProductsHomeGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1273,6 +1328,10 @@ button {
     display: grid;
     grid-template-columns: 1fr;
     width: 100%;
+  }
+
+  .servicesPreviewSupportTrack {
+    grid-template-columns: 1fr;
   }
 
   .servicesPreviewActions > *,

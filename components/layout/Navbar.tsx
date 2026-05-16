@@ -5,15 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Container from "@/components/layout/Container";
-import { useCart } from "@/lib/cart-context";
 import styles from "@/components/layout/SiteChrome.module.css";
 
 const navItems = [
   { href: "/services", label: "Services" },
-  { href: "/blog", label: "Blog" },
-  { href: "/academy", label: "Academy" },
-  { href: "/products", label: "Products" },
   { href: "/projects", label: "Projects" },
+  { href: "/products", label: "Products" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 function isActivePath(pathname: string, href: string) {
@@ -28,7 +27,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
-  const { totalItems } = useCart();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -86,14 +84,6 @@ export default function Navbar() {
         </nav>
 
         <div className={styles.navCtas}>
-          <Link
-            href="/cart"
-            className={cn(styles.navCartLink, isActivePath(pathname, "/cart") && styles.active)}
-            aria-label={`Cart with ${totalItems} item${totalItems === 1 ? "" : "s"}`}
-          >
-            <span>Cart</span>
-            <span className={styles.navCartCount}>{totalItems}</span>
-          </Link>
           <Link href="/quote" className={cn("btn", "primary", styles.navTopQuote)}>
             Request Quote
           </Link>
@@ -123,18 +113,6 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/cart"
-              className={cn(
-                styles.navMobileLink,
-                styles.navMobileCart,
-                isActivePath(pathname, "/cart") && styles.active,
-              )}
-              onClick={() => setOpen(false)}
-            >
-              <span>Cart</span>
-              <span className={styles.navCartCount}>{totalItems}</span>
-            </Link>
             <Link href="/quote" className="btn primary" onClick={() => setOpen(false)}>
               Request Quote
             </Link>

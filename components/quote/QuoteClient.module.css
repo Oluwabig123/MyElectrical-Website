@@ -67,11 +67,52 @@
   gap: 8px;
 }
 
+.timeline {
+  margin-top: 4px;
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 8px;
+}
+
+.timelineTitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.timelineList {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: rgba(217, 225, 238, 0.88);
+  font-size: 14px;
+  line-height: 1.56;
+}
+
+.timelineList li::marker {
+  color: rgba(255, 212, 0, 0.92);
+  font-weight: 700;
+}
+
 .infoPanelTitle {
   margin: 0;
   color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   font-weight: 700;
+}
+
+.infoPanelText {
+  margin: 0;
+  color: rgba(222, 229, 241, 0.82);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .infoActions {

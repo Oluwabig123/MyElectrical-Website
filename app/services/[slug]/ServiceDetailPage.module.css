@@ -1,0 +1,184 @@
+.page {
+  position: relative;
+  background:
+    radial-gradient(880px 380px at 10% 0%, rgba(255, 212, 0, 0.08), transparent 62%),
+    radial-gradient(740px 320px at 92% 10%, rgba(46, 233, 255, 0.08), transparent 64%),
+    #060d16;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.mediaCard,
+.copyCard {
+  overflow: hidden;
+  border-radius: 28px;
+}
+
+.mediaCard {
+  position: relative;
+  min-height: clamp(360px, 52vw, 560px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #111823;
+}
+
+.mediaImage {
+  object-fit: cover;
+}
+
+.mediaOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 12, 18, 0.78) 0%, rgba(8, 12, 18, 0.46) 42%, rgba(8, 12, 18, 0.08) 100%),
+    linear-gradient(180deg, rgba(8, 12, 18, 0.16), rgba(8, 12, 18, 0.62));
+}
+
+.mediaContent {
+  position: absolute;
+  left: clamp(20px, 3.8vw, 36px);
+  right: clamp(20px, 3.8vw, 36px);
+  bottom: clamp(20px, 3.8vw, 36px);
+  z-index: 1;
+  max-width: min(620px, 100%);
+  display: grid;
+  gap: 12px;
+}
+
+.heroTitle {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.98);
+  font-size: clamp(34px, 5vw, 62px);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+}
+
+.heroSummary {
+  margin: 0;
+  color: rgba(224, 232, 244, 0.88);
+  font-size: 15px;
+  line-height: 1.72;
+}
+
+.copyCard {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: clamp(20px, 2.6vw, 28px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(17, 26, 44, 0.92), rgba(11, 18, 32, 0.94)),
+    rgba(13, 21, 36, 0.92);
+}
+
+.tierChip {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 213, 74, 0.28);
+  background: rgba(255, 213, 74, 0.1);
+  color: rgba(255, 241, 199, 0.96);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.intro {
+  display: grid;
+  gap: 10px;
+}
+
+.introTitle {
+  margin: 0;
+  color: rgba(247, 251, 255, 0.96);
+  font-size: 22px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.introText {
+  margin: 0;
+  color: rgba(190, 203, 226, 0.88);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fact {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.factLabel {
+  color: rgba(255, 212, 0, 0.82);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.factValue {
+  color: rgba(248, 251, 255, 0.94);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.contentCard {
+  border-radius: 26px;
+}
+
+.section {
+  margin-top: 26px;
+}
+
+@media (max-width: 980px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .mediaCard,
+  .copyCard {
+    border-radius: 22px;
+  }
+
+  .heroTitle {
+    font-size: clamp(30px, 10vw, 44px);
+  }
+
+  .facts {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions :global(.btn) {
+    width: 100%;
+  }
+}

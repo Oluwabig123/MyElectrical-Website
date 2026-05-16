@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BlogCard from "@/components/blog/BlogCard";
 import Container from "@/components/layout/Container";
 import JsonLd from "@/components/seo/JsonLd";
 import FaqAccordion from "@/components/ui/FaqAccordion";
-import { CONTACT_LINKS } from "@/data/contact";
+import { CONTACT, CONTACT_LINKS } from "@/data/contact";
 import { getServicePageBySlug, servicePages } from "@/data/service-pages";
+import { services } from "@/data/services";
 import { getAllBlogPosts } from "@/lib/blog";
 import { buildCollectionPath, resolveProductCategory } from "@/lib/product-catalog";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildFaqSchema, buildServiceSchema } from "@/lib/structured-data";
+import styles from "./ServiceDetailPage.module.css";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -46,6 +49,14 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const service = getServicePageBySlug(slug);
   if (!service) notFound();
+  const serviceRecord = services.find((item) => item.slug === service.slug);
+  const isFlagshipService = serviceRecord?.tier === "flagship";
+  const serviceTierLabel = isFlagshipService ? "Flagship service" : "Supporting service";
+  const serviceTierSummary = isFlagshipService
+    ? "This is part of the core installation work Oduzz should be known for."
+    : "This service usually supports the broader electrical delivery path rather than replacing it.";
+  const serviceImage = serviceRecord?.image || "/hero/wiring.webp";
+  const serviceImageAlt = serviceRecord?.alt || service.title;
 
   const allPosts = await getAllBlogPosts();
   const relatedPosts = allPosts.filter((post) => service.relatedBlogSlugs.includes(post.slug)).slice(0, 3);
@@ -64,17 +75,74 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   });
 
   return (
-    <section className="section seoPage">
+    <section className={`section seoPage ${styles.page}`}>
       <Container>
         <JsonLd data={[serviceSchema, faqSchema]} />
 
-        <div className="sectionHeader">
-          <div className="kicker">Services</div>
-          <h1 className="h2">{service.title}</h1>
-          <p className="p">{service.summary}</p>
-        </div>
+        <section className={styles.hero}>
+          <div className={styles.mediaCard}>
+            <Image
+              src={serviceImage}
+              alt={serviceImageAlt}
+              fill
+              priority
+              sizes="(max-width: 980px) 100vw, 62vw"
+              className={styles.mediaImage}
+            />
+            <div className={styles.mediaOverlay} aria-hidden="true" />
+            <div className={styles.mediaContent}>
+              <div className="kicker">{serviceTierLabel}</div>
+              <h1 className={styles.heroTitle}>{service.title}</h1>
+              <p className={styles.heroSummary}>{service.summary}</p>
+            </div>
+          </div>
 
-        <div className="seoContentCard seoIntroCard">
+          <div className={styles.copyCard}>
+            <span className={styles.tierChip}>{serviceTierLabel}</span>
+            <div className={styles.intro}>
+              <h2 className={styles.introTitle}>Why this scope matters</h2>
+              <p className={styles.introText}>{serviceTierSummary}</p>
+            </div>
+            <div className={styles.facts}>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Service role</span>
+                <span className={styles.factValue}>
+                  {isFlagshipService ? "Core installation path" : "Supporting delivery path"}
+                </span>
+              </div>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Material collections</span>
+                <span className={styles.factValue}>
+                  {relatedCategories.length > 0
+                    ? `${relatedCategories.length} related collections`
+                    : "Scoped mainly through site review"}
+                </span>
+              </div>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Response window</span>
+                <span className={styles.factValue}>
+                  {CONTACT.whatsappResponseTime} during {CONTACT.businessHours}
+                </span>
+              </div>
+              <div className={styles.fact}>
+                <span className={styles.factLabel}>Best next step</span>
+                <span className={styles.factValue}>
+                  Share location, scope, timing, and photos for practical guidance.
+                </span>
+              </div>
+            </div>
+            <div className={styles.actions}>
+              <a href={CONTACT_LINKS.whatsapp} target="_blank" rel="noreferrer" className="btn primary">
+                Chat on WhatsApp
+              </a>
+              <Link href="/quote" className="btn outline">
+                Request quote
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <div className={`seoContentCard seoIntroCard ${styles.contentCard}`}>
           <div className="seoContentGrid">
             <div>
               <h2 className="h2">What this service covers</h2>
@@ -90,20 +158,21 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             </div>
           </div>
           <div className="seoActionRow">
-            <a href={CONTACT_LINKS.whatsapp} target="_blank" rel="noreferrer" className="btn primary">
-              Chat on WhatsApp
-            </a>
-            <Link href="/quote" className="btn outline">
-              Request quote
-            </Link>
             <Link href="/contact" className="btn outline">
               Contact Oduzz
+            </Link>
+            <Link href="/locations" className="btn outline">
+              Service areas
             </Link>
           </div>
         </div>
 
-        <section className="seoContentSection">
-          <h2 className="h2">How Oduzz approaches this service</h2>
+        <section className={`seoContentSection ${styles.section}`}>
+          <h2 className="h2">
+            {isFlagshipService
+              ? "How Oduzz delivers this flagship service"
+              : "How Oduzz integrates this supporting service"}
+          </h2>
           <div className="seoCardGrid">
             {service.process.map((step) => (
               <article key={step} className="card seoInfoCard">
@@ -118,8 +187,8 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         </section>
 
         {relatedCategories.length > 0 ? (
-          <section className="seoContentSection">
-            <h2 className="h2">Related product categories</h2>
+          <section className={`seoContentSection ${styles.section}`}>
+            <h2 className="h2">Related material collections</h2>
             <div className="seoActionRow">
               {relatedCategories.map((category) => (
                 <Link key={category.key} href={buildCollectionPath(category.key)} className="btn outline">
@@ -134,7 +203,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         ) : null}
 
         {relatedPosts.length > 0 ? (
-          <section className="seoContentSection">
+          <section className={`seoContentSection ${styles.section}`}>
             <h2 className="h2">Related guides from the journal</h2>
             <div className="seoCardGrid">
               {relatedPosts.map((post) => (
@@ -144,14 +213,14 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           </section>
         ) : null}
 
-        <section className="seoContentSection">
+        <section className={`seoContentSection ${styles.section}`}>
           <h2 className="h2">Frequently asked questions</h2>
           <FaqAccordion items={service.faqs} />
         </section>
 
-        <section className="seoContentSection">
-          <div className="seoContentCard">
-            <h2 className="h2">Explore more pages</h2>
+        <section className={`seoContentSection ${styles.section}`}>
+          <div className={`seoContentCard ${styles.contentCard}`}>
+            <h2 className="h2">Continue planning this scope</h2>
             <div className="seoActionRow">
               <Link href="/services" className="btn outline">
                 All services

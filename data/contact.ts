@@ -1,5 +1,5 @@
 const resolvedBusinessEmail =
-  process.env.NEXT_PUBLIC_BUSINESS_EMAIL?.trim() || "tobiloba428@gmail.com";
+  process.env.NEXT_PUBLIC_BUSINESS_EMAIL?.trim() || "hello@oduzzconcept.com.ng";
 
 export const CONTACT = {
   phoneDisplay: "07032258039",

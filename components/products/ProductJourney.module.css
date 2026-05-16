@@ -175,6 +175,26 @@
   gap: 6px;
 }
 
+.supportStrip {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  border-radius: 24px;
+  border: 1px solid var(--pj-line-soft);
+  background:
+    linear-gradient(180deg, rgba(17, 26, 44, 0.92), rgba(11, 18, 32, 0.94)),
+    var(--pj-surface-soft);
+}
+
+.supportStripCopy {
+  display: grid;
+  gap: 6px;
+  max-width: 68ch;
+}
+
 .catalogTitle {
   margin: 0;
   color: var(--pj-text);
@@ -481,6 +501,13 @@
 
   .catalogReset {
     font-size: 12px;
+  }
+
+  .supportStrip {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 20px;
   }
 
   .actions > * {

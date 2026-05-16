@@ -19,27 +19,40 @@ type CategoryCard = {
 export default async function FeaturedProducts() {
   const { products } = await fetchOnlineProductsCached();
   const { groups } = buildProductCatalog(products);
-  const categoryCards = groups
+  const rankedGroups = [...groups].sort((left, right) => {
+    const leftFeatured = left.items.filter((item) => item.featured).length;
+    const rightFeatured = right.items.filter((item) => item.featured).length;
+    if (leftFeatured !== rightFeatured) return rightFeatured - leftFeatured;
+    if (left.items.length !== right.items.length) return right.items.length - left.items.length;
+    return left.label.localeCompare(right.label);
+  });
+
+  const curatedGroups = rankedGroups.filter((group) => group.items.length >= 2);
+  const fallbackGroups = rankedGroups.filter((group) => group.items.length === 1);
+  const displayGroups = [...curatedGroups, ...fallbackGroups].slice(0, 4);
+
+  const categoryCards = displayGroups
     .flatMap<CategoryCard>((group) => {
       const representative = group.items.find((item) => item.imageUrl) ?? group.items[0];
       if (!representative?.imageUrl) return [];
+      const featuredCount = group.items.filter((item) => item.featured).length;
+      const helperLabel =
+        group.items.length >= 4
+          ? `${group.items.length} stocked products`
+          : group.items.length >= 2
+            ? `${group.items.length} curated products`
+            : "Curated specification";
 
       return [{
         id: group.key,
         categoryLabel: group.label,
-        helperLabel: `${group.items.length} product${group.items.length === 1 ? "" : "s"}`,
-        badgeLabel: "Top Selling",
-        badgeTone: "warm",
+        helperLabel,
+        badgeLabel: featuredCount > 0 ? "Flagship Stock" : "Project-Ready",
+        badgeTone: featuredCount > 0 ? "warm" : "cool",
         imageUrl: representative.imageUrl,
         href: buildCollectionPath(group.key),
       }];
-    })
-    .slice(0, 4)
-    .map((card, index) => ({
-      ...card,
-      badgeLabel: index < 2 ? "Top Selling" : "In Stock",
-      badgeTone: index < 2 ? "warm" : "cool",
-    }));
+    });
 
   if (categoryCards.length === 0) {
     return null;
@@ -50,9 +63,9 @@ export default async function FeaturedProducts() {
       <Container>
         <div className="featuredProductsHomeShell">
           <SectionHeader
-            kicker="Shop solar, CCTV, and lighting supplies"
-            title="Electrical materials for cleaner installs"
-            subtitle="Browse the categories clients ask for most when planning wiring, lighting, CCTV, and backup power."
+            kicker="Curated supply"
+            title="Project materials grouped by real installation use"
+            subtitle="Browse the collections most often requested after wiring scope, backup power, lighting finish, and accessory requirements are properly defined."
           />
 
           <div className="featuredProductsHomeGrid">
