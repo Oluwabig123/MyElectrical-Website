@@ -97,6 +97,7 @@ export default function HomePage() {
                 <article key={step.label} className="homeApproachPane">
                   <p className="homeApproachLabel">{step.label}</p>
                   <h3 className="homeApproachTitle">{step.title}</h3>
+                  <span className="homeApproachPulse" aria-hidden="true" />
                 </article>
               ))}
             </div>

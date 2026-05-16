@@ -61,7 +61,7 @@
 
 .nav {
   position: sticky;
-  top: var(--top-ad-height);
+  top: 0;
   z-index: 50;
   backdrop-filter: blur(12px);
   background: rgba(7, 10, 18, 0.7);

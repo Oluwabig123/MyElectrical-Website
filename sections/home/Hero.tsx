@@ -197,6 +197,15 @@ export default function Hero() {
                   </a>
                 </div>
               </div>
+            </Reveal>
+          </div>
+
+          <Reveal key={`${activeSlide.id}-aside`} delay={0.14}>
+            <aside className="heroAside" aria-label="Current service spotlight">
+              <div className="heroAsideTop">
+                <span className="heroAsideLabel">Now showing</span>
+                <span className="heroAsideCount">{safeActiveIndex + 1} / {totalSlides}</span>
+              </div>
 
               <div className="heroBenefits" aria-label="Service highlights">
                 {activeSlide.benefits.map((benefit) => (
@@ -205,8 +214,15 @@ export default function Hero() {
                   </span>
                 ))}
               </div>
+
+              <div className="heroAsideFoot">
+                <p className="heroAsideText">Clean execution for homes, offices, and commercial spaces.</p>
+                <Link href="/projects" className="heroAsideLink">
+                  See project work
+                </Link>
+              </div>
+            </aside>
             </Reveal>
-          </div>
         </Container>
 
         {totalSlides > 1 ? (

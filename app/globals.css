@@ -13,7 +13,7 @@
   --radius: 18px;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
   --max: 1120px;
-  --top-ad-height: 44px;
+  --top-ad-height: 0px;
   --nav-height: 84px;
   --canvas: var(--bg);
   --surface: rgba(255, 255, 255, 0.05);
@@ -283,16 +283,98 @@ button {
   z-index: 1;
 }
 
-.servicesPreviewGrid {
+.servicesPreviewStage {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
 }
 
-.servicesPreviewCard {
+.servicesPreviewLead {
+  position: relative;
+  overflow: hidden;
   display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+  min-height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.03);
+  box-shadow: var(--shadow);
+}
+
+.servicesPreviewLeadMedia {
+  position: relative;
+  min-height: 380px;
+  overflow: hidden;
+}
+
+.servicesPreviewLeadMedia::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 11, 20, 0.04), rgba(8, 11, 20, 0.55)),
+    radial-gradient(520px 220px at 20% 20%, rgba(255, 212, 0, 0.14), transparent 60%);
+  pointer-events: none;
+}
+
+.servicesPreviewLeadImage {
+  object-fit: cover;
+  object-position: center;
+}
+
+.servicesPreviewLeadBody {
+  display: grid;
+  align-content: end;
+  gap: 14px;
+  padding: clamp(22px, 3vw, 32px);
+}
+
+.servicesPreviewLeadTitle {
+  margin: 0;
+  font-size: clamp(28px, 3.3vw, 42px);
+  line-height: 0.98;
+  color: rgba(247, 251, 255, 0.98);
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.servicesPreviewLeadActions {
+  display: flex;
   gap: 10px;
-  min-height: 188px;
+  flex-wrap: wrap;
+}
+
+.servicesPreviewRail {
+  display: grid;
+  gap: 14px;
+}
+
+.servicesPreviewRailItem {
+  display: grid;
+  gap: 12px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.025);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.14);
+}
+
+.servicesPreviewRailCopy {
+  display: grid;
+  gap: 8px;
+}
+
+.servicesPreviewRailLink {
+  width: fit-content;
+  color: rgba(255, 223, 134, 0.94);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .servicesPreviewCardHead {
@@ -318,6 +400,11 @@ button {
 .servicesPreviewTitle,
 .whyOduzzTitle {
   margin: 0;
+}
+
+.servicesPreviewTitle {
+  font-size: clamp(18px, 1.8vw, 24px);
+  line-height: 1.16;
 }
 
 .servicesPreviewEyebrow {
@@ -588,11 +675,77 @@ button {
     radial-gradient(620px 260px at 14% 92%, rgba(46, 233, 255, 0.07), transparent 72%);
 }
 
-.storiesGrid,
-.whyOduzzGrid {
+.storiesMosaic {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.14fr) minmax(300px, 0.86fr);
+}
+
+.storiesFeature {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(255, 255, 255, 0.03);
+  box-shadow: var(--shadow);
+}
+
+.storiesFeatureBody {
+  display: grid;
+  gap: 10px;
+  padding: clamp(20px, 2.8vw, 30px);
+}
+
+.storiesFeatureTitle {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 40px);
+  line-height: 1.02;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: rgba(247, 251, 255, 0.98);
+  text-wrap: balance;
+}
+
+.storiesFeatureMeta {
+  margin: 0;
+  color: rgba(255, 223, 134, 0.9);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.storiesFeatureScope {
+  margin: 0;
+  max-width: 44ch;
+  color: rgba(205, 217, 236, 0.9);
+  font-size: 15px;
+  line-height: 1.62;
+}
+
+.storiesRail {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.storiesRailCard {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+    rgba(255, 255, 255, 0.03);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.14);
+}
+
+.storiesRailLink {
+  width: fit-content;
+  color: rgba(255, 223, 134, 0.94);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .storiesCard {
@@ -632,8 +785,8 @@ button {
 .heroStage {
   position: relative;
   overflow: hidden;
-  min-height: calc(100vh - var(--top-ad-height) - var(--nav-height));
-  min-height: calc(100svh - var(--top-ad-height) - var(--nav-height));
+  min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100svh - var(--nav-height));
   border-radius: 0;
   border: none;
   background: #1b202b;
@@ -695,14 +848,16 @@ button {
   z-index: 1;
   width: 100%;
   display: flex;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(28px, 5vw, 68px);
 }
 
 .heroContent {
-  width: min(680px, 100%);
+  width: min(620px, 100%);
   padding: 0;
-  margin-inline: auto;
-  text-align: center;
+  margin-inline: 0;
+  text-align: left;
   border: none;
   background: none;
   backdrop-filter: none;
@@ -719,7 +874,7 @@ button {
 
 .heroContent .h1 {
   max-width: 16ch;
-  margin: 16px auto 0;
+  margin: 16px 0 0;
   color: rgba(255, 255, 255, 0.98);
   font-size: clamp(28px, 4.8vw, 54px);
   line-height: 1.04;
@@ -727,9 +882,9 @@ button {
 }
 
 .heroContent .p {
-  max-width: 58ch;
+  max-width: 44ch;
   color: rgba(255, 255, 255, 0.92);
-  margin: 16px auto 0;
+  margin: 16px 0 0;
   font-size: clamp(14px, 1.25vw, 17px);
   line-height: 1.55;
 }
@@ -737,7 +892,7 @@ button {
 .heroCtaShell {
   margin-top: 28px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .heroCtas {
@@ -776,7 +931,7 @@ button {
 .heroBenefits {
   margin-top: 26px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 12px 26px;
 }
@@ -800,6 +955,67 @@ button {
   border-right: 2px solid rgba(255, 212, 0, 0.96);
   border-bottom: 2px solid rgba(255, 212, 0, 0.96);
   transform: translateY(-50%) rotate(45deg);
+}
+
+.heroAside {
+  width: min(320px, 100%);
+  display: grid;
+  gap: 18px;
+  padding: 20px 20px 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    radial-gradient(520px 200px at 0% 0%, rgba(255, 212, 0, 0.14), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(8, 12, 22, 0.44);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 22px 42px rgba(0, 0, 0, 0.2);
+}
+
+.heroAsideTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heroAsideLabel,
+.heroAsideCount {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.heroAsideLabel {
+  color: rgba(255, 241, 199, 0.94);
+}
+
+.heroAsideCount {
+  color: rgba(211, 222, 238, 0.82);
+}
+
+.heroAsideFoot {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.heroAsideText {
+  margin: 0;
+  color: rgba(211, 222, 238, 0.88);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.heroAsideLink {
+  width: fit-content;
+  color: rgba(255, 223, 134, 0.96);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .heroControls {
@@ -1115,10 +1331,10 @@ button {
 }
 
 @media (max-width: 920px) {
-  .servicesPreviewGrid,
-  .storiesGrid,
+  .servicesPreviewStage,
+  .storiesMosaic,
   .whyOduzzGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .featuredProductsHomeGrid {
@@ -1130,8 +1346,26 @@ button {
     --hero-image-opacity: 0.8;
   }
 
+  .heroContentWrap {
+    align-items: flex-end;
+    justify-content: flex-start;
+    flex-direction: column;
+  }
+
   .heroContent {
     width: min(760px, 100%);
+  }
+
+  .heroAside {
+    width: min(420px, 100%);
+  }
+
+  .servicesPreviewLead {
+    grid-template-columns: 1fr;
+  }
+
+  .servicesPreviewLeadMedia {
+    min-height: 300px;
   }
 
   .heroContent .h1 {
@@ -1144,9 +1378,6 @@ button {
 }
 
 @media (max-width: 768px) {
-  :root {
-    --top-ad-height: 40px;
-  }
 
   .section {
     padding: 40px 0;
@@ -1160,21 +1391,21 @@ button {
     margin: 8px 0 10px;
   }
 
-  .servicesPreviewGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .servicesPreviewCard,
-  .whyOduzzCard {
-    min-height: 0;
-  }
-
   .servicesPreviewFoot {
     align-items: flex-start;
   }
 
   .servicesPreviewActions {
     width: 100%;
+  }
+
+  .servicesPreviewLeadBody,
+  .servicesPreviewRailItem {
+    padding: 16px;
+  }
+
+  .storiesFeatureBody {
+    padding: 18px;
   }
 
   .servicesPreviewSupportTrack {
@@ -1208,7 +1439,7 @@ button {
     width: 100%;
   }
 
-  .storiesGrid,
+  .storiesMosaic,
   .whyOduzzGrid {
     grid-template-columns: 1fr;
   }
@@ -1285,7 +1516,6 @@ button {
 
 @media (max-width: 560px) {
   :root {
-    --top-ad-height: 32px;
     --nav-height: 64px;
   }
 
@@ -1306,20 +1536,25 @@ button {
     line-height: 1.55;
   }
 
-  .servicesPreviewGrid,
-  .storiesGrid,
+  .servicesPreviewStage,
+  .storiesMosaic,
   .whyOduzzGrid,
   .seoContentGrid,
   .seoCardGrid {
     grid-template-columns: 1fr;
   }
 
-  .servicesPreviewCard,
+  .servicesPreviewLead,
+  .servicesPreviewRailItem,
+  .storiesFeature,
+  .storiesRailCard,
   .whyOduzzCard,
-  .storiesCard,
   .seoInfoCard {
     border-radius: 16px;
-    padding: 18px;
+  }
+
+  .servicesPreviewLeadMedia {
+    min-height: 240px;
   }
 
   .servicesPreviewActions,
@@ -1393,6 +1628,7 @@ button {
 
   .heroContent {
     width: 100%;
+    text-align: center;
   }
 
   .heroKicker {
@@ -1402,14 +1638,19 @@ button {
 
   .heroContent .h1 {
     max-width: 13ch;
-    margin-top: 12px;
+    margin: 12px auto 0;
     font-size: clamp(30px, 9vw, 40px);
   }
 
   .heroContent .p {
     max-width: 32ch;
-    margin-top: 12px;
+    margin: 12px auto 0;
     font-size: 13px;
+  }
+
+  .heroCtaShell,
+  .heroBenefits {
+    justify-content: center;
   }
 
   .heroCtas {
@@ -1425,6 +1666,10 @@ button {
   .heroBenefits {
     max-width: 310px;
     margin-inline: auto;
+  }
+
+  .heroAside {
+    display: none;
   }
 
   .ctaTitle {
@@ -1473,11 +1718,13 @@ button {
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.servicesPreviewGrid,
-.storiesGrid,
+.storiesMosaic,
 .whyOduzzGrid {
   gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.servicesPreviewStage {
+  gap: 20px;
 }
 
 .featuredProductsHomeGrid {
@@ -1559,8 +1806,8 @@ button {
     padding: 34px 0;
   }
 
-  .servicesPreviewGrid,
-  .storiesGrid,
+  .servicesPreviewStage,
+  .storiesMosaic,
   .whyOduzzGrid,
   .seoContentGrid,
   .seoCardGrid {
@@ -2991,7 +3238,7 @@ button {
   display: grid;
   gap: 14px;
   position: sticky;
-  top: calc(var(--top-ad-height, 0px) + 84px);
+  top: var(--nav-height);
 }
 
 .cartSummaryKicker {
@@ -3409,6 +3656,8 @@ select:focus {
 }
 
 .homeApproachPane {
+  position: relative;
+  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 18px;
   padding: clamp(14px, 2vw, 18px);
@@ -3435,6 +3684,17 @@ select:focus {
   line-height: 1.22;
   font-weight: 800;
   max-width: 16ch;
+}
+
+.homeApproachPulse {
+  width: 46px;
+  height: 46px;
+  margin-top: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 212, 0, 0.2);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 212, 0, 0.9) 0 18%, rgba(255, 212, 0, 0.18) 19% 44%, transparent 45% 100%);
+  box-shadow: 0 0 0 10px rgba(255, 212, 0, 0.06);
 }
 
 .homeApproachAreas {

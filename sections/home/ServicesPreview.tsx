@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import Container from "@/components/layout/Container";
 import Reveal from "@/components/ui/Reveal";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -8,6 +9,8 @@ import { services } from "@/data/services";
 export default function ServicesPreview() {
   const flagshipServices = services.filter((service) => service.tier === "flagship");
   const supportServices = services.filter((service) => service.tier === "support");
+  const leadService = flagshipServices[0];
+  const secondaryServices = flagshipServices.slice(1);
 
   return (
     <section className="section servicesPreview">
@@ -18,19 +21,58 @@ export default function ServicesPreview() {
           subtitle="Wiring, backup power, and lighting lead. The support systems sit around them."
         />
 
-        <div className="servicesPreviewGrid">
-          {flagshipServices.map((service, index) => (
-            <Reveal key={service.title} delay={index * 0.04}>
-              <article className="card servicesPreviewCard">
-                <div className="servicesPreviewCardHead">
-                  <span className="servicesPreviewIndex">0{index + 1}</span>
-                  <span className="servicesPreviewEyebrow">{service.eyebrow}</span>
+        <div className="servicesPreviewStage">
+          {leadService ? (
+            <Reveal delay={0.03}>
+              <article className="servicesPreviewLead">
+                <div className="servicesPreviewLeadMedia">
+                  <Image
+                    src={leadService.image}
+                    alt={leadService.alt}
+                    fill
+                    sizes="(max-width: 980px) 100vw, 46vw"
+                    className="servicesPreviewLeadImage"
+                  />
                 </div>
-                <h3 className="cardTitle servicesPreviewTitle">{service.title}</h3>
-                <p className="p">{service.detail}</p>
+                <div className="servicesPreviewLeadBody">
+                  <div className="servicesPreviewCardHead">
+                    <span className="servicesPreviewIndex">01</span>
+                    <span className="servicesPreviewEyebrow">{leadService.eyebrow}</span>
+                  </div>
+                  <h3 className="servicesPreviewLeadTitle">{leadService.title}</h3>
+                  <p className="p">{leadService.detail}</p>
+                  <div className="servicesPreviewLeadActions">
+                    <Link href={`/services/${leadService.slug}`} className="btn primary">
+                      Explore service
+                    </Link>
+                    <Link href="/quote" className="btn outline">
+                      Start quote
+                    </Link>
+                  </div>
+                </div>
               </article>
             </Reveal>
-          ))}
+          ) : null}
+
+          <div className="servicesPreviewRail">
+            {secondaryServices.map((service, index) => (
+              <Reveal key={service.title} delay={0.08 + index * 0.05}>
+                <article className="servicesPreviewRailItem">
+                  <div className="servicesPreviewCardHead">
+                    <span className="servicesPreviewIndex">0{index + 2}</span>
+                    <span className="servicesPreviewEyebrow">{service.eyebrow}</span>
+                  </div>
+                  <div className="servicesPreviewRailCopy">
+                    <h3 className="servicesPreviewTitle">{service.title}</h3>
+                    <p className="p">{service.detail}</p>
+                  </div>
+                  <Link href={`/services/${service.slug}`} className="servicesPreviewRailLink">
+                    View service
+                  </Link>
+                </article>
+              </Reveal>
+            ))}
+          </div>
         </div>
 
         <Reveal delay={0.12}>
