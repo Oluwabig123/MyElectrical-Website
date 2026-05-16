@@ -14,8 +14,8 @@ export default function ServicesPreview() {
       <Container>
         <SectionHeader
           kicker="Service hierarchy"
-          title="Flagship electrical services first, supporting scope where needed"
-          subtitle="Oduzz leads with core installation work, then supports the surrounding diagnostics, security, and control systems that make projects complete."
+          title="Core installation work first"
+          subtitle="Wiring, backup power, and lighting lead. The support systems sit around them."
         />
 
         <div className="servicesPreviewGrid">
@@ -27,7 +27,7 @@ export default function ServicesPreview() {
                   <span className="servicesPreviewEyebrow">{service.eyebrow}</span>
                 </div>
                 <h3 className="cardTitle servicesPreviewTitle">{service.title}</h3>
-                <p className="p">{service.desc}</p>
+                <p className="p">{service.detail}</p>
               </article>
             </Reveal>
           ))}
@@ -35,7 +35,7 @@ export default function ServicesPreview() {
 
         <Reveal delay={0.12}>
           <div className="servicesPreviewSupport">
-            <p className="servicesPreviewSupportLabel">Supporting scope</p>
+            <p className="servicesPreviewSupportLabel">Also available</p>
             <div className="servicesPreviewSupportTrack">
               {supportServices.map((service) => (
                 <Link key={service.slug} href={`/services/${service.slug}`} className="servicesPreviewSupportChip">
@@ -50,7 +50,7 @@ export default function ServicesPreview() {
         <Reveal delay={0.14}>
           <div className="servicesPreviewFoot">
             <p className="servicesPreviewNote">
-              Typical quote response: {CONTACT.whatsappResponseTime} on WhatsApp ({CONTACT.businessHours}).
+              Quote response: {CONTACT.whatsappResponseTime} on WhatsApp.
             </p>
             <div className="servicesPreviewActions">
               <Link href="/services" className="btn outline">

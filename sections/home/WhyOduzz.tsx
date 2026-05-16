@@ -5,19 +5,19 @@ import styles from "./WhyOduzz.module.css";
 
 const principles = [
   {
-    title: "Verified Material Guidance",
+    title: "Verified Material Choices",
     description:
-      "Clients get practical direction on brands, cable sizes, accessories, and protection choices so the installed result matches the budgeted standard.",
+      "Clear guidance on brands, sizes, accessories, and protection choices.",
   },
   {
     title: "Protection-First Planning",
     description:
-      "Distribution, cable routing, and load decisions are reviewed before finishing starts, which reduces avoidable corrections later.",
+      "Load paths and routing are reviewed before finishing starts.",
   },
   {
-    title: "Cleaner Handover Standards",
+    title: "Cleaner Final Handover",
     description:
-      "The end result is expected to look tidy, test properly, and feel easy for the client to inspect with confidence.",
+      "The final installation should look tidy, test properly, and feel easy to inspect.",
   },
 ] as const;
 
@@ -35,14 +35,12 @@ export default function WhyOduzz() {
           <Reveal delay={0.03}>
             <div className={styles.intro}>
               <p className={styles.kicker}>Why Oduzz</p>
-              <h2 className={styles.title}>Built for clients who care how the work ends, not just how it starts</h2>
+              <h2 className={styles.title}>Built for clients who care how the work ends</h2>
               <p className={styles.lead}>
-                Premium electrical work is usually judged at handover. Oduzz tries to earn trust by
-                making safer technical decisions early, protecting finish quality during execution,
-                and keeping project communication clear while the work is still moving.
+                Safer technical choices early. Cleaner finishing later. Fewer surprises in between.
               </p>
               <div className={styles.assurance}>
-                <span className={styles.assuranceLabel}>What clients usually inspect at handover</span>
+                <span className={styles.assuranceLabel}>At handover</span>
                 <ul className={styles.assuranceList}>
                   {handoverChecks.map((item) => (
                     <li key={item}>{item}</li>

@@ -4,7 +4,6 @@ import Container from "@/components/layout/Container";
 import CTAQuoteStrip from "@/sections/home/CTAQuoteStrip";
 import FeaturedProducts from "@/sections/home/FeaturedProducts";
 import Hero from "@/sections/home/Hero";
-import HomeTrustBand from "@/sections/home/HomeTrustBand";
 import LightingShowcase from "@/sections/home/LightingShowcase";
 import ServicesPreview from "@/sections/home/ServicesPreview";
 import Stories from "@/sections/home/Stories";
@@ -16,6 +15,21 @@ import { homeFaqs, serviceAreas } from "@/data/service-areas";
 import { buildMetadata } from "@/lib/seo";
 import { absoluteUrl } from "@/lib/seo";
 import { buildFaqSchema } from "@/lib/structured-data";
+
+const approachSteps = [
+  {
+    label: "Plan",
+    title: "Define the real load and finish standard",
+  },
+  {
+    label: "Source",
+    title: "Match materials to the actual installation",
+  },
+  {
+    label: "Deliver",
+    title: "Hand over a cleaner, easier-to-inspect result",
+  },
+] as const;
 
 export const metadata: Metadata = buildMetadata({
   title: "Premium Electrical Installations in Lagos | Oduzz Electrical Concept",
@@ -44,7 +58,8 @@ function HomeSectionFallback({ minHeight = 320 }: { minHeight?: number }) {
 }
 
 export default function HomePage() {
-  const homeFaqSchema = buildFaqSchema(homeFaqs, {
+  const visibleHomeFaqs = homeFaqs.slice(0, 3);
+  const homeFaqSchema = buildFaqSchema(visibleHomeFaqs, {
     id: `${absoluteUrl("/")}#homepage-faq`,
   });
 
@@ -52,7 +67,6 @@ export default function HomePage() {
     <>
       <JsonLd data={homeFaqSchema} />
       <Hero />
-      <HomeTrustBand />
       <ServicesPreview />
       <DeferredSection fallback={<HomeSectionFallback minHeight={420} />}>
         <Stories />
@@ -72,42 +86,30 @@ export default function HomePage() {
           <div className="seoContentCard homeApproachCard">
             <div className="homeApproachHead">
               <p className="kicker">Our approach</p>
-              <h2 className="h2">
-                Premium electrical installation services and verified materials in Lagos
-              </h2>
+              <h2 className="h2">How a project moves with Oduzz</h2>
               <p className="p homeApproachLead">
-                Oduzz supports residential and commercial projects with a tighter operating
-                standard: plan safely, source correctly, execute cleanly, and hand over with
-                confidence.
+                Fewer words, clearer decisions, cleaner delivery.
               </p>
             </div>
 
             <div className="homeApproachGrid">
-              <article className="homeApproachPane">
-                <p className="homeApproachLabel">How we work</p>
-                <p className="p">
-                  Installation and materials decisions are treated as one system. From wiring and
-                  lighting to sockets, fittings, and power accessories, selections are made for safety,
-                  authenticity, and long-term performance.
-                </p>
-              </article>
-
-              <article className="homeApproachPane">
-                <p className="homeApproachLabel">Why it matters</p>
-                <p className="p">
-                  Many projects fail at the material stage: premium components are billed, then
-                  substandard alternatives are installed. Oduzz reduces that risk through practical
-                  guidance and transparent purchasing direction.
-                </p>
-              </article>
+              {approachSteps.map((step) => (
+                <article key={step.label} className="homeApproachPane">
+                  <p className="homeApproachLabel">{step.label}</p>
+                  <h3 className="homeApproachTitle">{step.title}</h3>
+                </article>
+              ))}
             </div>
 
             <div className="seoChipRow homeApproachAreas" aria-label="Service areas">
-              {serviceAreas.map((area) => (
+              {serviceAreas.slice(0, 3).map((area) => (
                 <Link key={area.slug} href={`/locations/${area.slug}`} className="btn outline">
-                  Electrical services in {area.name}
+                  {area.name}
                 </Link>
               ))}
+              <Link href="/locations" className="btn outline">
+                View all areas
+              </Link>
             </div>
           </div>
         </Container>
@@ -117,8 +119,8 @@ export default function HomePage() {
         <Container>
           <div className="seoContentCard">
             <p className="kicker">FAQ</p>
-            <h2 className="h2">Frequently asked questions about Oduzz Electrical Concept</h2>
-            <FaqAccordion items={homeFaqs} />
+            <h2 className="h2">Quick answers</h2>
+            <FaqAccordion items={visibleHomeFaqs} />
           </div>
         </Container>
       </section>

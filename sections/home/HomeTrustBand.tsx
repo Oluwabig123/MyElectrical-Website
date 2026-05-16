@@ -13,23 +13,23 @@ const projectCategories = Array.from(
 const proofItems = [
   {
     value: CONTACT.whatsappResponseTime,
-    label: "Typical WhatsApp response",
+    label: "WhatsApp response",
     detail: `During ${CONTACT.businessHours}`,
   },
   {
     value: String(serviceAreas.length),
-    label: "Core Lagos service areas",
-    detail: "With wider support by project scope",
+    label: "Lagos focus areas",
+    detail: "Plus wider support by project scope",
   },
   {
     value: String(projectCategories.length),
-    label: "Active project tracks",
+    label: "Project tracks",
     detail: projectCategories.join(", "),
   },
   {
     value: "Homes + commercial",
     label: "Working scope",
-    detail: "Planned for reliability, finishing, and handover quality",
+    detail: "Built around reliability and clean handover",
   },
 ] as const;
 
@@ -41,10 +41,9 @@ export default function HomeTrustBand() {
           <Reveal delay={0.02}>
             <div className={styles.head}>
               <p className={styles.kicker}>Proof and coverage</p>
-              <h2 className={styles.title}>The trust layer clients look for before committing</h2>
+              <h2 className={styles.title}>Fast proof before the long conversation</h2>
               <p className={styles.lead}>
-                Fast response matters, but premium electrical work is usually judged by planning,
-                material discipline, finishing quality, and how confidently the job is handed over.
+                Fast replies, real coverage, and project work that holds up at handover.
               </p>
             </div>
           </Reveal>

@@ -12,7 +12,7 @@ export default function Stories() {
         <SectionHeader
           kicker="Proof of work"
           title="Recent projects"
-          subtitle="Selected installations that show cleaner finishing, safer execution, and stronger handover quality."
+          subtitle="A quick look at the standard of finish."
         />
 
         <div className="storiesGrid">
@@ -23,11 +23,9 @@ export default function Stories() {
                 <div className="storiesCardBody">
                   <p className="kicker">{project.category}</p>
                   <div className="cardTitle">{project.title}</div>
-                  <p className="p">{project.summary}</p>
                   <p className="seoMetaLine">
                     {project.location} | {project.duration} | {project.scope}
                   </p>
-                  {project.outcome ? <p className="projectOutcome">{project.outcome}</p> : null}
                   <div className="storiesActions">
                     <Link href={`/projects/${project.id}`} className="btn outline">
                       View case study

@@ -6,7 +6,7 @@ export const heroGallery = [
     kicker: "Lagos Electrical Systems",
     title: "Premium Electrical Installations in Lagos",
     copy:
-      "Oduzz delivers safer wiring, cleaner finishing, and verified electrical materials for homes, offices, and commercial spaces.",
+      "Safer wiring, cleaner finishing, and verified materials for homes, offices, and commercial spaces.",
     ctaLabel: "Request Quote",
     ctaTo: "/quote",
     benefits: ["Load-safe planning", "Neat finishing", "Verified materials"],
@@ -18,7 +18,7 @@ export const heroGallery = [
     kicker: "Solar",
     title: "Backup Power Planned Properly",
     copy:
-      "Solar and inverter systems sized for real usage, installed with cleaner routing, safer protection, and better long-term reliability.",
+      "Solar and inverter systems sized for real usage, with cleaner routing and dependable protection.",
     ctaLabel: "View Services",
     ctaTo: "/services",
     benefits: ["Load-aware sizing", "Clean finishing", "Reliable protection"],
@@ -30,7 +30,7 @@ export const heroGallery = [
     kicker: "CCTV",
     title: "Security Coverage With Cleaner Execution",
     copy:
-      "Practical camera placement, discreet cable management, and dependable setup for homes, offices, and retail spaces.",
+      "Practical placement, discreet cable routing, and dependable setup for homes, offices, and retail spaces.",
     ctaLabel: "Get CCTV Quote",
     ctaTo: "/quote",
     benefits: ["Smart placement", "Tidy routing", "Remote-ready setup"],
@@ -42,7 +42,7 @@ export const heroGallery = [
     kicker: "Lighting",
     title: "Lighting Designed for a Better Finish",
     copy:
-      "Feature lighting, chandeliers, and ceiling details installed with balanced layout, cleaner coordination, and premium visual impact.",
+      "Feature lighting and ceiling details installed with balanced layout and cleaner coordination.",
     ctaLabel: "View Projects",
     ctaTo: "/projects",
     benefits: ["Balanced layout", "Clean ceiling work", "Better ambience"],

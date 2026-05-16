@@ -64,8 +64,8 @@ export default async function FeaturedProducts() {
         <div className="featuredProductsHomeShell">
           <SectionHeader
             kicker="Curated supply"
-            title="Project materials grouped by real installation use"
-            subtitle="Browse the collections most often requested after wiring scope, backup power, lighting finish, and accessory requirements are properly defined."
+            title="Project materials grouped by use"
+            subtitle="Start with the installation scope, then narrow the materials."
           />
 
           <div className="featuredProductsHomeGrid">

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Container from "@/components/layout/Container";
 import styles from "@/components/layout/SiteChrome.module.css";
 
@@ -13,9 +12,6 @@ export default function TopAdBar() {
               Premium electrical installations, verified materials, and fast quote response for
               homes and commercial spaces.
             </span>
-            <Link href="/quote" className={styles.topAdBarLink}>
-              Request Quote
-            </Link>
           </div>
         </div>
       </Container>
