@@ -383,6 +383,95 @@ export function buildProductHighlights(product: Partial<Product>) {
   return mergedHighlights.slice(0, 3);
 }
 
+export type ProductCredibilityNotes = {
+  bestUseCase: string;
+  safetyNote: string;
+  installationNote: string;
+  compatibilityNote: string;
+  bulkAvailabilityNote: string;
+  confirmBeforePaymentNote: string;
+};
+
+export function buildProductCredibilityNotes(product: Partial<Product>): ProductCredibilityNotes {
+  const useCases = sanitizeText(product.bestFor)
+    .split("|")
+    .map((value) => sanitizeText(value).toLowerCase())
+    .filter(Boolean);
+  const useCaseText = useCases.length > 0 ? joinListWithAnd(useCases) : "general electrical applications";
+
+  const context = [
+    sanitizeText(product.name),
+    sanitizeText(product.type),
+    sanitizeText(product.category),
+    sanitizeText(product.description),
+    ...(Array.isArray(product.keyFeatures) ? product.keyFeatures.map((item) => sanitizeText(item)) : []),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  let safetyNote =
+    "Use a qualified electrician and isolate power before handling this item in any live installation area.";
+  let installationNote =
+    "Installation approach should match site conditions, circuit loading, and the final finish level required.";
+  let compatibilityNote =
+    "Confirm this item matches your existing electrical setup, accessory size, and intended application before payment.";
+
+  if (/cable|wire|conduit|trunking/.test(context)) {
+    safetyNote =
+      "Confirm cable and protection sizing against load requirements to reduce overheating and insulation risk.";
+    installationNote =
+      "Route through approved containment, protect bends and junction points, and keep terminations clean and labeled.";
+    compatibilityNote =
+      "Verify conductor size, insulation class, and pathway fit with your conduit, trunking, and panel entry points.";
+  } else if (/breaker|mcb|rccb|rcbo|panel|distribution|isolator|fuse|surge/.test(context)) {
+    safetyNote =
+      "Protection ratings must match the connected load profile and fault level; avoid direct substitution without verification.";
+    installationNote =
+      "Install in correctly sized enclosures with clear circuit labeling and termination torque checks.";
+    compatibilityNote =
+      "Confirm breaker format, panel rail compatibility, and coordination with upstream and downstream protection.";
+  } else if (/socket|outlet|switch/.test(context)) {
+    safetyNote =
+      "Ensure the circuit is isolated and correctly protected before replacing switches or sockets.";
+    installationNote =
+      "Mount on secure back boxes, maintain proper polarity, and test operation under normal use after installation.";
+    compatibilityNote =
+      "Confirm gang format, plate style, and electrical rating with your existing wall box and accessory line.";
+  } else if (/solar|inverter|battery|ups|charger/.test(context)) {
+    safetyNote =
+      "Backup power accessories should be paired with proper isolation and protection to avoid battery or inverter faults.";
+    installationNote =
+      "Install with load-priority planning, cable protection, and clear separation between AC and backup circuits.";
+    compatibilityNote =
+      "Confirm voltage class, inverter capacity, and accessory support with your current backup architecture.";
+  } else if (/cctv|camera|dvr|nvr|poe|security|intercom|alarm/.test(context)) {
+    safetyNote =
+      "Security equipment should use stable power paths and protected cable routing to reduce downtime and signal issues.";
+    installationNote =
+      "Place for real coverage first, then secure mounts, connectors, and recorder settings before handover.";
+    compatibilityNote =
+      "Confirm camera protocol, recorder channel type, storage support, and power method before procurement.";
+  } else if (/light|lamp|bulb|flood|chandelier|downlight|spot/.test(context)) {
+    safetyNote =
+      "Match fixture and control accessories to circuit protection and environment to prevent heat or trip issues.";
+    installationNote =
+      "Use secure mounting points, maintain clean terminations, and test switching groups for balanced output.";
+    compatibilityNote =
+      "Confirm fitting type, mounting depth, and control method with your ceiling design and switching layout.";
+  }
+
+  return {
+    bestUseCase: `Best use case: ${useCaseText}.`,
+    safetyNote,
+    installationNote,
+    compatibilityNote,
+    bulkAvailabilityNote:
+      "Bulk availability is confirmed per order. Live quantities can change during active projects and restock cycles.",
+    confirmBeforePaymentNote:
+      "Confirm final spec, quantity, delivery location, and availability with Oduzz before payment.",
+  };
+}
+
 export function buildProductCatalog(products: Array<Partial<Product>>, { includeInactive = false } = {}) {
   const normalizedItems = products.map((item, index) => normalizeProduct(item, `product-${index + 1}`));
   const visibleItems = includeInactive ? normalizedItems : normalizedItems.filter((item) => item.isActive);

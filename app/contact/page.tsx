@@ -11,12 +11,14 @@ import { buildFaqSchema } from "@/lib/structured-data";
 export const metadata: Metadata = buildMetadata({
   title: "Contact Oduzz Electrical Concept in Lagos",
   description:
-    "Contact Oduzz Electrical Concept for electrical services, product guidance, and project quotes in Lagos, Nigeria.",
+    "Contact Oduzz Electrical Concept for electrical installation in Lagos, verified product guidance, and project quotes with photo-based planning support.",
   path: "/contact",
   keywords: [
     "contact electrician Lagos",
     "electrical quote Lagos",
-    "electrical products contact Nigeria",
+    "electrical materials in Lagos",
+    "verified electrical materials",
+    "authentic electrical products",
     "Oduzz Electrical Concept contact",
   ],
 });

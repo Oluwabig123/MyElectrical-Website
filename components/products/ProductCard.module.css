@@ -98,6 +98,12 @@
   color: rgba(255, 231, 171, 0.95);
 }
 
+.badgeInStock {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: rgba(74, 222, 128, 0.36);
+  color: rgba(185, 249, 209, 0.96);
+}
+
 .badgeUnavailable {
   background: rgba(148, 163, 184, 0.2);
   border-color: rgba(148, 163, 184, 0.34);
@@ -150,6 +156,20 @@
   line-height: 1.25;
   font-weight: 600;
   letter-spacing: 0.005em;
+}
+
+.summary {
+  margin: 0;
+  color: rgba(177, 191, 216, 0.9);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.availability {
+  margin: 0;
+  color: rgba(210, 221, 238, 0.9);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .featuredMedia {
@@ -242,6 +262,14 @@
     min-height: 1.16em;
     -webkit-line-clamp: 1;
   }
+
+  .summary {
+    min-height: calc(1.5em * 2);
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
 }
 
 @media (min-width: 1240px) {
@@ -266,5 +294,10 @@
   .price {
     font-size: 13px;
     margin-top: 3px;
+  }
+
+  .availability,
+  .summary {
+    font-size: 11.5px;
   }
 }

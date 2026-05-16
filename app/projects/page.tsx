@@ -17,9 +17,15 @@ type PageProps = {
 export const metadata: Metadata = buildMetadata({
   title: "Our Projects | Electrical Installations Lagos",
   description:
-    "Explore our completed electrical projects including wiring, lighting, solar, and smart solutions in Lagos Nigeria.",
+    "Explore real electrical installation in Lagos case studies covering wiring, lighting installation Lagos projects, solar inverter installation Lagos work, and verified material decisions.",
   path: "/projects",
-  keywords: ["electrical projects Lagos", "lighting projects Lagos", "solar projects Nigeria", "electrical installations Lagos"],
+  keywords: [
+    "electrical projects Lagos",
+    "electrical installation in Lagos",
+    "lighting installation Lagos",
+    "solar inverter installation Lagos",
+    "verified electrical materials",
+  ],
   image: "/hero/lightings.webp",
 });
 

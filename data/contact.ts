@@ -1,11 +1,10 @@
-const resolvedBusinessEmail =
-  process.env.NEXT_PUBLIC_BUSINESS_EMAIL?.trim() || "hello@oduzzconcept.com.ng";
+const PUBLIC_BUSINESS_EMAIL = "hello@oduzzconcept.com.ng";
 
 export const CONTACT = {
   phoneDisplay: "07032258039",
   phoneE164: "+2347032258039",
   whatsappNumber: "2347032258039",
-  email: resolvedBusinessEmail,
+  email: PUBLIC_BUSINESS_EMAIL,
   businessHours: "Mon-Sat, 8:00am to 8:00pm",
   whatsappResponseTime: "under 10 minutes",
 } as const;

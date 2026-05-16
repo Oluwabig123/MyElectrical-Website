@@ -14,9 +14,16 @@ type PageProps = {
 export const metadata: Metadata = buildMetadata({
   title: "Request a Quote",
   description:
-    "Request a quote for wiring, solar, inverter, CCTV, lighting, and related electrical services from Oduzz Electrical Concept.",
+    "Request a quote for electrical installation in Lagos, wiring and cables in Ikorodu, lighting, CCTV, and solar inverter installation Lagos projects from Oduzz Electrical Concept.",
   path: "/quote",
-  keywords: ["electrical quote", "solar quote", "wiring estimate", "lighting quote lagos"],
+  keywords: [
+    "electrical quote",
+    "electrical installation in Lagos",
+    "wiring and cables in Ikorodu",
+    "lighting installation Lagos",
+    "solar inverter installation Lagos",
+    "verified electrical materials",
+  ],
 });
 
 function buildSearchString(searchParams: Record<string, string | string[] | undefined>) {

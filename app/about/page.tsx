@@ -71,13 +71,15 @@ const clientPromises = [
 export const metadata: Metadata = buildMetadata({
   title: "About",
   description:
-    "Learn about Oduzz Electrical Concept, our safety-first process, authentic material guidance, and electrical service standards in Lagos, Nigeria.",
+    "Learn about Oduzz Electrical Concept, our safety-first process, verified electrical materials approach, and electrical installation in Lagos delivery standards.",
   path: "/about",
   keywords: [
     "about Oduzz Electrical Concept",
     "electrical contractor Lagos",
     "electrician Ikorodu",
-    "electrical installation company Nigeria",
+    "electrical installation in Lagos",
+    "verified electrical materials",
+    "authentic electrical products",
   ],
   image: "/hero/wiring.webp",
 });

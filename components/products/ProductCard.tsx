@@ -2,6 +2,7 @@ import Link from "next/link";
 import SmartImage from "@/components/ui/SmartImage";
 import {
   buildProductPath,
+  buildProductTagline,
   formatProductPrice,
   getProductAvailability,
   type Product,
@@ -33,13 +34,16 @@ export default function ProductCard({
 }: ProductCardProps) {
   const availability = getProductAvailability(product);
   const priceLabel = formatProductPrice(product);
-  const showCategoryLabel = Boolean(showCategory);
-  const showState = availability !== "In stock";
+  const showCategoryLabel = showCategory ?? variant !== "related";
+  const showState = true;
   const showFeaturedBadge = product.featured && !showState;
   const isCompactVariant = variant === "related" || variant === "collection";
+  const productTagline = buildProductTagline(product);
   const availabilityClass = toStateClassName(availability);
   const badgeClass =
-    availabilityClass === "low-stock"
+    availabilityClass === "in-stock"
+      ? styles.badgeInStock
+      : availabilityClass === "low-stock"
       ? styles.badgeLowStock
       : availabilityClass === "out-of-stock" || availabilityClass === "inactive"
         ? styles.badgeUnavailable
@@ -88,7 +92,9 @@ export default function ProductCard({
       <div className={styles.body}>
         {showCategoryLabel ? <p className={styles.eyebrow}>{product.categoryLabel}</p> : null}
         <h3 className={styles.title}>{product.name}</h3>
+        <p className={styles.summary}>{productTagline}</p>
         <strong className={styles.price}>{priceLabel}</strong>
+        <p className={styles.availability}>Availability: {availability}</p>
       </div>
     </Link>
   );

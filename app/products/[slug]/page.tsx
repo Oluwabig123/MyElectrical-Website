@@ -65,10 +65,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return buildMetadata({
-    title: product.name,
-    description: product.description || buildProductTagline(product),
+    title: `${product.name} | Verified Electrical Product in Lagos`,
+    description:
+      product.description ||
+      `${buildProductTagline(product)} Confirm compatibility and availability before payment for delivery in Lagos.`,
     path: buildProductPath(product),
     keywords: [
+      "electrical materials in Lagos",
+      "verified electrical materials",
+      "authentic electrical products",
       "electrical product",
       "product detail",
       product.categoryLabel,

@@ -8,7 +8,11 @@ import JsonLd from "@/components/seo/JsonLd";
 import FaqAccordion from "@/components/ui/FaqAccordion";
 import { getServicePageBySlug } from "@/data/service-pages";
 import { buildProjectPath, getAllProjectSlugs, getAllProjects, getProjectBySlug } from "@/lib/projects";
-import { buildCollectionPath, type ProductCategoryKey, resolveProductCategory } from "@/lib/product-catalog";
+import {
+  buildCollectionPath,
+  type ProductCategoryKey,
+  resolveProductCategory,
+} from "@/lib/product-catalog";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildFaqSchema, buildProjectSchema } from "@/lib/structured-data";
 import styles from "./ProjectDetailPage.module.css";
@@ -21,19 +25,10 @@ function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
 }
 
-const PROJECT_RELATIONS: Record<string, { serviceSlug: string; categoryKey: ProductCategoryKey }> = {
-  solar: {
-    serviceSlug: "solar-inverter-installation",
-    categoryKey: "power-backup-solar",
-  },
-  wiring: {
-    serviceSlug: "residential-commercial-wiring",
-    categoryKey: "wiring-cables",
-  },
-  lighting: {
-    serviceSlug: "lighting-interior-finishing",
-    categoryKey: "lighting",
-  },
+const PROJECT_SERVICE_MAP: Record<string, string> = {
+  solar: "solar-inverter-installation",
+  wiring: "residential-commercial-wiring",
+  lighting: "lighting-interior-finishing",
 };
 
 function getProjectFaqs(project: { title: string; location: string; category: string; duration: string }) {
@@ -44,13 +39,13 @@ function getProjectFaqs(project: { title: string; location: string; category: st
         "Yes. Similar projects can be scoped based on your site conditions, load needs, and finishing expectations.",
     },
     {
-      question: `How long does a project like this usually take?`,
-      answer: `Typical duration depends on scope, but this featured project was completed in ${project.duration}.`,
+      question: "What details help Oduzz scope this type of work faster?",
+      answer:
+        "Share location, intended outcome, timeline, and clear before-photos. That helps refine route, materials, and protection decisions earlier.",
     },
     {
-      question: `How do I request a quote for similar work?`,
-      answer:
-        "Share your location, project type, timeline, and clear site photos through WhatsApp or the quote page for faster planning.",
+      question: `How long does a project like this usually take?`,
+      answer: `Typical duration depends on scope, but this featured project was completed in ${project.duration}.`,
     },
   ];
 }
@@ -72,13 +67,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return buildMetadata({
-    title: `${project.title} | ${project.location}`,
-    description: `${project.summary} ${project.outcome} Delivered by Oduzz Electrical Concept in ${project.location}.`,
+    title: `${project.title} | Electrical Installation in Lagos`,
+    description: `${project.summary} ${project.outcome} Case study delivered in ${project.location} with verified electrical materials and safety-first execution.`,
     path: buildProjectPath(project),
     keywords: [
       `${project.category} project Lagos`,
       project.location,
       "electrical installation Lagos",
+      "electrical installation in Lagos",
+      "verified electrical materials",
+      "authentic electrical products",
       "Oduzz Electrical Concept projects",
     ],
     image: project.image,
@@ -94,9 +92,15 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const relatedProjects = getAllProjects()
     .filter((item) => item.slug !== project.slug)
     .slice(0, 3);
-  const relation = PROJECT_RELATIONS[project.category.toLowerCase()];
-  const relatedService = relation ? getServicePageBySlug(relation.serviceSlug) : null;
-  const relatedCategory = relation ? resolveProductCategory(relation.categoryKey) : null;
+
+  const relatedService = getServicePageBySlug(
+    PROJECT_SERVICE_MAP[project.category.toLowerCase()] ?? "",
+  );
+
+  const relatedCategories = (project.relatedCategoryKeys ?? [])
+    .map((key) => resolveProductCategory(key as ProductCategoryKey))
+    .filter((item): item is NonNullable<ReturnType<typeof resolveProductCategory>> => Boolean(item));
+
   const projectFaqs = getProjectFaqs(project);
   const faqSchema = buildFaqSchema(projectFaqs, { id: `${absoluteUrl(buildProjectPath(project))}#faq` });
 
@@ -161,6 +165,86 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           </div>
         </div>
 
+        <section className={styles.caseStudySection}>
+          <h2 className="h2">Case study breakdown</h2>
+          <div className={styles.caseStudyGrid}>
+            <article className={cn("card", styles.caseCard)}>
+              <h3 className="cardTitle">Client problem</h3>
+              <p className="p">{project.clientProblem}</p>
+            </article>
+
+            <article className={cn("card", styles.caseCard)}>
+              <h3 className="cardTitle">Site condition</h3>
+              <p className="p">{project.siteCondition}</p>
+            </article>
+          </div>
+
+          <div className={styles.caseStudyColumns}>
+            <article className={cn("card", styles.caseCard)}>
+              <h3 className="cardTitle">Work completed</h3>
+              <ul className={styles.caseList}>
+                {project.workCompleted.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className={cn("card", styles.caseCard)}>
+              <h3 className="cardTitle">Materials and solutions used</h3>
+              <ul className={styles.caseList}>
+                {project.materialsSolutions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className={cn("card", styles.caseCard)}>
+              <h3 className="cardTitle">Safety and protection decisions</h3>
+              <ul className={styles.caseList}>
+                {project.safetyDecisions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className={cn("card", styles.caseCard)}>
+              <h3 className="cardTitle">Final outcome</h3>
+              <p className="p">{project.finalOutcome}</p>
+              <div className="seoActionRow">
+                <Link href="/quote" className="btn primary">
+                  Request similar work
+                </Link>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        {project.evidence.length > 0 ? (
+          <section className={styles.evidenceSection}>
+            <h2 className="h2">Before, during, and after evidence</h2>
+            <div className={styles.evidenceGrid}>
+              {project.evidence.map((entry) => (
+                <article key={`${entry.phase}-${entry.title}`} className={cn("card", styles.evidenceCard)}>
+                  <div className={styles.evidenceMedia}>
+                    <Image
+                      src={entry.image}
+                      alt={`${entry.phase} evidence for ${project.title}`}
+                      fill
+                      loading="lazy"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                  </div>
+                  <div className={styles.evidenceBody}>
+                    <p className="kicker">{entry.phase}</p>
+                    <h3 className="cardTitle">{entry.title}</h3>
+                    <p className="p">{entry.note}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {relatedProjects.length > 0 ? (
           <div className={styles.relatedSection}>
             <div className="sectionHeader">
@@ -193,18 +277,18 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         ) : null}
 
         <section className="seoContentSection">
-          <h2 className="h2">Related service and product paths</h2>
+          <h2 className="h2">Related products and services</h2>
           <div className="seoActionRow">
             {relatedService ? (
               <Link href={`/services/${relatedService.slug}`} className="btn outline">
                 {relatedService.shortTitle}
               </Link>
             ) : null}
-            {relatedCategory ? (
-              <Link href={buildCollectionPath(relatedCategory.key)} className="btn outline">
-                {relatedCategory.label}
+            {relatedCategories.map((category) => (
+              <Link key={category.key} href={buildCollectionPath(category.key)} className="btn outline">
+                {category.label}
               </Link>
-            ) : null}
+            ))}
             <Link href="/projects" className="btn outline">
               More case studies
             </Link>

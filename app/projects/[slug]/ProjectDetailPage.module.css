@@ -48,13 +48,74 @@
   line-height: 1.5;
 }
 
+.caseStudySection {
+  margin-top: 34px;
+  display: grid;
+  gap: 16px;
+}
+
+.caseStudyGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.caseStudyColumns {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.caseCard {
+  display: grid;
+  gap: 12px;
+}
+
+.caseList {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.evidenceSection {
+  margin-top: 34px;
+  display: grid;
+  gap: 16px;
+}
+
+.evidenceGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.evidenceCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.evidenceMedia {
+  position: relative;
+  min-height: 220px;
+}
+
+.evidenceBody {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
 .relatedSection {
   margin-top: 36px;
 }
 
 @media (max-width: 920px) {
   .hero,
-  .factsGrid {
+  .factsGrid,
+  .caseStudyGrid,
+  .caseStudyColumns,
+  .evidenceGrid {
     grid-template-columns: 1fr;
   }
 }

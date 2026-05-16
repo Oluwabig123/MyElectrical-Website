@@ -90,12 +90,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return buildMetadata({
-    title: `${category.label} Collection`,
-    description: buildCollectionDescription(category.label, category.group),
+    title: `${category.label} Collection | Electrical Materials in Lagos`,
+    description: `${buildCollectionDescription(category.label, category.group)} Oduzz supports electrical installation in Lagos with verified electrical materials and authentic electrical products.`,
     path: buildCollectionPath(category.key),
     keywords: [
       `${category.label} collection`,
       `${category.label} Lagos`,
+      "electrical materials in Lagos",
+      "verified electrical materials",
+      "authentic electrical products",
       "electrical products Lagos",
       category.group,
     ],

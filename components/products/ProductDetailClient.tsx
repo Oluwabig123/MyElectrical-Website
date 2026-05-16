@@ -13,6 +13,7 @@ import { CONTACT, buildWhatsAppUrl } from "@/data/contact";
 import { useCart } from "@/lib/cart-context";
 import {
   buildCollectionPath,
+  buildProductCredibilityNotes,
   buildProductHighlights,
   buildProductTagline,
   formatProductPrice,
@@ -60,6 +61,7 @@ export default function ProductDetailClient({
   const availability = getProductAvailability(product);
   const canAddToCart = product.isActive && product.stockQty > 0 && product.priceAmount > 0;
   const productHighlights = buildProductHighlights(product);
+  const credibilityNotes = buildProductCredibilityNotes(product);
   const productTagline = buildProductTagline(product);
   const collectionPath = buildCollectionPath(product.category);
   const whatsappUrl = buildWhatsAppUrl(encodeURIComponent(buildProductPurchaseMessage(product)));
@@ -288,12 +290,20 @@ export default function ProductDetailClient({
             </details>
 
             <details className={styles.accordion}>
-              <summary>Delivery and support</summary>
+              <summary>Delivery, support, and confirmation</summary>
               <div className={styles.accordionBody}>
                 <p>
                   Confirm bulk availability before payment. For matching accessories, installation
                   guidance, or alternative sizes, send the intended use and location on WhatsApp.
                 </p>
+                <ul className={styles.featureList}>
+                  <li>{credibilityNotes.bestUseCase}</li>
+                  <li>Safety note: {credibilityNotes.safetyNote}</li>
+                  <li>Installation note: {credibilityNotes.installationNote}</li>
+                  <li>Compatibility note: {credibilityNotes.compatibilityNote}</li>
+                  <li>{credibilityNotes.bulkAvailabilityNote}</li>
+                  <li>{credibilityNotes.confirmBeforePaymentNote}</li>
+                </ul>
                 <div className={styles.auxLinks}>
                   <a href={whatsappUrl} target="_blank" rel="noreferrer">
                     Ask about this product
