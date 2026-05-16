@@ -7,6 +7,7 @@ export type PremiumCatalogCategory = {
   useCaseNote: string;
   collectionKeys: ProductCategoryKey[];
   primaryCollectionKey: ProductCategoryKey;
+  landingPath: string;
   quoteFocus: string;
 };
 
@@ -20,6 +21,7 @@ export const premiumCatalogCategories: PremiumCatalogCategory[] = [
       "Use when planning new wiring, rewiring upgrades, or dedicated circuit runs where cable sizing and route protection matter.",
     collectionKeys: ["wiring-cables"],
     primaryCollectionKey: "wiring-cables",
+    landingPath: "/products/cables-wires",
     quoteFocus: "cable sizing and routing plan",
   },
   {
@@ -31,6 +33,7 @@ export const premiumCatalogCategories: PremiumCatalogCategory[] = [
       "Use for POP ceiling channels, chandelier points, ambient/task lighting zoning, and final decorative finishing.",
     collectionKeys: ["lighting"],
     primaryCollectionKey: "lighting",
+    landingPath: "/products/lighting",
     quoteFocus: "lighting layout and switching plan",
   },
   {
@@ -42,6 +45,7 @@ export const premiumCatalogCategories: PremiumCatalogCategory[] = [
       "Use during final accessory phase for homes, offices, and fit-outs where control points must align with daily usage.",
     collectionKeys: ["switches-sockets"],
     primaryCollectionKey: "switches-sockets",
+    landingPath: "/products/switches-sockets",
     quoteFocus: "accessory schedule and point count",
   },
   {
@@ -53,6 +57,7 @@ export const premiumCatalogCategories: PremiumCatalogCategory[] = [
       "Use when building or upgrading distribution boards, adding critical load protection, or improving fault isolation.",
     collectionKeys: ["circuit-protection", "distribution-boards-panels", "earthing-lightning-protection"],
     primaryCollectionKey: "circuit-protection",
+    landingPath: "/products/protection-distribution",
     quoteFocus: "protection sizing and panel upgrade",
   },
   {
@@ -64,6 +69,7 @@ export const premiumCatalogCategories: PremiumCatalogCategory[] = [
       "Use for inverter-based backup projects where protection, cable path, and load priority must be confirmed before purchase.",
     collectionKeys: ["power-backup-solar", "transformers-power-equipment", "circuit-protection"],
     primaryCollectionKey: "power-backup-solar",
+    landingPath: "/products/solar-inverter-components",
     quoteFocus: "solar and inverter load confirmation",
   },
   {
@@ -95,6 +101,7 @@ export const premiumCatalogCategories: PremiumCatalogCategory[] = [
       "cctv-accessories",
     ],
     primaryCollectionKey: "cctv-cameras",
+    landingPath: "/products/cctv-smart-home",
     quoteFocus: "camera coverage and recorder setup",
   },
   {
@@ -106,6 +113,7 @@ export const premiumCatalogCategories: PremiumCatalogCategory[] = [
       "Use during first-fix and finishing phases where cable containment, support points, and accessory compatibility are critical.",
     collectionKeys: ["conduits-trunking", "installation-materials", "electrical-accessories", "cable-management"],
     primaryCollectionKey: "conduits-trunking",
+    landingPath: "/products/cables-wires",
     quoteFocus: "containment route and installation accessories",
   },
 ];

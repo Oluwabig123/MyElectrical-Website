@@ -4,13 +4,9 @@ import Container from "@/components/layout/Container";
 import ProductCard from "@/components/products/ProductCard";
 import journeyStyles from "@/components/products/ProductJourney.module.css";
 import JsonLd from "@/components/seo/JsonLd";
+import { googleBusinessProfileProductUrls } from "@/data/product-category-landing-pages";
 import { premiumCatalogCategories } from "@/data/premium-catalog-categories";
-import {
-  buildCollectionPath,
-  buildProductCatalog,
-  type Product,
-  type ProductCategoryKey,
-} from "@/lib/product-catalog";
+import { buildProductCatalog, type Product, type ProductCategoryKey } from "@/lib/product-catalog";
 import { fetchOnlineProductsCached } from "@/lib/product-directory-server";
 import { buildMetadata } from "@/lib/seo";
 import { buildProductListSchema } from "@/lib/structured-data";
@@ -81,7 +77,7 @@ export default async function ProductsPage() {
                   <Link href="/quote" className="btn primary">
                     Request project quote
                   </Link>
-                  <Link href="/collections/wiring-cables" className="btn outline">
+                  <Link href="/products/cables-wires" className="btn outline">
                     Start with wiring & cables
                   </Link>
                 </div>
@@ -111,7 +107,7 @@ export default async function ProductsPage() {
                 {premiumCatalogCategories.map((category) => (
                   <Link
                     key={category.key}
-                    href={buildCollectionPath(category.primaryCollectionKey)}
+                    href={category.landingPath}
                     className={journeyStyles.filterChip}
                   >
                     {category.title}
@@ -143,8 +139,8 @@ export default async function ProductsPage() {
                       </p>
                       <p className="p">Use-case note: {category.useCaseNote}</p>
                       <div className="seoActionRow">
-                        <Link href={buildCollectionPath(category.primaryCollectionKey)} className="btn outline">
-                          View collection
+                        <Link href={category.landingPath} className="btn outline">
+                          View landing page
                         </Link>
                         <Link
                           href={`/quote?serviceType=${encodeURIComponent(category.quoteFocus)}`}
@@ -291,6 +287,35 @@ export default async function ProductsPage() {
                   <Link href="/quote" className="btn primary">
                     Request guided quote
                   </Link>
+                </div>
+              </div>
+            </section>
+
+            <section className="seoContentSection">
+              <div className="seoContentCard">
+                <p className={journeyStyles.eyebrow}>Google Business Profile</p>
+                <h2 className="h2">Product URLs for local product listings</h2>
+                <p className={journeyStyles.catalogFeedback}>
+                  Use these category landing pages for Google Business Profile products so each item
+                  sends local product traffic to the most relevant page.
+                </p>
+
+                <div className="seoCardGrid">
+                  {googleBusinessProfileProductUrls.map((item) => (
+                    <article key={item.product} className="card seoInfoCard">
+                      <h3 className="cardTitle">{item.product}</h3>
+                      <p className="seoMetaLine">{item.url}</p>
+                      <Link href={item.path} className="btn outline">
+                        Open landing page
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="seoActionRow">
+                  <a href="/google-business-profile-product-urls.csv" className="btn primary">
+                    Download GBP URL export
+                  </a>
                 </div>
               </div>
             </section>

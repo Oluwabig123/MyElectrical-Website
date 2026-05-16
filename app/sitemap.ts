@@ -6,6 +6,7 @@ import { getAllProjectSlugs } from "@/lib/projects";
 import { absoluteUrl } from "@/lib/seo";
 import { serviceAreas } from "@/data/service-areas";
 import { servicePages } from "@/data/service-pages";
+import { productCategoryLandingPages } from "@/data/product-category-landing-pages";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogSlugs = await getAllBlogSlugs();
@@ -19,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/about",
     "/services",
     "/products",
+    ...productCategoryLandingPages.map((page) => page.path),
     "/contact",
     "/blog",
     "/academy",
