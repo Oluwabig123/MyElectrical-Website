@@ -72,8 +72,8 @@ export default function ProductCard({
             priority={priority}
             sizes={
               variant === "listing"
-                ? "(max-width: 768px) 50vw, (max-width: 1180px) 33vw, 25vw"
-                : "(max-width: 768px) 50vw, 25vw"
+                ? "(max-width: 768px) 100vw, (max-width: 1180px) 33vw, 25vw"
+                : "(max-width: 768px) 100vw, 25vw"
             }
           />
         ) : (
@@ -90,11 +90,15 @@ export default function ProductCard({
       </div>
 
       <div className={styles.body}>
-        {showCategoryLabel ? <p className={styles.eyebrow}>{product.categoryLabel}</p> : null}
+        <div className={styles.metaRow}>
+          {showCategoryLabel ? <p className={styles.eyebrow}>{product.categoryLabel}</p> : null}
+          <span className={styles.metaLink}>View details</span>
+        </div>
         <h3 className={styles.title}>{product.name}</h3>
         <p className={styles.summary}>{productTagline}</p>
-        <strong className={styles.price}>{priceLabel}</strong>
-        <p className={styles.availability}>Availability: {availability}</p>
+        <div className={styles.footer}>
+          <strong className={styles.price}>{priceLabel}</strong>
+        </div>
       </div>
     </Link>
   );

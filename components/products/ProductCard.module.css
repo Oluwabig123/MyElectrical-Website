@@ -3,14 +3,22 @@
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 0;
-  border: 0;
-  border-radius: 14px;
-  overflow: visible;
-  background: transparent;
+  border: 1px solid rgba(157, 175, 203, 0.16);
+  border-radius: 22px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(14, 20, 34, 0.92), rgba(10, 16, 28, 0.98)),
+    rgba(10, 16, 28, 0.94);
   color: inherit;
   text-decoration: none;
-  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: none;
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease;
+  box-shadow:
+    0 20px 34px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   will-change: transform;
 }
 
@@ -19,11 +27,12 @@
   width: 100%;
   display: block;
   border: 0;
-  border-bottom: 0;
-  border-radius: 7px 7px 0 0;
-  aspect-ratio: 1 / 1;
-  background: linear-gradient(180deg, #f7f7f7 0%, #ececec 100%);
-  box-shadow: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0;
+  aspect-ratio: 1 / 0.92;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.2), transparent 38%),
+    linear-gradient(180deg, #f8f8f8 0%, #ececec 100%);
   overflow: hidden;
   transition: background 320ms ease;
 }
@@ -43,9 +52,9 @@
 .media::after {
   content: "";
   position: absolute;
-  inset: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: inherit;
+  inset: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
   opacity: 0;
   pointer-events: none;
   transition: inset 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease;
@@ -59,7 +68,7 @@
   object-fit: cover;
   object-position: center;
   padding: 0;
-  transform: scale(1.08);
+  transform: scale(1.03);
   transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -80,16 +89,17 @@
 
 .badge {
   position: absolute;
-  left: 10px;
-  bottom: 10px;
-  min-height: 28px;
-  padding: 0 10px;
+  left: 14px;
+  top: 14px;
+  min-height: 30px;
+  padding: 0 11px;
   display: inline-flex;
   align-items: center;
   border: 1px solid transparent;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
+  backdrop-filter: blur(8px);
 }
 
 .badgeLowStock {
@@ -117,20 +127,36 @@
 }
 
 .body {
-  gap: 7px;
-  margin-top: 16px;
-  padding: 4px 10px 20px 0;
+  gap: 9px;
+  margin-top: 0;
+  padding: 18px 18px 20px;
   background: transparent;
   display: grid;
 }
 
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .eyebrow {
   margin: 0;
-  color: rgba(193, 234, 243, 0.9);
+  color: rgba(193, 234, 243, 0.82);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.metaLink {
+  color: rgba(255, 223, 134, 0.94);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .title {
@@ -139,37 +165,40 @@
   overflow: hidden;
   color: rgba(247, 251, 255, 0.97);
   font-family: var(--font-manrope), sans-serif;
-  font-size: 14px;
-  line-height: 1.22;
-  font-weight: 550;
+  font-size: 17px;
+  line-height: 1.14;
+  font-weight: 650;
   letter-spacing: -0.005em;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   margin: 0;
 }
 
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(157, 175, 203, 0.1);
+}
+
 .price {
   display: block;
   margin-top: 0;
   color: rgba(247, 238, 218, 0.98);
-  font-size: 13px;
+  font-size: 18px;
   line-height: 1.25;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.005em;
 }
 
 .summary {
   margin: 0;
-  color: rgba(177, 191, 216, 0.9);
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-.availability {
-  margin: 0;
-  color: rgba(210, 221, 238, 0.9);
-  font-size: 12px;
-  line-height: 1.45;
+  color: rgba(187, 199, 220, 0.86);
+  font-size: 13px;
+  line-height: 1.66;
 }
 
 .featuredMedia {
@@ -227,10 +256,11 @@
 
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
-    transform: translateY(-3px);
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
+    transform: translateY(-6px);
+    border-color: rgba(255, 213, 74, 0.28);
+    box-shadow:
+      0 26px 42px rgba(0, 0, 0, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   .card:hover .media {
@@ -242,29 +272,29 @@
   }
 
   .card:hover .media::after {
-    inset: 0;
-    opacity: 0.16;
+    inset: 10px;
+    opacity: 0.2;
   }
 
   .card:hover .image {
-    transform: scale(1.095);
+    transform: scale(1.07);
   }
 }
 
 @media (min-width: 768px) {
   .body {
     gap: 6px;
-    margin-top: 14px;
-    padding: 4px 10px 20px 0;
+    margin-top: 0;
+    padding: 18px 18px 20px;
   }
 
   .title {
-    min-height: 1.16em;
-    -webkit-line-clamp: 1;
+    min-height: calc(1.18em * 2);
+    -webkit-line-clamp: 2;
   }
 
   .summary {
-    min-height: calc(1.5em * 2);
+    min-height: calc(1.6em * 2);
     display: -webkit-box;
     overflow: hidden;
     -webkit-line-clamp: 2;
@@ -274,30 +304,68 @@
 
 @media (min-width: 1240px) {
   .body {
-    padding: 4px 10px 20px 0;
+    padding: 16px 16px 18px;
   }
 }
 
 @media (max-width: 767px) {
+  .card {
+    border-radius: 20px;
+    box-shadow:
+      0 14px 26px rgba(0, 0, 0, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .media {
+    aspect-ratio: 1 / 0.9;
+  }
+
+  .media::after {
+    display: none;
+  }
+
+  .badge {
+    left: 12px;
+    top: 12px;
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+
   .body {
-    margin-top: 14px;
-    padding: 4px 10px 20px 0;
-    gap: 5px;
+    margin-top: 0;
+    padding: 14px 14px 16px;
+    gap: 6px;
+  }
+
+  .metaRow {
+    justify-content: flex-start;
+    gap: 8px;
   }
 
   .title {
-    font-size: 13.5px;
-    line-height: 1.26;
-    font-weight: 500;
+    min-height: calc(1.22em * 2);
+    font-size: 16px;
+    line-height: 1.18;
+    font-weight: 600;
+  }
+
+  .metaLink {
+    display: none;
+  }
+
+  .summary {
+    display: none;
+  }
+
+  .footer {
+    margin-top: 2px;
+    padding-top: 0;
+    border-top: 0;
   }
 
   .price {
-    font-size: 13px;
-    margin-top: 3px;
-  }
-
-  .availability,
-  .summary {
-    font-size: 11.5px;
+    font-size: 18px;
+    margin-top: 0;
   }
 }

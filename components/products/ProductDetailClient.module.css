@@ -1,51 +1,53 @@
+.heroPanel {
+  display: grid;
+  gap: 24px;
+}
+
 .layout {
   display: grid;
-  gap: 16px;
+  gap: 22px;
 }
 
-.panel {
+.visualColumn,
+.detailColumn,
+.contentSection,
+.supportBand,
+.relatedSection {
   display: grid;
-  gap: 16px;
-  border: 1px solid var(--pj-line-soft);
-  border-radius: 22px;
-  padding: 14px;
-  background:
-    linear-gradient(180deg, rgba(17, 26, 44, 0.92), rgba(11, 18, 32, 0.94)),
-    var(--pj-surface-soft);
-  color: var(--pj-text);
-  box-shadow: none;
-}
-
-.featuredPanel {
-  border-color: rgba(255, 212, 0, 0.42);
-  background:
-    radial-gradient(120% 120% at 14% 0%, rgba(255, 212, 0, 0.14), transparent 48%),
-    radial-gradient(120% 120% at 100% 100%, rgba(46, 233, 255, 0.1), transparent 54%),
-    linear-gradient(180deg, rgba(17, 26, 44, 0.96), rgba(11, 18, 32, 0.96));
+  gap: 18px;
 }
 
 .galleryStage {
   position: relative;
-  aspect-ratio: 1 / 1.02;
+  min-height: 520px;
   overflow: hidden;
+  border-radius: 28px;
   border: 1px solid var(--pj-line-soft);
-  border-radius: 16px;
-  background: linear-gradient(180deg, #f7f7f7 0%, #ececec 100%);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.18), transparent 36%),
+    linear-gradient(180deg, #f7f7f7 0%, #ececec 100%);
 }
 
 .featuredStage {
   background:
-    radial-gradient(circle at 50% 0%, rgba(255, 212, 0, 0.18), transparent 58%),
-    radial-gradient(circle at 82% 100%, rgba(46, 233, 255, 0.12), transparent 48%),
+    radial-gradient(circle at 24% 0%, rgba(255, 213, 74, 0.18), transparent 34%),
+    radial-gradient(circle at 88% 100%, rgba(46, 233, 255, 0.12), transparent 44%),
     linear-gradient(180deg, #f7f7f7 0%, #ececec 100%);
+}
+
+.galleryStage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6, 11, 20, 0) 58%, rgba(6, 11, 20, 0.76) 100%),
+    radial-gradient(520px 180px at 18% 14%, rgba(255, 213, 74, 0.14), transparent 58%);
+  pointer-events: none;
 }
 
 .galleryImage {
   object-fit: cover;
   object-position: center;
-  padding: 0;
-  transform: scale(1.08);
-  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .galleryFallback {
@@ -63,60 +65,41 @@
   text-transform: uppercase;
 }
 
-.thumbRail {
+.mediaBadgeRow {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 1;
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  overflow-x: auto;
+  flex-wrap: wrap;
 }
 
-.thumb {
-  position: relative;
-  width: 92px;
-  aspect-ratio: 1 / 1;
-  flex-shrink: 0;
-  overflow: hidden;
-  border: 1px solid var(--pj-line);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #f7f7f7 0%, #ececec 100%);
-}
-
-.thumbActive {
-  border-color: var(--pj-accent-line);
-}
-
-.thumbImage {
-  object-fit: cover;
-  object-position: center;
-}
-
-.galleryMeta {
+.visualFoot {
   display: grid;
   gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.galleryMeta > div,
-.factCard {
+.visualMetaCard,
+.noteCard {
   display: grid;
   gap: 6px;
-  padding: 14px;
+  padding: 18px;
+  border-radius: 18px;
   border: 1px solid var(--pj-line-soft);
-  border-radius: 14px;
-  background: rgba(12, 20, 34, 0.72);
+  background:
+    linear-gradient(180deg, rgba(17, 26, 44, 0.92), rgba(11, 18, 32, 0.94)),
+    rgba(11, 18, 32, 0.94);
 }
 
-.galleryMeta strong,
-.factCard strong,
-.price {
+.visualMetaCard strong {
   color: var(--pj-text);
-}
-
-.metaLabel {
-  margin: 0;
-  color: rgba(193, 234, 243, 0.9);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 16px;
+  line-height: 1.3;
 }
 
 .headerMeta {
@@ -127,78 +110,80 @@
   flex-wrap: wrap;
 }
 
+.headerLink {
+  color: rgba(255, 223, 134, 0.96);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.intro,
+.richCopy,
+.noteCard p {
+  margin: 0;
+  color: var(--pj-muted);
+  font-size: 15px;
+  line-height: 1.78;
+}
+
+.priceBar {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(157, 175, 203, 0.12);
+}
+
+.price {
+  color: var(--pj-text);
+  font-size: clamp(32px, 3.6vw, 46px);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.priceContext {
+  color: rgba(214, 223, 241, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.stateBadge,
 .featuredAccent {
   display: inline-flex;
   align-items: center;
   min-height: 34px;
   padding: 0 12px;
-  border: 1px solid rgba(255, 212, 0, 0.38);
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 214, 82, 0.96), rgba(255, 194, 0, 0.92));
-  color: rgba(34, 24, 0, 0.92);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-
-.intro,
-.summaryText,
-.accordionBody p {
-  margin: 0;
-  color: var(--pj-muted);
-  font-size: 15px;
-  line-height: 1.72;
-}
-
-.summaryTextMuted {
-  color: rgba(167, 182, 207, 0.72);
-  font-size: 13px;
-}
-
-.priceBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.price {
-  font-size: clamp(26px, 3vw, 34px);
-  line-height: 1.04;
-  font-weight: 700;
-}
-
-.stateBadge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  backdrop-filter: blur(8px);
 }
 
 .stateInStock {
-  border-color: rgba(74, 222, 128, 0.34);
+  border: 1px solid rgba(74, 222, 128, 0.34);
   background: rgba(74, 222, 128, 0.15);
   color: rgba(185, 249, 209, 0.95);
 }
 
 .stateLowStock {
-  border-color: rgba(255, 213, 74, 0.4);
+  border: 1px solid rgba(255, 213, 74, 0.4);
   background: rgba(255, 213, 74, 0.18);
   color: rgba(255, 236, 178, 0.96);
 }
 
 .stateUnavailable {
-  border-color: rgba(148, 163, 184, 0.34);
+  border: 1px solid rgba(148, 163, 184, 0.34);
   background: rgba(148, 163, 184, 0.16);
   color: rgba(226, 232, 240, 0.9);
+}
+
+.featuredAccent {
+  border: 1px solid rgba(255, 213, 74, 0.34);
+  background: rgba(9, 15, 26, 0.46);
+  color: rgba(255, 240, 190, 0.95);
 }
 
 .specRow {
@@ -219,26 +204,34 @@
   font-size: 13px;
 }
 
-.purchasePanel {
+.buyPanel {
   display: grid;
-  gap: 10px;
-  border: 1px solid var(--pj-line-soft);
-  border-radius: 16px;
-  padding: 12px;
-  background: rgba(9, 15, 25, 0.62);
+  gap: 16px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(157, 175, 203, 0.16);
+  background:
+    linear-gradient(180deg, rgba(11, 18, 32, 0.92), rgba(8, 13, 24, 0.96)),
+    rgba(8, 13, 24, 0.94);
 }
 
-.quantityPanel {
+.buyHead {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
+}
+
+.buyTitle {
+  color: var(--pj-text);
+  font-size: 19px;
+  line-height: 1.3;
 }
 
 .quantityControl {
   display: inline-grid;
-  grid-template-columns: 44px minmax(56px, auto) 44px;
+  grid-template-columns: 42px minmax(52px, auto) 42px;
   align-items: center;
   overflow: hidden;
   border: 1px solid var(--pj-line);
@@ -247,31 +240,23 @@
 }
 
 .quantityButton {
-  min-height: 44px;
+  min-height: 42px;
   border: 0;
   background: transparent;
   color: var(--pj-text);
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
 }
 
 .quantityValue {
-  min-width: 56px;
+  min-width: 52px;
   display: grid;
   place-items: center;
   color: var(--pj-text);
   font-weight: 700;
 }
 
-.auxLinks {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.serviceNote {
+.buyNotes {
   display: grid;
   gap: 6px;
   color: rgba(177, 191, 216, 0.84);
@@ -279,59 +264,21 @@
   line-height: 1.5;
 }
 
-.accordionGrid {
-  display: grid;
-  gap: 14px;
-}
-
-.accordion {
+.checkoutPanelWrap {
+  border-radius: 22px;
   overflow: hidden;
-  border: 1px solid var(--pj-line-soft);
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(17, 26, 44, 0.92), rgba(11, 18, 32, 0.94)),
-    var(--pj-surface-soft);
-  color: var(--pj-text);
 }
 
-.accordion summary {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  cursor: pointer;
-  padding: 14px 16px;
-  color: var(--pj-text);
-  font-family: var(--font-manrope), sans-serif;
-  font-size: clamp(16px, 2.2vw, 20px);
-  letter-spacing: -0.01em;
-}
-
-.accordion summary::-webkit-details-marker {
-  display: none;
-}
-
-.accordion summary::after {
-  content: "+";
-  color: rgba(255, 224, 133, 0.94);
-  font-family: var(--font-manrope), sans-serif;
-  font-size: 20px;
-}
-
-.accordion[open] summary::after {
-  content: "-";
-}
-
-.accordionBody {
+.contentGrid {
   display: grid;
-  gap: 16px;
-  padding: 0 16px 16px;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.factsGrid {
+.sectionHead {
   display: grid;
-  gap: 12px;
+  gap: 7px;
+  max-width: 44ch;
 }
 
 .featureList {
@@ -344,32 +291,70 @@
   line-height: 1.65;
 }
 
-.relatedSection {
+.noteGrid {
   display: grid;
-  gap: 16px;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@media (min-width: 768px) {
-  .panel {
-    padding: 16px;
-  }
+.supportBand {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
 
-  .galleryMeta,
-  .factsGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.supportCopy {
+  display: grid;
+  gap: 8px;
+  max-width: 54ch;
+}
+
+.relatedSection {
+  gap: 18px;
+}
+
+.metaLabel {
+  margin: 0;
+  color: rgba(193, 234, 243, 0.9);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 @media (min-width: 1024px) {
   .layout {
-    grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
-    gap: 20px;
+    grid-template-columns: minmax(0, 1.04fr) minmax(340px, 0.96fr);
+    gap: 24px;
     align-items: start;
   }
 }
 
+@media (max-width: 980px) {
+  .contentGrid,
+  .supportBand,
+  .noteGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 767px) {
-  .quantityPanel {
-    align-items: flex-start;
+  .galleryStage {
+    min-height: 320px;
+    border-radius: 22px;
+  }
+
+  .visualFoot {
+    grid-template-columns: 1fr;
+  }
+
+  .buyPanel,
+  .visualMetaCard,
+  .noteCard {
+    padding: 15px;
+    border-radius: 18px;
+  }
+
+  .price {
+    font-size: clamp(28px, 10vw, 38px);
   }
 }

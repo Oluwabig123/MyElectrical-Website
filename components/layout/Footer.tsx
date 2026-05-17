@@ -4,14 +4,20 @@ import { CONTACT, CONTACT_LINKS } from "@/data/contact";
 import Container from "@/components/layout/Container";
 import styles from "@/components/layout/SiteChrome.module.css";
 
-const quickLinks = [
+const primaryLinks = [
   { href: "/services", label: "Services" },
   { href: "/projects", label: "Projects" },
   { href: "/products", label: "Products" },
-  { href: "/locations", label: "Service Areas" },
+  { href: "/quote", label: "Request Quote" },
+] as const;
+
+const companyLinks = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
-  { href: "/quote", label: "Request Quote" },
+  { href: "/locations", label: "Service Areas" },
+] as const;
+
+const resourceLinks = [
   { href: "/blog", label: "Blog" },
   { href: "/academy", label: "Academy" },
   { href: "/assistant", label: "Assistant" },
@@ -34,7 +40,12 @@ export default function Footer() {
               loading="lazy"
               sizes="180px"
             />
+            <p className={styles.footerEyebrow}>Electrical installs and verified materials</p>
             <p className={styles.footerTagline}>Powering Homes. Brightening Futures.</p>
+            <p className={styles.footerLead}>
+              Installations, upgrades, and material sourcing shaped for homes, retail spaces, and commercial sites in
+              Lagos.
+            </p>
             <p className={styles.footerLocation}>Ikorodu, Lagos, Nigeria</p>
             <div className={styles.footerBadges}>
               <span className={styles.footerBadge}>Licensed Electricians</span>
@@ -43,18 +54,46 @@ export default function Footer() {
           </section>
 
           <nav className={styles.footerCol} aria-label="Footer quick links">
-            <div className={styles.footerTitle}>Quick Links</div>
-            <div className={styles.footerLinksGrid}>
-              {quickLinks.map((item) => (
-                <Link key={item.href} className={styles.footerLink} href={item.href}>
-                  {item.label}
-                </Link>
-              ))}
+            <div className={styles.footerTitle}>Navigate</div>
+            <div className={styles.footerLinkColumns}>
+              <div className={styles.footerLinkGroup}>
+                <div className={styles.footerGroupTitle}>Main</div>
+                <div className={styles.footerLinksList}>
+                  {primaryLinks.map((item) => (
+                    <Link key={item.href} className={styles.footerLink} href={item.href}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.footerLinkGroup}>
+                <div className={styles.footerGroupTitle}>Company</div>
+                <div className={styles.footerLinksList}>
+                  {companyLinks.map((item) => (
+                    <Link key={item.href} className={styles.footerLink} href={item.href}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.footerLinkGroup}>
+                <div className={styles.footerGroupTitle}>Resources</div>
+                <div className={styles.footerLinksList}>
+                  {resourceLinks.map((item) => (
+                    <Link key={item.href} className={styles.footerLink} href={item.href}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </nav>
 
           <div className={`${styles.footerCol} ${styles.footerContactCol}`}>
-            <div className={styles.footerTitle}>Contact</div>
+            <div className={styles.footerTitle}>Talk to Oduzz</div>
+            <p className={styles.footerMeta}>For installs, product support, and guided quotations.</p>
             <a className={styles.footerLink} href={CONTACT_LINKS.phone}>
               {CONTACT.phoneDisplay}
             </a>

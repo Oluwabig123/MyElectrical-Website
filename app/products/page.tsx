@@ -2,11 +2,17 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import Container from "@/components/layout/Container";
 import ProductCard from "@/components/products/ProductCard";
+import SmartImage from "@/components/ui/SmartImage";
 import journeyStyles from "@/components/products/ProductJourney.module.css";
 import JsonLd from "@/components/seo/JsonLd";
-import { googleBusinessProfileProductUrls } from "@/data/product-category-landing-pages";
 import { premiumCatalogCategories } from "@/data/premium-catalog-categories";
-import { buildProductCatalog, type Product, type ProductCategoryKey } from "@/lib/product-catalog";
+import {
+  buildCollectionPath,
+  buildProductCatalog,
+  formatProductPrice,
+  type Product,
+  type ProductCategoryKey,
+} from "@/lib/product-catalog";
 import { fetchOnlineProductsCached } from "@/lib/product-directory-server";
 import { buildMetadata } from "@/lib/seo";
 import { buildProductListSchema } from "@/lib/structured-data";
@@ -39,131 +45,213 @@ function countProductsByCategoryKeys(products: Product[], categoryKeys: ProductC
   return products.filter((item) => keySet.has(item.category as ProductCategoryKey)).length;
 }
 
-function pickFeaturedProducts(products: Product[], limit = 8) {
+function pickFeaturedProducts(products: Product[], limit = 4) {
   const featured = products.filter((item) => item.featured);
   const nonFeatured = products.filter((item) => !item.featured);
   return [...featured, ...nonFeatured].slice(0, limit);
 }
 
+function pickRepresentativeProduct(products: Product[], categoryKeys: ProductCategoryKey[]) {
+  const keySet = new Set(categoryKeys);
+
+  return (
+    products.find((item) => keySet.has(item.category as ProductCategoryKey) && item.imageUrl) ??
+    products.find((item) => keySet.has(item.category as ProductCategoryKey)) ??
+    null
+  );
+}
+
 export default async function ProductsPage() {
   const { products, error, source } = await fetchOnlineProductsCached();
   const catalog = buildProductCatalog(products);
-  const catalogError = source === "starter" ? "" : (error?.message ?? "");
-  const featuredProducts = pickFeaturedProducts(catalog.items, 8);
+  const catalogError = source === "starter" ? "" : error?.message ?? "";
+  const featuredProducts = pickFeaturedProducts(catalog.items, 4);
   const categorySummaries = premiumCatalogCategories.map((category) => ({
     ...category,
     count: countProductsByCategoryKeys(catalog.items, category.collectionKeys),
+    collectionPath: buildCollectionPath(category.primaryCollectionKey),
+    representativeProduct: pickRepresentativeProduct(catalog.items, category.collectionKeys),
   }));
+  const visibleCollections = categorySummaries.filter((category) => category.count > 0);
+  const quietCollections = categorySummaries.filter((category) => category.count === 0);
+  const leadCollection = visibleCollections[0] ?? null;
+  const secondaryCollections = visibleCollections.slice(leadCollection ? 1 : 0, 6);
+  const heroProduct =
+    featuredProducts.find((item) => item.imageUrl) ?? featuredProducts[0] ?? catalog.items[0] ?? null;
 
   return (
     <>
       <JsonLd data={buildProductListSchema(catalog.items)} />
 
-      <section className={cn("section", journeyStyles.page, journeyStyles.catalogPage)} id="products-grid">
+      <section className={cn("section", journeyStyles.page, journeyStyles.catalogPage)}>
         <Container className={journeyStyles.container}>
-          <div className={cn(journeyStyles.frame, journeyStyles.shell)}>
-            <div className="productCollectionHero">
-              <div className="productCollectionHeroCopy">
-                <p className={journeyStyles.eyebrow}>Premium catalog</p>
-                <h1 className={cn(journeyStyles.display, journeyStyles.displayCollection)}>
-                  Verified electrical materials in Lagos
-                </h1>
-                <p className={cn(journeyStyles.lead, "productCollectionHeroLead")}>
-                  Review real products with practical context before procurement. Every listing is
-                  organized to support electrical installation in Lagos with clearer category paths,
-                  compatibility guidance, and quote support.
+          <div className={journeyStyles.catalogStack}>
+            <section className={cn(journeyStyles.frame, journeyStyles.heroPanel)}>
+              <div className={journeyStyles.heroCopy}>
+                <p className={journeyStyles.eyebrow}>Live product catalog</p>
+                <h1 className={journeyStyles.display}>Verified electrical materials in Lagos</h1>
+                <p className={journeyStyles.lead}>
+                  Live products from our current catalog, arranged into cleaner collection paths
+                  for sourcing, comparison, and faster project quoting.
                 </p>
-                <div className={journeyStyles.actions}>
-                  <Link href="/quote" className="btn primary">
-                    Request project quote
-                  </Link>
-                  <Link href="/products/cables-wires" className="btn outline">
-                    Start with wiring & cables
-                  </Link>
-                </div>
-              </div>
 
-              <div className={journeyStyles.stats}>
-                <div className={journeyStyles.stat}>
-                  <strong className={journeyStyles.statValue}>{catalog.items.length}</strong>
-                  <span className={journeyStyles.statLabel}>Active products</span>
-                </div>
-                <div className={journeyStyles.stat}>
-                  <strong className={journeyStyles.statValue}>{premiumCatalogCategories.length}</strong>
-                  <span className={journeyStyles.statLabel}>Catalog categories</span>
-                </div>
-                <div className={journeyStyles.stat}>
-                  <strong className={journeyStyles.statValue}>{featuredProducts.length}</strong>
-                  <span className={journeyStyles.statLabel}>Featured selections</span>
-                </div>
-              </div>
-            </div>
-
-            <div className={journeyStyles.controlRow}>
-              <nav className={journeyStyles.filterRail} aria-label="Browse product categories">
-                <Link href="#catalog-grid" className={cn(journeyStyles.filterChip, journeyStyles.filterChipActive)}>
-                  All products
-                </Link>
-                {premiumCatalogCategories.map((category) => (
-                  <Link
-                    key={category.key}
-                    href={category.landingPath}
-                    className={journeyStyles.filterChip}
-                  >
-                    {category.title}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-
-            <section className="seoContentSection">
-              <div className="seoContentCard">
-                <div className={journeyStyles.catalogToolbar}>
-                  <div className={journeyStyles.catalogToolbarCopy}>
-                    <p className={journeyStyles.eyebrow}>Category directory</p>
-                    <h2 className={journeyStyles.catalogTitle}>Browse the premium catalog by use case</h2>
-                    <p className={journeyStyles.catalogFeedback}>
-                      Each category includes a clear purpose note, live product count, and direct
-                      route to collection pages or quote support.
-                    </p>
+                <div className={journeyStyles.heroSignals} aria-label="Catalog highlights">
+                  <div className={journeyStyles.heroSignal}>
+                    <strong>{catalog.items.length}</strong>
+                    <span>Live products</span>
+                  </div>
+                  <div className={journeyStyles.heroSignal}>
+                    <strong>{visibleCollections.length}</strong>
+                    <span>Active collections</span>
                   </div>
                 </div>
 
-                <div className="seoCardGrid">
-                  {categorySummaries.map((category) => (
-                    <article key={category.key} className="card seoInfoCard">
-                      <h3 className="cardTitle">{category.title}</h3>
-                      <p className="p">{category.description}</p>
-                      <p className="seoMetaLine">
-                        {category.count} product{category.count === 1 ? "" : "s"} currently listed
-                      </p>
-                      <p className="p">Use-case note: {category.useCaseNote}</p>
-                      <div className="seoActionRow">
-                        <Link href={category.landingPath} className="btn outline">
-                          View landing page
-                        </Link>
-                        <Link
-                          href={`/quote?serviceType=${encodeURIComponent(category.quoteFocus)}`}
-                          className="btn primary"
-                        >
-                          Request quote
-                        </Link>
-                      </div>
-                    </article>
-                  ))}
+                <p className={journeyStyles.heroNote}>Only currently published products appear here.</p>
+
+                <div className={journeyStyles.actions}>
+                  <Link href="#catalog-grid" className="btn primary">
+                    Browse catalog
+                  </Link>
+                  <Link href="/quote" className={cn("btn", "outline", journeyStyles.secondaryAction)}>
+                    Get a quote
+                  </Link>
+                </div>
+              </div>
+
+              <div className={journeyStyles.heroVisual}>
+                <div className={journeyStyles.heroVisualMedia}>
+                  {heroProduct?.imageUrl ? (
+                    <SmartImage
+                      src={heroProduct.imageUrl}
+                      alt={heroProduct.name}
+                      className={journeyStyles.heroVisualImage}
+                      fill
+                      priority
+                      sizes="(max-width: 860px) 100vw, 42vw"
+                    />
+                  ) : (
+                    <div className={journeyStyles.heroVisualFallback}>Oduzz Catalog</div>
+                  )}
+                </div>
+                <div className={journeyStyles.heroVisualCaption}>
+                  <span className={journeyStyles.heroVisualKicker}>
+                    {heroProduct?.categoryLabel ?? "Live product"}
+                  </span>
+                  <strong className={journeyStyles.heroVisualName}>
+                    {heroProduct?.name ?? "Admin uploaded product catalog"}
+                  </strong>
+                  <span className={journeyStyles.heroVisualMeta}>
+                    {heroProduct ? formatProductPrice(heroProduct) : `${catalog.items.length} products live`}
+                  </span>
+                  <Link
+                    href={heroProduct ? `/products/${heroProduct.slug}` : "#catalog-grid"}
+                    className={journeyStyles.heroVisualLink}
+                  >
+                    View product
+                  </Link>
                 </div>
               </div>
             </section>
 
-            <section className="seoContentSection">
-              <div className="seoContentCard">
-                <div className={journeyStyles.catalogToolbar}>
-                  <div className={journeyStyles.catalogToolbarCopy}>
+            {catalogError ? <p className={journeyStyles.catalogFeedback}>{catalogError}</p> : null}
+
+            {visibleCollections.length > 0 ? (
+              <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)}>
+                <div className={journeyStyles.sectionHead}>
+                  <div className={journeyStyles.sectionCopy}>
+                    <p className={journeyStyles.eyebrow}>Collection directory</p>
+                    <h2 className={journeyStyles.catalogTitle}>Browse by collection</h2>
+                    <p className={journeyStyles.catalogFeedback}>
+                      Start with the material group you need, then move into the live product list.
+                    </p>
+                  </div>
+                  <Link href="/quote" className={journeyStyles.sectionLink}>
+                    Get sourcing help
+                  </Link>
+                </div>
+
+                <div className={journeyStyles.collectionStudio}>
+                  {leadCollection ? (
+                    <Link href={leadCollection.collectionPath} className={journeyStyles.collectionLead}>
+                      <div className={journeyStyles.collectionLeadMedia}>
+                        {leadCollection.representativeProduct?.imageUrl ? (
+                          <SmartImage
+                            src={leadCollection.representativeProduct.imageUrl}
+                            alt={leadCollection.title}
+                            className={journeyStyles.collectionLeadImage}
+                            fill
+                            sizes="(max-width: 980px) 100vw, 52vw"
+                          />
+                        ) : (
+                          <div className={journeyStyles.collectionFallback}>Oduzz</div>
+                        )}
+                      </div>
+                      <div className={journeyStyles.collectionLeadBody}>
+                        <span className={journeyStyles.collectionLeadCount}>
+                          {leadCollection.count} product{leadCollection.count === 1 ? "" : "s"}
+                        </span>
+                        <h3 className={journeyStyles.collectionLeadTitle}>{leadCollection.title}</h3>
+                        <p className={journeyStyles.collectionLeadText}>{leadCollection.description}</p>
+                        <span className={journeyStyles.collectionLeadAction}>Open collection</span>
+                      </div>
+                    </Link>
+                  ) : null}
+
+                  <div className={journeyStyles.collectionGrid}>
+                    {secondaryCollections.map((category) => (
+                      <Link key={category.key} href={category.collectionPath} className={journeyStyles.collectionCard}>
+                        <div className={journeyStyles.collectionCardMedia}>
+                          {category.representativeProduct?.imageUrl ? (
+                            <SmartImage
+                              src={category.representativeProduct.imageUrl}
+                              alt={category.title}
+                              className={journeyStyles.collectionCardImage}
+                              fill
+                              sizes="(max-width: 767px) 100vw, (max-width: 1180px) 50vw, 25vw"
+                            />
+                          ) : (
+                            <div className={journeyStyles.collectionFallback}>Oduzz</div>
+                          )}
+                        </div>
+                        <div className={journeyStyles.collectionCardBody}>
+                          <span className={journeyStyles.collectionCardCount}>
+                            {category.count} product{category.count === 1 ? "" : "s"}
+                          </span>
+                          <h3 className={journeyStyles.collectionCardTitle}>{category.title}</h3>
+                          <p className={journeyStyles.collectionCardText}>{category.useCaseNote}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {quietCollections.length > 0 ? (
+                  <div className={journeyStyles.collectionQuiet}>
+                    <p className={journeyStyles.collectionQuietLabel}>Collections being stocked next</p>
+                    <div className={journeyStyles.collectionQuietChips}>
+                      {quietCollections.map((category) => (
+                        <span key={category.key} className={journeyStyles.collectionQuietChip}>
+                          {category.title}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            {featuredProducts.length > 0 ? (
+              <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)}>
+                <div className={journeyStyles.sectionHead}>
+                  <div className={journeyStyles.sectionCopy}>
                     <p className={journeyStyles.eyebrow}>Featured picks</p>
                     <h2 className={journeyStyles.catalogTitle}>Frequently requested products</h2>
+                    <p className={journeyStyles.catalogFeedback}>
+                      A tighter shortlist of products buyers usually price first.
+                    </p>
                   </div>
-                  <Link href="/quote" className={journeyStyles.catalogReset}>
-                    Need procurement support?
+                  <Link href="#catalog-grid" className={journeyStyles.sectionLink}>
+                    See all
                   </Link>
                 </div>
 
@@ -178,146 +266,49 @@ export default async function ProductsPage() {
                     />
                   ))}
                 </div>
-              </div>
-            </section>
+              </section>
+            ) : null}
 
-            {catalogError ? <p className={journeyStyles.catalogFeedback}>{catalogError}</p> : null}
-
-            <section className="seoContentSection" id="catalog-grid">
-              <div className="seoContentCard">
-                <div className={journeyStyles.catalogToolbar}>
-                  <div className={journeyStyles.catalogToolbarCopy}>
+            <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)} id="catalog-grid">
+                <div className={journeyStyles.sectionHead}>
+                  <div className={journeyStyles.sectionCopy}>
                     <p className={journeyStyles.eyebrow}>Full catalog</p>
-                    <h2 className={journeyStyles.catalogTitle}>All products</h2>
+                    <h2 className={journeyStyles.catalogTitle}>All live products</h2>
                     <p className={journeyStyles.catalogFeedback}>
-                      Product names, categories, descriptions, prices, availability, and internal links
-                      are fully visible here for crawlability and easier comparison.
+                      Browse every product currently live in the catalog.
                     </p>
                   </div>
-                </div>
-
-                {catalog.items.length === 0 ? (
-                  <div className={journeyStyles.emptyState}>
-                    <h2 className={journeyStyles.emptyTitle}>Catalog update in progress</h2>
-                    <p className={journeyStyles.emptyBody}>
-                      Products are currently syncing. You can still request a quote with your required
-                      items and project location.
-                    </p>
-                    <div className={journeyStyles.actions}>
-                      <Link href="/quote" className="btn primary">
-                        Request quote
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridListing)}>
-                    {catalog.items.map((item, index) => (
-                      <ProductCard
-                        key={item.id}
-                        product={item}
-                        variant="listing"
-                        showCategory
-                        priority={index < 4}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="seoContentSection">
-              <div className="seoContentCard">
-                <p className={journeyStyles.eyebrow}>Trust and process</p>
-                <h2 className="h2">Proof-first trust signals</h2>
-
-                <div className="seoCardGrid">
-                  <article className="card seoInfoCard">
-                    <h3 className="cardTitle">Material Quality Promise</h3>
-                    <p className="p">
-                      We prioritize verified electrical materials and explain where each item fits in
-                      your installation plan before payment confirmation.
-                    </p>
-                  </article>
-
-                  <article className="card seoInfoCard">
-                    <h3 className="cardTitle">What We Check Before Installation</h3>
-                    <p className="p">
-                      Circuit load intent, routing pathway, protection matching, and accessory
-                      compatibility are reviewed before site execution starts.
-                    </p>
-                  </article>
-
-                  <article className="card seoInfoCard">
-                    <h3 className="cardTitle">Before We Leave Site Checklist</h3>
-                    <p className="p">
-                      Visual finishing check, functional test, circuit label verification, and client
-                      walk-through are completed before handover.
-                    </p>
-                  </article>
-
-                  <article className="card seoInfoCard">
-                    <h3 className="cardTitle">Why We Ask for Photos and Site Details</h3>
-                    <p className="p">
-                      Photos and layout context reduce wrong material selection, improve quote accuracy,
-                      and shorten back-and-forth during planning.
-                    </p>
-                  </article>
-
-                  <article className="card seoInfoCard">
-                    <h3 className="cardTitle">Workmanship and After-Service Policy</h3>
-                    <p className="p">
-                      Policy placeholder: detailed workmanship and after-service terms will be
-                      published here for transparent client reference.
-                    </p>
-                  </article>
-
-                  <article className="card seoInfoCard">
-                    <h3 className="cardTitle">Business Registration Disclosure</h3>
-                    <p className="p">
-                      CAC or registration details placeholder: official business registration reference
-                      will be shown here without assumptions.
-                    </p>
-                  </article>
-                </div>
-
-                <div className="seoActionRow">
-                  <Link href="/projects" className="btn outline">
-                    See project proof
-                  </Link>
-                  <Link href="/quote" className="btn primary">
-                    Request guided quote
+                  <Link href="/quote" className={journeyStyles.sectionLink}>
+                    Bundle quote
                   </Link>
                 </div>
-              </div>
-            </section>
 
-            <section className="seoContentSection">
-              <div className="seoContentCard">
-                <p className={journeyStyles.eyebrow}>Google Business Profile</p>
-                <h2 className="h2">Product URLs for local product listings</h2>
-                <p className={journeyStyles.catalogFeedback}>
-                  Use these category landing pages for Google Business Profile products so each item
-                  sends local product traffic to the most relevant page.
-                </p>
-
-                <div className="seoCardGrid">
-                  {googleBusinessProfileProductUrls.map((item) => (
-                    <article key={item.product} className="card seoInfoCard">
-                      <h3 className="cardTitle">{item.product}</h3>
-                      <p className="seoMetaLine">{item.url}</p>
-                      <Link href={item.path} className="btn outline">
-                        Open landing page
-                      </Link>
-                    </article>
+              {catalog.items.length === 0 ? (
+                <div className={journeyStyles.emptyState}>
+                  <h2 className={journeyStyles.emptyTitle}>Catalog update in progress</h2>
+                  <p className={journeyStyles.emptyBody}>
+                    Products are currently syncing. You can still request a quote with your required
+                    items and project location.
+                  </p>
+                  <div className={journeyStyles.actions}>
+                    <Link href="/quote" className="btn primary">
+                      Request quote
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridListing)}>
+                  {catalog.items.map((item, index) => (
+                    <ProductCard
+                      key={item.id}
+                      product={item}
+                      variant="listing"
+                      showCategory
+                      priority={index < 4}
+                    />
                   ))}
                 </div>
-
-                <div className="seoActionRow">
-                  <a href="/google-business-profile-product-urls.csv" className="btn primary">
-                    Download GBP URL export
-                  </a>
-                </div>
-              </div>
+              )}
             </section>
           </div>
         </Container>
