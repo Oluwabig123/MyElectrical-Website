@@ -61,6 +61,10 @@ function pickRepresentativeProduct(products: Product[], categoryKeys: ProductCat
   );
 }
 
+function buildCategoryQuotePath(quoteFocus: string) {
+  return `/quote?serviceType=${encodeURIComponent(quoteFocus)}`;
+}
+
 export default async function ProductsPage() {
   const { products, error, source } = await fetchOnlineProductsCached();
   const catalog = buildProductCatalog(products);
@@ -73,9 +77,6 @@ export default async function ProductsPage() {
     representativeProduct: pickRepresentativeProduct(catalog.items, category.collectionKeys),
   }));
   const visibleCollections = categorySummaries.filter((category) => category.count > 0);
-  const quietCollections = categorySummaries.filter((category) => category.count === 0);
-  const leadCollection = visibleCollections[0] ?? null;
-  const secondaryCollections = visibleCollections.slice(leadCollection ? 1 : 0, 6);
   const heroProduct =
     featuredProducts.find((item) => item.imageUrl) ?? featuredProducts[0] ?? catalog.items[0] ?? null;
 
@@ -155,14 +156,15 @@ export default async function ProductsPage() {
 
             {catalogError ? <p className={journeyStyles.catalogFeedback}>{catalogError}</p> : null}
 
-            {visibleCollections.length > 0 ? (
+            {categorySummaries.length > 0 ? (
               <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)}>
                 <div className={journeyStyles.sectionHead}>
                   <div className={journeyStyles.sectionCopy}>
-                    <p className={journeyStyles.eyebrow}>Collection directory</p>
-                    <h2 className={journeyStyles.catalogTitle}>Browse by collection</h2>
+                    <p className={journeyStyles.eyebrow}>Catalog categories</p>
+                    <h2 className={journeyStyles.catalogTitle}>Browse by material path</h2>
                     <p className={journeyStyles.catalogFeedback}>
-                      Start with the material group you need, then move into the live product list.
+                      Start with the material group you need, then move into the matching collection,
+                      quote flow, or the full live catalog below.
                     </p>
                   </div>
                   <Link href="/quote" className={journeyStyles.sectionLink}>
@@ -170,36 +172,24 @@ export default async function ProductsPage() {
                   </Link>
                 </div>
 
-                <div className={journeyStyles.collectionStudio}>
-                  {leadCollection ? (
-                    <Link href={leadCollection.collectionPath} className={journeyStyles.collectionLead}>
-                      <div className={journeyStyles.collectionLeadMedia}>
-                        {leadCollection.representativeProduct?.imageUrl ? (
-                          <SmartImage
-                            src={leadCollection.representativeProduct.imageUrl}
-                            alt={leadCollection.title}
-                            className={journeyStyles.collectionLeadImage}
-                            fill
-                            sizes="(max-width: 980px) 100vw, 52vw"
-                          />
-                        ) : (
-                          <div className={journeyStyles.collectionFallback}>Oduzz</div>
-                        )}
-                      </div>
-                      <div className={journeyStyles.collectionLeadBody}>
-                        <span className={journeyStyles.collectionLeadCount}>
-                          {leadCollection.count} product{leadCollection.count === 1 ? "" : "s"}
-                        </span>
-                        <h3 className={journeyStyles.collectionLeadTitle}>{leadCollection.title}</h3>
-                        <p className={journeyStyles.collectionLeadText}>{leadCollection.description}</p>
-                        <span className={journeyStyles.collectionLeadAction}>Open collection</span>
-                      </div>
+                <nav className={journeyStyles.filterRail} aria-label="Browse product categories">
+                  {categorySummaries.map((category) => (
+                    <Link
+                      key={category.key}
+                      href={`#${category.key}`}
+                      className={journeyStyles.filterChip}
+                    >
+                      {category.title}
                     </Link>
-                  ) : null}
+                  ))}
+                  <Link href="#catalog-grid" className={cn(journeyStyles.filterChip, journeyStyles.filterChipActive)}>
+                    All live products
+                  </Link>
+                </nav>
 
-                  <div className={journeyStyles.collectionGrid}>
-                    {secondaryCollections.map((category) => (
-                      <Link key={category.key} href={category.collectionPath} className={journeyStyles.collectionCard}>
+                <div className={journeyStyles.collectionGrid}>
+                  {categorySummaries.map((category) => (
+                    <article key={category.key} id={category.key} className={journeyStyles.collectionCard}>
                         <div className={journeyStyles.collectionCardMedia}>
                           {category.representativeProduct?.imageUrl ? (
                             <SmartImage
@@ -218,25 +208,20 @@ export default async function ProductsPage() {
                             {category.count} product{category.count === 1 ? "" : "s"}
                           </span>
                           <h3 className={journeyStyles.collectionCardTitle}>{category.title}</h3>
+                          <p className={journeyStyles.collectionLeadText}>{category.description}</p>
                           <p className={journeyStyles.collectionCardText}>{category.useCaseNote}</p>
+                          <div className={journeyStyles.actions}>
+                            <Link href={category.collectionPath} className="btn outline">
+                              View collection
+                            </Link>
+                            <Link href={buildCategoryQuotePath(category.quoteFocus)} className="btn primary">
+                              Request quote
+                            </Link>
+                          </div>
                         </div>
-                      </Link>
-                    ))}
-                  </div>
+                    </article>
+                  ))}
                 </div>
-
-                {quietCollections.length > 0 ? (
-                  <div className={journeyStyles.collectionQuiet}>
-                    <p className={journeyStyles.collectionQuietLabel}>Collections being stocked next</p>
-                    <div className={journeyStyles.collectionQuietChips}>
-                      {quietCollections.map((category) => (
-                        <span key={category.key} className={journeyStyles.collectionQuietChip}>
-                          {category.title}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
               </section>
             ) : null}
 
@@ -309,6 +294,98 @@ export default async function ProductsPage() {
                   ))}
                 </div>
               )}
+            </section>
+
+            <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)}>
+              <div className={journeyStyles.sectionHead}>
+                <div className={journeyStyles.sectionCopy}>
+                  <p className={journeyStyles.eyebrow}>Trust signals</p>
+                  <h2 className={journeyStyles.catalogTitle}>Proof-first buying support</h2>
+                  <p className={journeyStyles.catalogFeedback}>
+                    The goal is to reduce wrong material selection before money changes hands and to
+                    make installation standards visible, not implied.
+                  </p>
+                </div>
+                <Link href="/quote" className={journeyStyles.sectionLink}>
+                  Request guided quote
+                </Link>
+              </div>
+
+              <div className={journeyStyles.collectionGrid}>
+                <article className={journeyStyles.collectionCard}>
+                  <div className={journeyStyles.collectionCardBody}>
+                    <span className={journeyStyles.collectionCardCount}>Material quality promise</span>
+                    <h3 className={journeyStyles.collectionCardTitle}>Verified product guidance first</h3>
+                    <p className={journeyStyles.collectionCardText}>
+                      We help clients match cables, breakers, sockets, lighting, backup power items,
+                      and security products to the real installation need before payment.
+                    </p>
+                  </div>
+                </article>
+
+                <article className={journeyStyles.collectionCard}>
+                  <div className={journeyStyles.collectionCardBody}>
+                    <span className={journeyStyles.collectionCardCount}>Before we leave site</span>
+                    <h3 className={journeyStyles.collectionCardTitle}>Final checks are part of delivery</h3>
+                    <p className={journeyStyles.collectionCardText}>
+                      Visual finishing, functional testing, circuit confirmation, and handover review
+                      are completed before the work is treated as done.
+                    </p>
+                  </div>
+                </article>
+
+                <article className={journeyStyles.collectionCard}>
+                  <div className={journeyStyles.collectionCardBody}>
+                    <span className={journeyStyles.collectionCardCount}>Before installation</span>
+                    <h3 className={journeyStyles.collectionCardTitle}>We confirm route, load, and fit</h3>
+                    <p className={journeyStyles.collectionCardText}>
+                      Product fit, protection sizing, load intent, and site conditions are checked
+                      early so the selected materials support a clean installation path.
+                    </p>
+                  </div>
+                </article>
+
+                <article className={journeyStyles.collectionCard}>
+                  <div className={journeyStyles.collectionCardBody}>
+                    <span className={journeyStyles.collectionCardCount}>Photo review</span>
+                    <h3 className={journeyStyles.collectionCardTitle}>Why we ask for site details</h3>
+                    <p className={journeyStyles.collectionCardText}>
+                      Photos, layout notes, and location details improve quote accuracy, reduce wrong
+                      purchases, and help us advise on installation compatibility sooner.
+                    </p>
+                  </div>
+                </article>
+
+                <article className={journeyStyles.collectionCard}>
+                  <div className={journeyStyles.collectionCardBody}>
+                    <span className={journeyStyles.collectionCardCount}>After-service placeholder</span>
+                    <h3 className={journeyStyles.collectionCardTitle}>Workmanship terms will be published clearly</h3>
+                    <p className={journeyStyles.collectionCardText}>
+                      We have left this as a placeholder rather than inventing terms. The public policy
+                      block can be updated when the final after-service wording is approved.
+                    </p>
+                  </div>
+                </article>
+
+                <article className={journeyStyles.collectionCard}>
+                  <div className={journeyStyles.collectionCardBody}>
+                    <span className={journeyStyles.collectionCardCount}>Registration placeholder</span>
+                    <h3 className={journeyStyles.collectionCardTitle}>CAC details can be added without guesswork</h3>
+                    <p className={journeyStyles.collectionCardText}>
+                      This placeholder stays intentionally factual until the formal registration reference
+                      is ready to be published on the site.
+                    </p>
+                    <div className={journeyStyles.actions}>
+                      <Link href="/projects" className="btn outline">
+                        See project proof
+                      </Link>
+                      <Link href="/quote" className="btn primary">
+                        Request quote
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              </div>
             </section>
           </div>
         </Container>

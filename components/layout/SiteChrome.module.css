@@ -710,7 +710,7 @@
 
   .oduzzAssistant {
     right: 12px;
-    bottom: 14px;
+    bottom: 72px;
     animation: none;
   }
 
@@ -721,17 +721,18 @@
   }
 
   .oduzzAssistantToggle {
-    min-height: 38px;
-    padding: 6px 9px 6px 6px;
+    min-height: 36px;
+    padding: 5px 8px 5px 5px;
   }
 
   .oduzzAssistantToggleBadge {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
+    font-size: 9px;
   }
 
   .oduzzAssistantToggleLabel {
-    font-size: 11px;
+    font-size: 10px;
   }
 }
 
@@ -773,7 +774,7 @@
 
   .oduzzAssistant {
     right: 10px;
-    bottom: 16px;
+    bottom: 74px;
   }
 
   .oduzzAssistantPrompt {
@@ -781,9 +782,9 @@
   }
 
   .oduzzAssistantToggle {
-    min-height: 36px;
+    min-height: 34px;
     gap: 6px;
-    padding: 5px 8px 5px 5px;
+    padding: 5px 7px 5px 5px;
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
   }
 

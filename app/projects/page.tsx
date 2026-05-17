@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Container from "@/components/layout/Container";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ProjectsGridClient from "@/components/projects/ProjectsGridClient";
+import { CONTACT_LINKS } from "@/data/contact";
 import { buildMetadata } from "@/lib/seo";
 import { buildProjectsListSchema } from "@/lib/structured-data";
 import { getAllProjects } from "@/lib/projects";
@@ -47,20 +49,42 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           as="h1"
           kicker="Projects"
           title="Electrical case studies delivered across Lagos"
-          subtitle="Browse selected installations covering wiring, lighting, solar, and finishing work with scope, duration, and outcome context."
+          subtitle="Browse selected electrical projects across wiring, lighting, solar, and finishing work with clear scope, duration, and outcome context."
         />
+
+        <div className="seoCardGrid seoIntroCard">
+          <article className="card seoInfoCard">
+            <h2 className="cardTitle">What these projects show</h2>
+            <p className="p">
+              Selected case studies across solar, wiring, lighting, and finishing work completed
+              with cleaner routing, safer planning, and better installation outcomes.
+            </p>
+          </article>
+          <article className="card seoInfoCard">
+            <h2 className="cardTitle">Why clients review them</h2>
+            <p className="p">
+              They help clients inspect the quality of execution, understand project scope, and
+              request similar work with more confidence.
+            </p>
+          </article>
+        </div>
 
         <div className="seoContentCard seoIntroCard">
           <div className="seoContentGrid">
-            <p className="p">
-              These case studies show the type of work Oduzz Electrical Concept delivers in Lagos:
-              cleaner routing, better protection choices, balanced lighting layouts, and more
-              dependable power systems.
-            </p>
-            <p className="p">
-              They also show how the work is judged: scope clarity, finishing quality, safer
-              planning, and outcomes clients can inspect with confidence at handover.
-            </p>
+            <div>
+              <h2 className="h2">Need similar electrical work?</h2>
+              <p className="p">
+                Request a quote for wiring, solar, lighting, inverter setup, or finishing work.
+              </p>
+            </div>
+            <div className="seoActionRow">
+              <Link href="/quote" className="btn primary">
+                Request Quote
+              </Link>
+              <a href={CONTACT_LINKS.whatsapp} target="_blank" rel="noreferrer" className="btn outline">
+                Chat on WhatsApp
+              </a>
+            </div>
           </div>
         </div>
 

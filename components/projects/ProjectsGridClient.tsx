@@ -105,15 +105,11 @@ export default function ProjectsGridClient({
           {filteredProjects.length} project{filteredProjects.length === 1 ? "" : "s"} shown
           {activeCategory !== ALL_PROJECT_CATEGORIES ? ` in ${activeCategory}` : ""}.
         </p>
-        <div className={styles.toolbarActions}>
-          <Link href="/quote" className="btn primary">
-            Request quote
-          </Link>
-        </div>
       </div>
 
       <div className={styles.filtersWrap}>
-        <div className={chipStyles.filters} aria-label="Filter projects by category">
+        <div className={styles.filtersScroller}>
+          <div className={cn(chipStyles.filters, styles.filters)} aria-label="Filter projects by category">
           {categories.map((category) => (
             <button
               type="button"
@@ -125,6 +121,7 @@ export default function ProjectsGridClient({
               {category}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
@@ -146,14 +143,14 @@ export default function ProjectsGridClient({
           </div>
         </article>
       ) : (
-        <div className={cn("seoCardGrid", cardStyles.grid)}>
+        <div className={cn("seoCardGrid", cardStyles.grid, styles.projectsGrid)}>
           {displayedProjects.map((project, index) => (
             <Reveal key={project.slug} delay={index * 0.03}>
               <article
                 id={`project-${project.id}`}
-                className={cn("card", cardStyles.card, project.id === selectedProjectId && cardStyles.active)}
+                className={cn("card", cardStyles.card, styles.projectCard, project.id === selectedProjectId && cardStyles.active)}
               >
-                <div className={cardStyles.media}>
+                <div className={cn(cardStyles.media, styles.projectMedia)}>
                   <Image
                     src={project.image}
                     alt={project.title}
@@ -163,14 +160,14 @@ export default function ProjectsGridClient({
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 </div>
-                <div className={cardStyles.body}>
+                <div className={cn(cardStyles.body, styles.projectBody)}>
                   <p className="kicker">{project.category}</p>
-                  <h2 className="cardTitle">{project.title}</h2>
-                  <p className="p">{project.summary}</p>
-                  <p className="seoMetaLine">
-                    {project.location} | {project.duration} | {project.scope}
+                  <h2 className={cn("cardTitle", styles.projectTitle)}>{project.title}</h2>
+                  <p className={cn("p", styles.projectSummary)}>{project.summary}</p>
+                  <p className={cn("seoMetaLine", styles.projectMeta)}>
+                    {project.location} · {project.duration}
                   </p>
-                  <p className="projectOutcome">{project.outcome}</p>
+                  <p className={cn("projectOutcome", styles.projectOutcome)}>{project.outcome}</p>
                   <Link href={buildProjectPath(project)} className="btn outline">
                     View case study
                   </Link>
