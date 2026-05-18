@@ -1,8 +1,16 @@
+import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { ingestKnowledgeDocument, sanitizeKnowledgePayload } from "@/lib/assistant-rag";
 
 function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function safeEqual(left: string, right: string) {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  if (!leftBuffer.length || leftBuffer.length !== rightBuffer.length) return false;
+  return crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
 function isAuthorized(request: Request) {
@@ -13,7 +21,7 @@ function isAuthorized(request: Request) {
     throw new Error("Missing ADMIN_INGEST_SECRET.");
   }
 
-  return providedSecret && providedSecret === configuredSecret;
+  return Boolean(providedSecret && safeEqual(providedSecret, configuredSecret));
 }
 
 function buildStatusCode(errorMessage: string) {
