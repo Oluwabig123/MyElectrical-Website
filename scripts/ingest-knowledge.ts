@@ -2,7 +2,6 @@ import { loadEnvConfig } from "@next/env";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { ingestKnowledgeDocument } from "../lib/assistant-rag";
 
 loadEnvConfig(process.cwd());
 
@@ -50,6 +49,7 @@ async function readMarkdownFiles() {
 }
 
 async function ingestFile(filePath: string) {
+  const { ingestKnowledgeDocument } = await import("../lib/assistant-rag");
   const raw = await fs.readFile(filePath, "utf8");
   const parsed = matter(raw);
   const fileName = path.basename(filePath);

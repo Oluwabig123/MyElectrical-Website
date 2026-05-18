@@ -491,7 +491,11 @@ export async function generateAssistantChatReply(rawMessages: unknown): Promise<
   }
 
   const quoteIntentDetected = isQuoteIntent(latestUserMessage.content);
-  const matches = await findRelevantChunks(latestUserMessage.content, 6, 0.72);
+  const primaryMatches = await findRelevantChunks(latestUserMessage.content, 6, 0.72);
+  const matches =
+    primaryMatches.length > 0
+      ? primaryMatches
+      : await findRelevantChunks(latestUserMessage.content, 6, 0.5);
 
   if (!matches.length) {
     return {
