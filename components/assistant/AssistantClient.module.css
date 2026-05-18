@@ -1,7 +1,6 @@
 .assistantPage {
   position: relative;
-  padding-top: 18px;
-  padding-bottom: 108px;
+  padding: 12px 0 18px;
 }
 
 .assistantPage::before {
@@ -9,10 +8,10 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.32;
+  opacity: 0.3;
   background:
-    radial-gradient(780px 300px at 8% 4%, rgba(255, 212, 0, 0.12), transparent 72%),
-    radial-gradient(720px 340px at 92% 88%, rgba(46, 233, 255, 0.08), transparent 74%);
+    radial-gradient(640px 220px at 8% 2%, rgba(255, 212, 0, 0.12), transparent 74%),
+    radial-gradient(680px 260px at 94% 100%, rgba(46, 233, 255, 0.08), transparent 76%);
 }
 
 .assistantContainer {
@@ -21,20 +20,20 @@
 }
 
 .chatShell {
-  width: min(100%, 920px);
+  width: min(100%, 880px);
   margin: 0 auto;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  min-height: calc(100svh - 170px);
-  max-height: calc(100svh - 148px);
+  min-height: calc(100svh - 30px);
+  max-height: calc(100svh - 30px);
   overflow: hidden;
   border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    linear-gradient(180deg, rgba(10, 16, 27, 0.98), rgba(7, 12, 20, 0.98)),
+    linear-gradient(180deg, rgba(12, 18, 29, 0.98), rgba(6, 11, 20, 0.98)),
     rgba(7, 10, 18, 0.96);
   box-shadow:
-    0 28px 72px rgba(0, 0, 0, 0.34),
+    0 30px 80px rgba(0, 0, 0, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -43,11 +42,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
-    rgba(7, 10, 18, 0.88);
+    rgba(7, 10, 18, 0.9);
   backdrop-filter: blur(12px);
 }
 
@@ -62,9 +61,9 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 58px;
-  border-radius: 18px;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     radial-gradient(circle at 50% 50%, rgba(255, 212, 0, 0.18), transparent 72%),
@@ -80,54 +79,54 @@
 .chatBrandCopy {
   min-width: 0;
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .chatBrandCopy strong {
   color: rgba(248, 251, 255, 0.98);
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
   letter-spacing: -0.03em;
 }
 
 .chatBrandCopy span {
-  color: rgba(214, 223, 238, 0.72);
-  font-size: 12px;
+  color: rgba(214, 223, 238, 0.7);
+  font-size: 11px;
   line-height: 1.35;
 }
 
 .chatHeaderActions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 .chatState {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.88);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .chatClearBtn {
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 11px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 13px;
-  font-weight: 800;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -139,52 +138,26 @@
 .chatThread {
   min-height: 0;
   overflow-y: auto;
-  padding: 18px;
+  padding: 18px 16px 12px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   align-content: start;
   background:
-    radial-gradient(620px 180px at 10% 0%, rgba(255, 212, 0, 0.04), transparent 72%),
+    radial-gradient(620px 170px at 8% 0%, rgba(255, 212, 0, 0.04), transparent 74%),
     transparent;
 }
 
 .messageRow {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: end;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .messageRowUser {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.messageAvatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.messageAvatarAssistant {
-  border: 1px solid rgba(255, 212, 0, 0.18);
-  background: linear-gradient(135deg, rgba(255, 212, 0, 0.18), rgba(46, 233, 255, 0.14));
-  color: rgba(255, 248, 229, 0.96);
-}
-
-.messageAvatarUser {
-  order: 2;
-  border: 1px solid rgba(46, 233, 255, 0.18);
-  background: rgba(46, 233, 255, 0.1);
-  color: rgba(219, 250, 255, 0.96);
+  justify-content: flex-end;
 }
 
 .messageContent {
+  max-width: min(100%, 620px);
   display: grid;
   gap: 8px;
   justify-items: start;
@@ -194,54 +167,106 @@
   justify-items: end;
 }
 
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .messageBubble {
-  max-width: min(100%, 560px);
+  max-width: min(100%, 100%);
+  display: grid;
+  gap: 10px;
   padding: 14px 16px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.16);
 }
 
 .messageBubbleAssistant {
+  border-top-left-radius: 10px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
     rgba(17, 24, 35, 0.92);
 }
 
 .messageBubbleUser {
+  border-top-right-radius: 10px;
+  border-color: rgba(255, 212, 0, 0.16);
   background:
-    linear-gradient(180deg, rgba(46, 233, 255, 0.12), rgba(46, 233, 255, 0.08)),
-    rgba(14, 28, 39, 0.92);
-  border-color: rgba(46, 233, 255, 0.16);
+    linear-gradient(180deg, rgba(255, 212, 0, 0.14), rgba(255, 212, 0, 0.07)),
+    rgba(31, 26, 11, 0.96);
 }
 
 .messageText {
   margin: 0;
   color: rgba(247, 251, 255, 0.96);
-  font-size: 15px;
-  line-height: 1.68;
+  font-size: 14px;
+  line-height: 1.62;
   white-space: pre-wrap;
 }
 
-.messageTyping {
-  color: rgba(214, 223, 238, 0.84);
+.messageList {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(247, 251, 255, 0.96);
+  font-size: 14px;
+  line-height: 1.62;
 }
 
-.quickChipRow {
+.messageList li + li {
+  margin-top: 4px;
+}
+
+.messageBubbleTyping {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 72px;
+}
+
+.typingDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  animation: typingPulse 1.2s ease-in-out infinite;
+}
+
+.typingDot:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.typingDot:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+.quickChipRow,
+.inlineChipRow {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.quickChip {
-  min-height: 36px;
+.quickChip,
+.inlineChip {
+  min-height: 34px;
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.92);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
+}
+
+.quickChip {
   cursor: pointer;
 }
 
@@ -251,38 +276,38 @@
 }
 
 .chatNotice {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 14px;
+  margin: 2px auto 0;
+  padding: 9px 12px;
+  border-radius: 999px;
   border: 1px solid rgba(46, 233, 255, 0.18);
   background: rgba(46, 233, 255, 0.08);
   color: rgba(223, 250, 255, 0.96);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .inlineCard {
   display: grid;
   gap: 12px;
-  padding: 15px;
+  padding: 14px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
     rgba(255, 255, 255, 0.03);
 }
 
 .inlineCardHead {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
 }
 
 .inlineCardLabel {
-  margin: 0 0 5px;
-  color: rgba(255, 212, 0, 0.92);
+  margin: 0;
+  color: rgba(255, 212, 0, 0.94);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -290,56 +315,53 @@
 }
 
 .inlineCardTitle {
-  margin: 0;
+  margin: 4px 0 0;
   color: rgba(248, 251, 255, 0.98);
-  font-size: 20px;
-  line-height: 1.12;
+  font-size: 18px;
+  line-height: 1.18;
   letter-spacing: -0.03em;
 }
 
 .inlineCardMeta {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 10px;
   border-radius: 999px;
   background: rgba(46, 233, 255, 0.08);
   border: 1px solid rgba(46, 233, 255, 0.16);
   color: rgba(219, 250, 255, 0.94);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
-.inlineChipRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.quoteSummaryGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.inlineChip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(244, 248, 255, 0.9);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.quoteSummary {
-  margin: 0;
-  padding: 12px 14px;
+.quoteSummaryItem {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
   border-radius: 16px;
-  background: rgba(7, 10, 18, 0.34);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(244, 248, 255, 0.88);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1.58;
-  white-space: pre-wrap;
+  background: rgba(7, 10, 18, 0.34);
+}
+
+.quoteSummaryItem span {
+  color: rgba(214, 223, 238, 0.62);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.quoteSummaryItem strong {
+  color: rgba(244, 248, 255, 0.92);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
 }
 
 .inlineActions {
@@ -350,19 +372,21 @@
 
 .inlineActionPrimary,
 .inlineActionSecondary {
-  min-height: 44px;
+  min-height: 42px;
 }
 
 .composerDock {
-  position: relative;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   display: grid;
-  gap: 12px;
+  gap: 10px;
   background:
-    linear-gradient(180deg, rgba(7, 10, 18, 0.78), rgba(7, 10, 18, 0.96)),
-    rgba(7, 10, 18, 0.96);
-  backdrop-filter: blur(12px);
+    linear-gradient(180deg, rgba(7, 10, 18, 0.78), rgba(7, 10, 18, 0.98)),
+    rgba(7, 10, 18, 0.98);
+  backdrop-filter: blur(14px);
 }
 
 .uploadRow {
@@ -370,8 +394,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
-  border-radius: 18px;
+  padding: 10px 12px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
 }
@@ -382,7 +406,7 @@
 }
 
 .uploadLabel {
-  color: rgba(255, 212, 0, 0.9);
+  color: rgba(255, 212, 0, 0.92);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -391,7 +415,7 @@
 
 .uploadText {
   margin: 0;
-  color: rgba(214, 223, 238, 0.74);
+  color: rgba(214, 223, 238, 0.72);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -409,24 +433,24 @@
 
 .inputShell {
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 22px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.06);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .inputShell textarea {
   width: 100%;
-  min-height: 56px;
-  max-height: 170px;
+  min-height: 52px;
+  max-height: 160px;
   border: 0;
   outline: 0;
-  resize: vertical;
+  resize: none;
   background: transparent;
   color: rgba(248, 251, 255, 0.96);
   padding: 15px 16px;
   font: inherit;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .inputShell textarea::placeholder {
@@ -434,8 +458,8 @@
 }
 
 .sendBtn {
-  min-width: 118px;
-  min-height: 56px;
+  min-width: 96px;
+  min-height: 52px;
   border-radius: 18px;
 }
 
@@ -445,28 +469,51 @@
 }
 
 .composerMeta span {
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
+}
+
+@keyframes typingPulse {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+
+  40% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 920px) {
   .chatShell {
-    min-height: calc(100svh - 156px);
-    max-height: calc(100svh - 132px);
+    min-height: calc(100svh - 22px);
+    max-height: calc(100svh - 22px);
   }
 }
 
 @media (max-width: 720px) {
   .assistantPage {
-    padding-top: 10px;
-    padding-bottom: 118px;
+    padding: 0;
+  }
+
+  .assistantContainer {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
   }
 
   .chatShell {
-    min-height: calc(100svh - 132px);
-    max-height: calc(100svh - 118px);
-    border-radius: 22px;
+    width: 100%;
+    min-height: 100svh;
+    max-height: 100svh;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
   }
 
   .chatHeader,
@@ -477,23 +524,14 @@
   }
 
   .chatHeader {
-    padding-top: 14px;
-    padding-bottom: 14px;
+    padding-top: 13px;
+    padding-bottom: 13px;
     align-items: flex-start;
   }
 
   .chatLogoWrap {
-    width: 48px;
-    height: 48px;
-    border-radius: 15px;
-  }
-
-  .chatBrandCopy strong {
-    font-size: 16px;
-  }
-
-  .chatBrandCopy span {
-    font-size: 11px;
+    width: 44px;
+    height: 44px;
   }
 
   .chatHeaderActions {
@@ -501,18 +539,8 @@
     justify-content: space-between;
   }
 
-  .messageText {
-    font-size: 14px;
-    line-height: 1.62;
-  }
-
-  .inlineCard {
-    padding: 14px;
-    border-radius: 18px;
-  }
-
-  .inlineCardTitle {
-    font-size: 18px;
+  .quoteSummaryGrid {
+    grid-template-columns: 1fr;
   }
 
   .inlineActions {
@@ -525,32 +553,18 @@
     align-items: stretch;
   }
 
-  .uploadButton {
+  .uploadButton,
+  .sendBtn {
     width: 100%;
+    min-width: 0;
   }
 
   .composerRow {
     grid-template-columns: 1fr;
   }
-
-  .sendBtn {
-    width: 100%;
-    min-width: 0;
-  }
 }
 
 @media (max-width: 560px) {
-  .chatState {
-    min-height: 30px;
-    padding: 0 9px;
-    font-size: 10px;
-  }
-
-  .chatClearBtn {
-    min-height: 30px;
-    font-size: 12px;
-  }
-
   .quickChipRow,
   .inlineChipRow {
     overflow-x: auto;
@@ -569,15 +583,22 @@
     flex: 0 0 auto;
   }
 
-  .messageAvatar {
-    width: 30px;
-    height: 30px;
-    font-size: 9px;
-  }
-
   .messageBubble {
-    max-width: 100%;
     padding: 13px 14px;
     border-radius: 18px;
+  }
+
+  .messageBubbleAssistant {
+    border-top-left-radius: 10px;
+  }
+
+  .messageBubbleUser {
+    border-top-right-radius: 10px;
+  }
+
+  .chatNotice {
+    border-radius: 16px;
+    width: 100%;
+    text-align: center;
   }
 }

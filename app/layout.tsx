@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import AppProviders from "@/components/providers/AppProviders";
-import Footer from "@/components/layout/Footer";
-import Navbar from "@/components/layout/Navbar";
-import OduzzAssistantWidget from "@/components/layout/OduzzAssistantWidget";
+import LayoutChrome from "@/components/layout/LayoutChrome";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_NAME, SITE_URL, DEFAULT_OG_IMAGE, BUSINESS_DESCRIPTION, DEFAULT_KEYWORDS } from "@/lib/seo";
 import { buildLocalBusinessSchema, buildOrganizationSchema, buildWebsiteSchema } from "@/lib/structured-data";
@@ -74,10 +72,7 @@ export default function RootLayout({
           <a className="skip" href="#content">
             Skip to content
           </a>
-          <Navbar />
-          <main id="content">{children}</main>
-          <Footer />
-          <OduzzAssistantWidget />
+          <LayoutChrome>{children}</LayoutChrome>
         </AppProviders>
       </body>
     </html>

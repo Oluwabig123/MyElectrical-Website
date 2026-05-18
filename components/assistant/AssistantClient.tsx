@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/layout/Container";
@@ -79,6 +79,43 @@ type SolarDraft = {
 
 function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
+}
+
+function renderMessageText(text: string) {
+  return String(text || "")
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block, blockIndex) => {
+      const lines = block
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      const isListBlock =
+        lines.length > 1 && lines.every((line) => /^(\d+\.\s|[-*]\s)/.test(line));
+
+      if (isListBlock) {
+        return (
+          <ol key={`list-${blockIndex}`} className={styles.messageList}>
+            {lines.map((line, lineIndex) => (
+              <li key={`${blockIndex}-${lineIndex}`}>{line.replace(/^(\d+\.\s|[-*]\s)/, "")}</li>
+            ))}
+          </ol>
+        );
+      }
+
+      return (
+        <p key={`text-${blockIndex}`} className={styles.messageText}>
+          {lines.map((line, lineIndex) => (
+            <Fragment key={`${blockIndex}-${lineIndex}`}>
+              {lineIndex > 0 ? <br /> : null}
+              {line}
+            </Fragment>
+          ))}
+        </p>
+      );
+    });
 }
 
 async function requestAssistantReply(messages: AssistantMessage[]) {
@@ -160,6 +197,19 @@ export default function AssistantClient() {
     activeQuoteData?.budget ? `Budget: ${activeQuoteData.budget}` : "",
     `Photos: ${Array.isArray(activeQuoteData?.imageUrls) ? activeQuoteData?.imageUrls.length : 0}/${MAX_QUOTE_IMAGE_COUNT}`,
   ].filter(Boolean);
+  const quoteSummaryRows = useMemo(() => {
+    if (!quoteResult) return [];
+
+    return [
+      { label: "Service", value: quoteResult.service || "Pending" },
+      { label: "Location", value: quoteResult.location || "Pending" },
+      { label: "Urgency", value: quoteResult.urgency || "Pending" },
+      { label: "Budget", value: quoteResult.budget || "Pending" },
+      { label: "Contact", value: quoteResult.name || "Pending" },
+      { label: "Phone", value: quoteResult.phone || "Pending" },
+      { label: "Brief", value: quoteResult.details || "Pending" },
+    ];
+  }, [quoteResult]);
 
   useEffect(() => {
     const body = bodyRef.current;
@@ -585,7 +635,7 @@ export default function AssistantClient() {
               </div>
               <div className={styles.chatBrandCopy}>
                 <strong>Oduzz AI</strong>
-                <span>Electrical planning assistant</span>
+                <span className={styles.srOnly}>Electrical planning assistant</span>
               </div>
             </div>
 
@@ -615,27 +665,20 @@ export default function AssistantClient() {
               >
                 <div
                   className={cn(
-                    styles.messageAvatar,
-                    message.role === "user" ? styles.messageAvatarUser : styles.messageAvatarAssistant,
-                  )}
-                  aria-hidden="true"
-                >
-                  {message.role === "user" ? "You" : "AI"}
-                </div>
-
-                <div
-                  className={cn(
                     styles.messageContent,
                     message.role === "user" && styles.messageContentUser,
                   )}
                 >
+                  <span className={styles.srOnly}>
+                    {message.role === "user" ? "You" : "Oduzz AI"}
+                  </span>
                   <div
                     className={cn(
                       styles.messageBubble,
                       message.role === "user" ? styles.messageBubbleUser : styles.messageBubbleAssistant,
                     )}
                   >
-                    <p className={styles.messageText}>{message.text}</p>
+                    {renderMessageText(message.text)}
                   </div>
 
                   {showWelcomePrompts && index === 0 ? (
@@ -659,28 +702,37 @@ export default function AssistantClient() {
 
             {isResponding ? (
               <div className={styles.messageRow} aria-label="Assistant is typing">
-                <div className={cn(styles.messageAvatar, styles.messageAvatarAssistant)} aria-hidden="true">
-                  AI
-                </div>
                 <div className={styles.messageContent}>
-                  <div className={cn(styles.messageBubble, styles.messageBubbleAssistant, styles.messageTyping)}>
-                    Oduzz is thinking...
+                  <span className={styles.srOnly}>Oduzz AI</span>
+                  <div
+                    className={cn(
+                      styles.messageBubble,
+                      styles.messageBubbleAssistant,
+                      styles.messageBubbleTyping,
+                    )}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.typingDot} />
+                    <span className={styles.typingDot} />
+                    <span className={styles.typingDot} />
                   </div>
                 </div>
               </div>
             ) : null}
 
-            {assistantStatus ? <p className={styles.chatNotice}>{assistantStatus}</p> : null}
+            {assistantStatus ? (
+              <p className={styles.chatNotice} role="status">
+                {assistantStatus}
+              </p>
+            ) : null}
 
             {isQuoteFlow ? (
               <div className={styles.inlineCard}>
                 <div className={styles.inlineCardHead}>
-                  <div>
-                    <p className={styles.inlineCardLabel}>Quote flow</p>
-                    <h3 className={styles.inlineCardTitle}>
-                      Step {quoteStageIndex} of {QUOTE_STAGE_ORDER.length}
-                    </h3>
-                  </div>
+                  <p className={styles.inlineCardLabel}>Quote flow</p>
+                  <span className={styles.inlineCardMeta}>
+                    Step {quoteStageIndex} / {QUOTE_STAGE_ORDER.length}
+                  </span>
                 </div>
                 <div className={styles.inlineChipRow}>
                   {activeQuoteChips.map((chip) => (
@@ -701,7 +753,14 @@ export default function AssistantClient() {
                   </div>
                   <span className={styles.inlineCardMeta}>{quoteResult.referenceId}</span>
                 </div>
-                <pre className={styles.quoteSummary}>{buildQuoteSummary(quoteResult)}</pre>
+                <div className={styles.quoteSummaryGrid}>
+                  {quoteSummaryRows.map((item) => (
+                    <div key={item.label} className={styles.quoteSummaryItem}>
+                      <span>{item.label}</span>
+                      <strong>{item.value}</strong>
+                    </div>
+                  ))}
+                </div>
                 <div className={styles.inlineActions}>
                   <Link className={cn("btn", "primary", styles.inlineActionPrimary)} href={`/quote${quotePrefillSearch}`}>
                     Open quote form
@@ -725,7 +784,7 @@ export default function AssistantClient() {
                 <div className={styles.uploadCopy}>
                   <span className={styles.uploadLabel}>Project photos</span>
                   <p className={styles.uploadText}>
-                    Optional. Up to {MAX_QUOTE_IMAGE_COUNT} images, {Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB each.
+                    Optional. Up to {MAX_QUOTE_IMAGE_COUNT} photos, {Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB each.
                   </p>
                 </div>
                 <label className={cn("assistantUploadButton", styles.uploadButton)}>
