@@ -43,10 +43,13 @@ import {
 import styles from "./AssistantClient.module.css";
 
 const QUICK_STARTS = [
-  { label: "Start quote", prompt: "Start quote intake" },
-  { label: "Size my solar", prompt: "Size my solar system" },
-  { label: "Lighting help", prompt: "Lighting quote checklist" },
-  { label: "Wiring safety", prompt: "Explain wiring safety steps" },
+  { label: "Size my solar system", prompt: "Size my solar system" },
+  { label: "Recommend electrical materials", prompt: "Recommend electrical materials for my project" },
+  { label: "I need wiring help", prompt: "I need wiring help" },
+  { label: "Lighting recommendation", prompt: "Lighting recommendation for my space" },
+  { label: "CCTV / smart home", prompt: "CCTV / smart home options for my property" },
+  { label: "Request a quote", prompt: "Start quote intake" },
+  { label: "Continue on WhatsApp", prompt: "Continue on WhatsApp for quote support" },
 ] as const;
 
 const QUOTE_STAGE_ORDER = [
@@ -62,6 +65,12 @@ const QUOTE_STAGE_ORDER = [
 type AssistantMessage = {
   role: "assistant" | "user";
   text: string;
+  usedKnowledgeBase?: boolean;
+  quoteIntentDetected?: boolean;
+  sources?: Array<{
+    title: string;
+    category: string;
+  }>;
 };
 
 type Stage =
@@ -119,13 +128,16 @@ function renderMessageText(text: string) {
 }
 
 async function requestAssistantReply(messages: AssistantMessage[]) {
-  const response = await fetch("/api/assistant", {
+  const response = await fetch("/api/assistant/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      messages: messages.slice(-10),
+      messages: messages.slice(-10).map((message) => ({
+        role: message.role,
+        content: message.text,
+      })),
     }),
   });
 
@@ -135,7 +147,26 @@ async function requestAssistantReply(messages: AssistantMessage[]) {
     throw new Error(payload.error || "Assistant request failed.");
   }
 
-  return String(payload.text || "").trim();
+  return {
+    answer: String(payload.answer || payload.text || "").trim(),
+    sources: Array.isArray(payload.sources)
+      ? payload.sources
+          .map((item: unknown) => {
+            const source = (item && typeof item === "object" ? item : {}) as {
+              title?: unknown;
+              category?: unknown;
+            };
+
+            return {
+              title: String(source.title || "").trim(),
+              category: String(source.category || "").trim(),
+            };
+          })
+          .filter((item: { title: string; category: string }) => item.title)
+      : [],
+    usedKnowledgeBase: Boolean(payload.usedKnowledgeBase),
+    quoteIntentDetected: Boolean(payload.quoteIntentDetected),
+  };
 }
 
 export default function AssistantClient() {
@@ -217,9 +248,22 @@ export default function AssistantClient() {
     body.scrollTop = body.scrollHeight;
   }, [messages, isResponding]);
 
-  function addAssistant(text: string) {
+  function addAssistant(
+    text: string,
+    metadata?: {
+      usedKnowledgeBase?: boolean;
+      quoteIntentDetected?: boolean;
+      sources?: Array<{ title: string; category: string }>;
+    },
+  ) {
     const safeText = clampMessage(text);
-    const nextMessage: AssistantMessage = { role: "assistant", text: safeText };
+    const nextMessage: AssistantMessage = {
+      role: "assistant",
+      text: safeText,
+      usedKnowledgeBase: Boolean(metadata?.usedKnowledgeBase),
+      quoteIntentDetected: Boolean(metadata?.quoteIntentDetected),
+      sources: metadata?.sources || [],
+    };
     setMessages((prev) => [...prev, nextMessage].slice(-MAX_MESSAGES));
   }
 
@@ -372,15 +416,15 @@ export default function AssistantClient() {
 
     try {
       const reply = await requestAssistantReply(history);
-      addAssistant(reply || buildFallbackAssistantReply(raw));
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "AI reply was unavailable.";
+      addAssistant(reply.answer || buildFallbackAssistantReply(raw), {
+        usedKnowledgeBase: reply.usedKnowledgeBase,
+        quoteIntentDetected: reply.quoteIntentDetected,
+        sources: reply.sources,
+      });
+    } catch {
       addAssistant(buildFallbackAssistantReply(raw));
       setAssistantStatus(
-        /configured/i.test(String(message || ""))
-          ? "AI reply is not configured yet, so the assistant used local guidance."
-          : "AI reply was unavailable, so the assistant used local guidance.",
+        "Sorry, I couldn’t complete that request right now. Please try again or continue on WhatsApp.",
       );
     } finally {
       setIsResponding(false);
@@ -620,6 +664,10 @@ export default function AssistantClient() {
   return (
     <section className={cn("section", styles.assistantPage)}>
       <Container className={styles.assistantContainer}>
+        <div className={styles.pageIntro}>
+          <h1>Oduzz AI Electrical Assistant</h1>
+          <p>Ask about solar sizing, wiring, lighting, products, CCTV, and quote preparation.</p>
+        </div>
         <div className={styles.chatShell}>
           <header className={styles.chatHeader}>
             <div className={styles.chatBrand}>
@@ -635,7 +683,7 @@ export default function AssistantClient() {
               </div>
               <div className={styles.chatBrandCopy}>
                 <strong>Oduzz AI</strong>
-                <span className={styles.srOnly}>Electrical planning assistant</span>
+                <span>Knowledge-base chat</span>
               </div>
             </div>
 
@@ -680,6 +728,26 @@ export default function AssistantClient() {
                   >
                     {renderMessageText(message.text)}
                   </div>
+                  {message.role === "assistant" && message.usedKnowledgeBase ? (
+                    <p className={styles.messageSourceTag}>Based on Oduzz knowledge base</p>
+                  ) : null}
+                  {message.role === "assistant" &&
+                  message.quoteIntentDetected &&
+                  !quoteResult &&
+                  !isQuoteFlow ? (
+                    <a
+                      className={cn("btn", "outline", styles.inlineWhatsAppBtn)}
+                      href={buildWhatsAppUrl(
+                        encodeURIComponent(
+                          "Hi Oduzz, I need help with a quote. Please guide me on next steps.",
+                        ),
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Continue on WhatsApp
+                    </a>
+                  ) : null}
 
                   {showWelcomePrompts && index === 0 ? (
                     <div className={styles.quickChipRow}>

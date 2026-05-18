@@ -1,6 +1,25 @@
 import { NextResponse } from "next/server";
 import { generateAssistantChatReply } from "@/lib/assistant-rag";
 
+function sanitizeText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function getLatestUserMessage(messages: unknown) {
+  if (!Array.isArray(messages)) return "";
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index] as { role?: unknown; content?: unknown; text?: unknown };
+    const role = sanitizeText(message?.role).toLowerCase();
+    if (role !== "user") continue;
+
+    const content = sanitizeText(message?.content || message?.text);
+    if (content) return content;
+  }
+
+  return "";
+}
+
 function buildStatusCode(errorMessage: string) {
   if (/missing openai|missing supabase|not configured/i.test(errorMessage)) return 503;
   if (/embedding|openai|semantic search/i.test(errorMessage)) return 502;
@@ -10,12 +29,17 @@ function buildStatusCode(errorMessage: string) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
+  const messages = (body && typeof body === "object" ? body : {}) as { messages?: unknown };
+  const latestUserMessage = getLatestUserMessage(messages.messages);
+
+  if (!latestUserMessage) {
+    return NextResponse.json({ error: "Please enter a message before sending." }, { status: 400 });
+  }
 
   try {
-    const result = await generateAssistantChatReply((body as { messages?: unknown })?.messages);
+    const result = await generateAssistantChatReply(messages.messages);
 
     return NextResponse.json({
-      text: result.answer,
       answer: result.answer,
       sources: result.sources,
       usedKnowledgeBase: result.usedKnowledgeBase,

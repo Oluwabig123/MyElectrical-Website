@@ -19,6 +19,28 @@
   z-index: 1;
 }
 
+.pageIntro {
+  width: min(100%, 880px);
+  margin: 0 auto 10px;
+  display: grid;
+  gap: 3px;
+}
+
+.pageIntro h1 {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.98);
+  font-size: clamp(20px, 2.6vw, 28px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.pageIntro p {
+  margin: 0;
+  color: rgba(214, 223, 238, 0.74);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .chatShell {
   width: min(100%, 880px);
   margin: 0 auto;
@@ -222,6 +244,21 @@
 
 .messageList li + li {
   margin-top: 4px;
+}
+
+.messageSourceTag {
+  margin: 0;
+  color: rgba(214, 223, 238, 0.78);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.inlineWhatsAppBtn {
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .messageBubbleTyping {
@@ -498,6 +535,15 @@
 @media (max-width: 720px) {
   .assistantPage {
     padding: 0;
+  }
+
+  .pageIntro {
+    padding: 10px 14px 6px;
+    margin-bottom: 0;
+  }
+
+  .pageIntro p {
+    font-size: 12px;
   }
 
   .assistantContainer {
