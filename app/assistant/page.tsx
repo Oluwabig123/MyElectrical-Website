@@ -3,11 +3,11 @@ import AssistantClient from "@/components/assistant/AssistantClient";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Electrical Assistant",
+  title: "Oduzz AI | Electrical Planning Assistant",
   description:
-    "Use the Oduzz assistant for guided electrical questions, quote preparation, and solar or inverter planning flows.",
+    "Chat with Oduzz AI for solar sizing, wiring guidance, lighting planning, and quote preparation.",
   path: "/assistant",
-  keywords: ["electrical assistant", "quote assistant", "solar sizing assistant"],
+  keywords: ["Oduzz AI", "electrical assistant", "quote assistant", "solar sizing assistant"],
 });
 
 export default function AssistantPage() {

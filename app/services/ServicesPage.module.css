@@ -1,5 +1,5 @@
 .servicesPage {
-  padding: clamp(28px, 4vw, 44px) 0 clamp(52px, 6vw, 84px);
+  padding: clamp(28px, 4vw, 44px) 0 clamp(104px, 8vw, 128px);
   background:
     radial-gradient(780px 360px at 8% 0%, rgba(255, 212, 0, 0.1), transparent 60%),
     radial-gradient(780px 360px at 100% 100%, rgba(46, 233, 255, 0.08), transparent 60%),
@@ -149,6 +149,10 @@
 }
 
 .panelListItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
   padding: 16px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.09);
 }
@@ -170,6 +174,19 @@
   color: rgba(255, 255, 255, 0.68);
   font-size: 13px;
   line-height: 1.6;
+}
+
+.panelItemCta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .panelFoot {
@@ -352,6 +369,9 @@
   width: fit-content;
   color: #171e28;
   font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
 }
 
 .processBand {
@@ -501,6 +521,9 @@
   width: fit-content;
   color: rgba(255, 212, 0, 0.95);
   font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
 }
 
 .benefitSection {
@@ -605,6 +628,7 @@
 @media (max-width: 720px) {
   .servicesPage {
     padding-top: 18px;
+    padding-bottom: 122px;
   }
 
   .pageShell {
@@ -612,15 +636,38 @@
     border-radius: 24px;
   }
 
+  .hero {
+    gap: 14px;
+  }
+
+  .heroMedia,
+  .heroPanel,
+  .featureRow,
+  .processBand,
+  .benefitCard {
+    border-radius: 22px;
+  }
+
+  .heroMedia {
+    min-height: 360px;
+  }
+
   .heroContent {
     left: 16px;
     right: 16px;
     bottom: 16px;
+    gap: 12px;
   }
 
   .heroTitle {
     max-width: 10ch;
     font-size: clamp(32px, 10vw, 48px);
+  }
+
+  .heroSummary {
+    font-size: 14px;
+    line-height: 1.62;
+    max-width: 34ch;
   }
 
   .heroActions,
@@ -632,17 +679,200 @@
     width: 100%;
   }
 
+  .heroPanel {
+    gap: 14px;
+    padding: 18px 16px;
+  }
+
+  .panelPills {
+    gap: 8px;
+  }
+
+  .panelPill {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .panelList {
+    gap: 0;
+  }
+
+  .panelListItem {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px 0;
+  }
+
+  .panelItemText,
+  .panelMetaValue {
+    display: none;
+  }
+
+  .panelItemTitle {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .panelItemCta,
+  .panelLink {
+    width: 100%;
+    justify-content: center;
+  }
+
   .sectorTrack {
-    gap: 10px 18px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    gap: 10px;
+    scrollbar-width: none;
+  }
+
+  .sectorTrack::-webkit-scrollbar {
+    display: none;
   }
 
   .sectorWordmark {
-    font-size: 17px;
+    flex: 0 0 auto;
+    font-size: 16px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(17, 25, 35, 0.06);
+  }
+
+  .sectionIntro,
+  .processIntro,
+  .benefitIntro {
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .sectionTitle,
+  .processTitle {
+    font-size: clamp(28px, 9vw, 38px);
+  }
+
+  .sectionSummary,
+  .processSummary {
+    font-size: 14px;
+    line-height: 1.62;
   }
 
   .featureCopy,
   .processBand {
     padding: 18px;
+  }
+
+  .featureStack {
+    gap: 14px;
+  }
+
+  .featureMedia {
+    min-height: 220px;
+  }
+
+  .featureCopy {
+    gap: 10px;
+  }
+
+  .featureTitle {
+    font-size: 28px;
+    line-height: 1.02;
+  }
+
+  .featureDesc {
+    font-size: 15px;
+    line-height: 1.58;
+  }
+
+  .featureDetail {
+    display: none;
+  }
+
+  .featureLink {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(17, 23, 34, 0.14);
+    background: rgba(17, 23, 34, 0.04);
+  }
+
+  .processSteps {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .processCard {
+    gap: 10px;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .processCardTitle {
+    font-size: 20px;
+  }
+
+  .processCardText {
+    font-size: 14px;
+    line-height: 1.58;
+  }
+
+  .processDivider {
+    margin-bottom: 14px;
+    gap: 8px;
+  }
+
+  .supportGrid {
+    gap: 12px;
+  }
+
+  .supportCard {
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .supportCardMedia {
+    aspect-ratio: auto;
+    min-height: 100%;
+  }
+
+  .supportCardBody {
+    gap: 7px;
+    padding: 14px;
+  }
+
+  .supportCardTitle {
+    font-size: 18px;
+  }
+
+  .supportCardText {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .supportCardLink {
+    width: 100%;
+    justify-content: center;
+    min-height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 212, 0, 0.22);
+    padding: 0 12px;
+  }
+
+  .benefitGrid {
+    gap: 12px;
+  }
+
+  .benefitCard {
+    padding: 18px;
+  }
+
+  .benefitTitle {
+    font-size: 20px;
   }
 
   .finalTitle {

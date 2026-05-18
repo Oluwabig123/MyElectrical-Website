@@ -23,9 +23,9 @@ export const metadata: Metadata = buildMetadata({
 });
 
 const heroHighlights = [
-  "Flagship installation work",
-  "Verified material guidance",
-  "Residential and commercial delivery",
+  "Core installation services",
+  "Material guidance",
+  "Lagos coverage",
 ] as const;
 
 const sectors = [
@@ -40,17 +40,17 @@ const processSteps = [
   {
     step: "01",
     title: "Inspect the real site conditions",
-    text: "Scope starts with load, routing, finish level, and access realities instead of guesswork.",
+    text: "Load, routing, finish level, and access realities are checked before work starts.",
   },
   {
     step: "02",
     title: "Specify the right materials",
-    text: "Cables, fittings, fixtures, and protection devices are matched to the job before installation starts.",
+    text: "Cables, fittings, fixtures, and protection devices are matched to the actual job.",
   },
   {
     step: "03",
     title: "Install with cleaner standards",
-    text: "Execution focuses on protection, neat runs, better placement, and a more accountable handover.",
+    text: "Execution focuses on neat runs, proper protection, and a cleaner handover.",
   },
 ] as const;
 
@@ -108,8 +108,8 @@ export default function ServicesPage() {
                     Electrical systems delivered with cleaner standards in Lagos.
                   </h1>
                   <p className={styles.heroSummary}>
-                    Wiring, solar and inverter backup, CCTV, smart controls, and lighting installation
-                    handled with sharper material guidance and a more premium finish.
+                    Wiring, solar backup, lighting, CCTV, and smart controls handled with practical planning
+                    and cleaner finishing.
                   </p>
 
                   <div className={styles.heroActions}>
@@ -142,8 +142,11 @@ export default function ServicesPage() {
                             {service.title}
                           </Link>
                         </p>
-                        <p className={styles.panelItemText}>{service.detail}</p>
+                        <p className={styles.panelItemText}>{service.desc}</p>
                       </div>
+                      <Link href={`/services/${service.slug}`} className={styles.panelItemCta}>
+                        Explore service
+                      </Link>
                     </article>
                   ))}
                 </div>
@@ -152,7 +155,7 @@ export default function ServicesPage() {
                   <div>
                     <p className={styles.panelMetaLabel}>Hierarchy</p>
                     <p className={styles.panelMetaValue}>
-                      Core installation work first, then diagnostics, security, and smart control support.
+                      Core installation work first, with diagnostics, security, and smart controls supporting it.
                     </p>
                   </div>
                   <Link href="/quote" className={styles.panelLink}>
@@ -179,10 +182,9 @@ export default function ServicesPage() {
           <section className={styles.featureSection}>
             <div className={styles.sectionIntro}>
               <p className={styles.sectionLabel}>Flagship electrical work</p>
-              <h2 className={styles.sectionTitle}>Installation quality starts with the core systems clients feel every day.</h2>
+              <h2 className={styles.sectionTitle}>Core electrical work clients rely on every day.</h2>
               <p className={styles.sectionSummary}>
-                These are the main service lines Oduzz should be known for: wiring, backup power,
-                and lighting finishing handled with stronger planning and cleaner execution.
+                Wiring, backup power, and lighting finishing delivered with stronger planning and cleaner execution.
               </p>
             </div>
 
@@ -223,8 +225,7 @@ export default function ServicesPage() {
                 <p className={styles.processLabel}>How Oduzz works</p>
                 <h2 className={styles.processTitle}>A tighter process from site review to handover.</h2>
                 <p className={styles.processSummary}>
-                  The point is not only technical installation. It is disciplined routing, better material
-                  decisions, and a cleaner final result that matches what the client paid for.
+                  Better routing, clearer material decisions, and a cleaner final result from start to handover.
                 </p>
               </div>
 
@@ -241,8 +242,7 @@ export default function ServicesPage() {
               <div className={styles.processDivider}>
                 <p className={styles.processLabel}>Supporting service scope</p>
                 <p className={styles.processSummary}>
-                  Diagnostics, CCTV, and smart control work are still available, but they support
-                  the broader installation standard instead of competing with it.
+                  Diagnostics, CCTV, and smart control work are available where they support the wider installation standard.
                 </p>
               </div>
 
@@ -262,9 +262,9 @@ export default function ServicesPage() {
                     <div className={styles.supportCardBody}>
                       <p className={styles.supportCardEyebrow}>{service.eyebrow}</p>
                       <h3 className={styles.supportCardTitle}>{service.title}</h3>
-                      <p className={styles.supportCardText}>{service.detail}</p>
+                      <p className={styles.supportCardText}>{service.desc}</p>
                       <Link href={`/services/${service.slug}`} className={styles.supportCardLink}>
-                        View service page
+                        Explore service
                       </Link>
                     </div>
                   </article>

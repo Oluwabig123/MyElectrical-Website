@@ -63,6 +63,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   const relatedCategories = service.relatedCategoryKeys
     .map((key) => resolveProductCategory(key))
     .filter((category) => category !== null);
+  const serviceLead = isFlagshipService
+    ? "Share your location, timing, and site photos for practical guidance on sizing, materials, and installation flow."
+    : "Share the main issue, location, and clear site photos so Oduzz can guide scope, materials, and next steps clearly.";
 
   const faqSchemaId = `${absoluteUrl(`/services/${service.slug}`)}#faq`;
   const faqSchema = buildFaqSchema(service.faqs, { id: faqSchemaId });
@@ -142,45 +145,51 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           </div>
         </section>
 
-        <div className={`seoContentCard seoIntroCard ${styles.contentCard}`}>
-          <div className="seoContentGrid">
-            <div>
-              <h2 className="h2">What this service covers</h2>
-              <p className="p">{service.intro}</p>
+        <section className={`seoContentCard seoIntroCard ${styles.contentCard}`}>
+          <div className={styles.scopeHeader}>
+            <div className={styles.scopeCopy}>
+              <span className={styles.sectionEyebrow}>Service overview</span>
+              <h2 className={styles.scopeTitle}>Need this service scoped properly?</h2>
+              <p className={styles.scopeText}>{serviceLead}</p>
             </div>
-            <div>
-              <h2 className="h2">Typical deliverables</h2>
-              <ul className="cardList">
-                {service.deliverables.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
+            <div className={styles.scopeActions}>
+              <Link href="/contact" className="btn outline">
+                Contact Oduzz
+              </Link>
+              <Link href="/locations" className="btn outline">
+                Service areas
+              </Link>
             </div>
           </div>
-          <div className="seoActionRow">
-            <Link href="/contact" className="btn outline">
-              Contact Oduzz
-            </Link>
-            <Link href="/locations" className="btn outline">
-              Service areas
-            </Link>
+
+          <div className={styles.deliverablesBlock}>
+            <h2 className="h2">Typical deliverables</h2>
+            <div className={styles.deliverablesGrid}>
+              {service.deliverables.map((item) => (
+                <article key={item} className={styles.deliverableCard}>
+                  <span className={styles.deliverableDot} aria-hidden="true" />
+                  <p className={styles.deliverableText}>{item}</p>
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
 
         <section className={`seoContentSection ${styles.section}`}>
           <h2 className="h2">
             {isFlagshipService
-              ? "How Oduzz delivers this flagship service"
-              : "How Oduzz integrates this supporting service"}
+              ? "How Oduzz delivers this service"
+              : "How Oduzz handles this supporting service"}
           </h2>
-          <div className="seoCardGrid">
-            {service.process.map((step) => (
-              <article key={step} className="card seoInfoCard">
-                <h3 className="cardTitle">{step}</h3>
-                <p className="p">
-                  Scope and material decisions are documented before execution so the final delivery stays clean
-                  and dependable.
-                </p>
+          <p className={styles.processLead}>
+            Scope, materials, routing, and final checks are aligned before execution so the installation stays clean
+            and dependable.
+          </p>
+          <div className={styles.processGrid}>
+            {service.process.map((step, index) => (
+              <article key={step} className={styles.processCard}>
+                <span className={styles.processIndex}>{String(index + 1).padStart(2, "0")}</span>
+                <h3 className={styles.processTitle}>{step}</h3>
               </article>
             ))}
           </div>
@@ -205,9 +214,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         {relatedPosts.length > 0 ? (
           <section className={`seoContentSection ${styles.section}`}>
             <h2 className="h2">Related guides from the journal</h2>
-            <div className="seoCardGrid">
+            <div className={`seoCardGrid ${styles.journalGrid}`}>
               {relatedPosts.map((post) => (
-                <BlogCard key={post.slug} post={post} variant="compact" />
+                <BlogCard key={post.slug} post={post} />
               ))}
             </div>
           </section>

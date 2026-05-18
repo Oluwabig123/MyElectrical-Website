@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/layout/Container";
-import SectionHeader from "@/components/ui/SectionHeader";
-import { CONTACT, CONTACT_LINKS, buildWhatsAppUrl } from "@/data/contact";
+import { buildWhatsAppUrl } from "@/data/contact";
 import { oduzzAssistantDoc } from "@/data/oduzz-assistant-doc";
 import {
   buildFallbackAssistantReply,
@@ -42,34 +42,11 @@ import {
 } from "@/lib/quote-lead-storage";
 import styles from "./AssistantClient.module.css";
 
-const QUICK_PROMPTS = [
-  "Start quote intake",
-  "Size my solar system",
-  "Cancel current flow",
-  "Explain wiring safety steps",
-  "Lighting quote checklist",
-  "What details do you need for a quote?",
-] as const;
-
-const ASSISTANT_CAPABILITIES = [
-  {
-    title: "Solar planning",
-    text: "Start with a quick load estimate, battery reserve, and a practical next step before site inspection.",
-  },
-  {
-    title: "Electrical guidance",
-    text: "Use it for wiring safety, fault questions, cable direction, and cleaner project scoping.",
-  },
-  {
-    title: "Quote readiness",
-    text: "Prepare the exact details Oduzz needs so pricing discussions start from a clearer brief.",
-  },
-] as const;
-
-const ASSISTANT_SIGNALS = [
-  "Structured reply style",
-  "Fast sizing workflow",
-  "Quote-ready handoff",
+const QUICK_STARTS = [
+  { label: "Start quote", prompt: "Start quote intake" },
+  { label: "Size my solar", prompt: "Size my solar system" },
+  { label: "Lighting help", prompt: "Lighting quote checklist" },
+  { label: "Wiring safety", prompt: "Explain wiring safety steps" },
 ] as const;
 
 const QUOTE_STAGE_ORDER = [
@@ -124,15 +101,6 @@ async function requestAssistantReply(messages: AssistantMessage[]) {
   return String(payload.text || "").trim();
 }
 
-function formatLastUpdatedLabel(date: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(date));
-}
-
 export default function AssistantClient() {
   const [input, setInput] = useState("");
   const [stage, setStage] = useState<Stage>("idle");
@@ -156,15 +124,6 @@ export default function AssistantClient() {
   const [isUploadingQuoteImage, setIsUploadingQuoteImage] = useState(false);
   const [assistantStatus, setAssistantStatus] = useState("");
   const bodyRef = useRef<HTMLDivElement | null>(null);
-
-  const headerMeta = useMemo(
-    () => `${oduzzAssistantDoc.company} Doc v${oduzzAssistantDoc.version}`,
-    [],
-  );
-  const lastUpdatedLabel = useMemo(
-    () => formatLastUpdatedLabel(oduzzAssistantDoc.lastUpdated),
-    [],
-  );
   const isQuoteFlow = stage.startsWith("quote-");
   const quoteStageIndex = isQuoteFlow
     ? QUOTE_STAGE_ORDER.findIndex((item) => item === stage) + 1
@@ -185,21 +144,22 @@ export default function AssistantClient() {
     if (stage === "quote-budget") return BUDGET_OPTIONS;
     return [];
   }, [stage]);
-
-  const stageLabel = useMemo(() => {
-    if (stage === "solar-loads") return "Solar sizing: load";
-    if (stage === "solar-location") return "Solar sizing: location";
-    if (stage === "solar-backup") return "Solar sizing: backup";
-    if (stage === "quote-service") return "Quote intake: service";
-    if (stage === "quote-location") return "Quote intake: location";
-    if (stage === "quote-details") return "Quote intake: project brief";
-    if (stage === "quote-urgency") return "Quote intake: urgency";
-    if (stage === "quote-budget") return "Quote intake: budget";
-    if (stage === "quote-name") return "Quote intake: contact name";
-    if (stage === "quote-phone") return "Quote intake: phone";
-    if (isResponding) return "AI assistant: replying";
-    return "General assistant";
-  }, [isResponding, stage]);
+  const headerStatus = useMemo(() => {
+    if (isResponding) return "Replying";
+    if (stage.startsWith("solar-")) return "Solar sizing";
+    if (stage.startsWith("quote-")) return `Quote ${quoteStageIndex}/${QUOTE_STAGE_ORDER.length}`;
+    return "";
+  }, [isResponding, quoteStageIndex, stage]);
+  const showWelcomePrompts = messages.length === 1 && messages[0]?.role === "assistant" && !isQuoteFlow && !quoteResult;
+  const showCharacterCount = input.length >= MAX_INPUT_CHARS - 80;
+  const activeQuoteData = isQuoteFlow ? quoteDraft : quoteResult;
+  const activeQuoteChips = [
+    activeQuoteData?.service ? `Service: ${activeQuoteData.service}` : "",
+    activeQuoteData?.location ? `Location: ${activeQuoteData.location}` : "",
+    activeQuoteData?.urgency ? `Urgency: ${activeQuoteData.urgency}` : "",
+    activeQuoteData?.budget ? `Budget: ${activeQuoteData.budget}` : "",
+    `Photos: ${Array.isArray(activeQuoteData?.imageUrls) ? activeQuoteData?.imageUrls.length : 0}/${MAX_QUOTE_IMAGE_COUNT}`,
+  ].filter(Boolean);
 
   useEffect(() => {
     const body = bodyRef.current;
@@ -610,294 +570,223 @@ export default function AssistantClient() {
   return (
     <section className={cn("section", styles.assistantPage)}>
       <Container className={styles.assistantContainer}>
-        <SectionHeader
-          kicker="Assistant"
-          title="A more polished way to plan electrical work"
-          subtitle="Ask about solar sizing, wiring, lighting, and quote preparation in one guided workspace."
-        />
-
-        <div className={styles.assistantLayout}>
-          <aside className={cn("card", styles.assistantGuide)}>
-            <div className={styles.assistantGuideHero}>
-              <span className={styles.assistantGuideEyebrow}>Concierge mode</span>
-              <h3 className={styles.assistantGuideTitle}>Built for cleaner project conversations</h3>
-              <p className={styles.assistantGuideLead}>
-                Use the assistant for early planning, then move into a proper quote with the same
-                context in mind.
-              </p>
+        <div className={styles.chatShell}>
+          <header className={styles.chatHeader}>
+            <div className={styles.chatBrand}>
+              <div className={styles.chatLogoWrap}>
+                <Image
+                  src="/oduzz-logo-transparent.webp"
+                  alt="Oduzz Electrical Concept"
+                  width={120}
+                  height={42}
+                  className={styles.chatLogo}
+                  priority
+                />
+              </div>
+              <div className={styles.chatBrandCopy}>
+                <strong>Oduzz AI</strong>
+                <span>Electrical planning assistant</span>
+              </div>
             </div>
 
-            <div className={styles.assistantSignalRow} aria-label="Assistant highlights">
-              {ASSISTANT_SIGNALS.map((signal) => (
-                <span key={signal} className={styles.assistantSignalChip}>
-                  {signal}
-                </span>
-              ))}
+            <div className={styles.chatHeaderActions}>
+              {headerStatus ? <span className={styles.chatState}>{headerStatus}</span> : null}
+              <button
+                type="button"
+                className={styles.chatClearBtn}
+                onClick={onReset}
+                disabled={isResponding}
+              >
+                Clear
+              </button>
             </div>
+          </header>
 
-            <div className={styles.assistantCapabilityList}>
-              {ASSISTANT_CAPABILITIES.map((item, index) => (
-                <div key={item.title} className={styles.assistantCapabilityCard}>
-                  <span className={styles.assistantCapabilityIndex}>0{index + 1}</span>
-                  <div>
-                    <h4 className={styles.assistantCapabilityTitle}>{item.title}</h4>
-                    <p className={styles.assistantCapabilityText}>{item.text}</p>
-                  </div>
+          <div
+            className={styles.chatThread}
+            ref={bodyRef}
+            role="log"
+            aria-live="polite"
+          >
+            {messages.map((message, index) => (
+              <div
+                key={`${message.role}-${index}`}
+                className={cn(styles.messageRow, message.role === "user" && styles.messageRowUser)}
+              >
+                <div
+                  className={cn(
+                    styles.messageAvatar,
+                    message.role === "user" ? styles.messageAvatarUser : styles.messageAvatarAssistant,
+                  )}
+                  aria-hidden="true"
+                >
+                  {message.role === "user" ? "You" : "AI"}
                 </div>
-              ))}
-            </div>
 
-            {isQuoteFlow || quoteResult ? (
-              <div className={styles.assistantQuoteTracker}>
-                <div className={styles.assistantQuoteTrackerHead}>
-                  <div>
-                    <p className={styles.assistantQuoteTrackerLabel}>Guided quote intake</p>
-                    <h4 className={styles.assistantQuoteTrackerTitle}>
-                      {isQuoteFlow
-                        ? `Step ${quoteStageIndex} of ${QUOTE_STAGE_ORDER.length}`
-                        : "Quote brief ready"}
-                    </h4>
+                <div
+                  className={cn(
+                    styles.messageContent,
+                    message.role === "user" && styles.messageContentUser,
+                  )}
+                >
+                  <div
+                    className={cn(
+                      styles.messageBubble,
+                      message.role === "user" ? styles.messageBubbleUser : styles.messageBubbleAssistant,
+                    )}
+                  >
+                    <p className={styles.messageText}>{message.text}</p>
                   </div>
-                  <span className={styles.assistantQuoteTrackerState}>
-                    {isQuoteFlow ? "In progress" : "Ready"}
-                  </span>
+
+                  {showWelcomePrompts && index === 0 ? (
+                    <div className={styles.quickChipRow}>
+                      {QUICK_STARTS.map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          className={styles.quickChip}
+                          onClick={() => onQuickPrompt(item.prompt)}
+                          disabled={isResponding}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
-                <div className={styles.assistantQuoteTrackerGrid}>
-                  <span>{(isQuoteFlow ? quoteDraft : quoteResult)?.service || "Service pending"}</span>
-                  <span>{(isQuoteFlow ? quoteDraft : quoteResult)?.location || "Location pending"}</span>
-                  <span>{(isQuoteFlow ? quoteDraft : quoteResult)?.urgency || "Urgency pending"}</span>
-                  <span>{(isQuoteFlow ? quoteDraft : quoteResult)?.budget || "Budget pending"}</span>
-                  <span>
-                    Photos:{" "}
-                    {Array.isArray((isQuoteFlow ? quoteDraft : quoteResult)?.imageUrls)
-                      ? (isQuoteFlow ? quoteDraft : quoteResult)?.imageUrls.length
-                      : 0}
-                    /{MAX_QUOTE_IMAGE_COUNT}
-                  </span>
+              </div>
+            ))}
+
+            {isResponding ? (
+              <div className={styles.messageRow} aria-label="Assistant is typing">
+                <div className={cn(styles.messageAvatar, styles.messageAvatarAssistant)} aria-hidden="true">
+                  AI
+                </div>
+                <div className={styles.messageContent}>
+                  <div className={cn(styles.messageBubble, styles.messageBubbleAssistant, styles.messageTyping)}>
+                    Oduzz is thinking...
+                  </div>
                 </div>
               </div>
             ) : null}
 
-            <div className={styles.assistantGuideBlock}>
-              <div className={styles.assistantGuideBlockHead}>
-                <h4 className={styles.assistantGuideBlockTitle}>Quick prompts</h4>
-                <span className={styles.assistantGuideBlockMeta}>Tap to start faster</span>
+            {assistantStatus ? <p className={styles.chatNotice}>{assistantStatus}</p> : null}
+
+            {isQuoteFlow ? (
+              <div className={styles.inlineCard}>
+                <div className={styles.inlineCardHead}>
+                  <div>
+                    <p className={styles.inlineCardLabel}>Quote flow</p>
+                    <h3 className={styles.inlineCardTitle}>
+                      Step {quoteStageIndex} of {QUOTE_STAGE_ORDER.length}
+                    </h3>
+                  </div>
+                </div>
+                <div className={styles.inlineChipRow}>
+                  {activeQuoteChips.map((chip) => (
+                    <span key={chip} className={styles.inlineChip}>
+                      {chip}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className={styles.assistantQuickList}>
-                {QUICK_PROMPTS.map((prompt) => (
+            ) : null}
+
+            {quoteResult ? (
+              <div className={styles.inlineCard}>
+                <div className={styles.inlineCardHead}>
+                  <div>
+                    <p className={styles.inlineCardLabel}>Quote ready</p>
+                    <h3 className={styles.inlineCardTitle}>Ready for a formal quote?</h3>
+                  </div>
+                  <span className={styles.inlineCardMeta}>{quoteResult.referenceId}</span>
+                </div>
+                <pre className={styles.quoteSummary}>{buildQuoteSummary(quoteResult)}</pre>
+                <div className={styles.inlineActions}>
+                  <Link className={cn("btn", "primary", styles.inlineActionPrimary)} href={`/quote${quotePrefillSearch}`}>
+                    Open quote form
+                  </Link>
+                  <a
+                    className={cn("btn", "outline", styles.inlineActionSecondary)}
+                    href={quoteWhatsAppUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    WhatsApp Oduzz
+                  </a>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className={styles.composerDock}>
+            {isQuoteFlow ? (
+              <div className={styles.uploadRow}>
+                <div className={styles.uploadCopy}>
+                  <span className={styles.uploadLabel}>Project photos</span>
+                  <p className={styles.uploadText}>
+                    Optional. Up to {MAX_QUOTE_IMAGE_COUNT} images, {Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB each.
+                  </p>
+                </div>
+                <label className={cn("assistantUploadButton", styles.uploadButton)}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleQuoteImageChange}
+                    disabled={isUploadingQuoteImage || isResponding}
+                  />
+                  {isUploadingQuoteImage ? "Uploading..." : "Add photos"}
+                </label>
+              </div>
+            ) : null}
+
+            {quoteFlowOptions.length ? (
+              <div className={styles.quickChipRow} aria-label="Current assistant suggestions">
+                {quoteFlowOptions.map((option) => (
                   <button
-                    key={prompt}
+                    key={option}
                     type="button"
-                    className={styles.assistantQuickBtn}
-                    onClick={() => onQuickPrompt(prompt)}
+                    className={styles.quickChip}
+                    onClick={() => onQuickPrompt(option)}
                     disabled={isResponding}
                   >
-                    <span>{prompt}</span>
-                    <span className={styles.assistantQuickArrow} aria-hidden="true">
-                      ↗
-                    </span>
+                    {option}
                   </button>
                 ))}
               </div>
-            </div>
+            ) : null}
 
-            <div className={styles.assistantGuidePanel}>
-              <div className={styles.assistantGuidePanelTop}>
-                <div>
-                  <p className={styles.assistantGuidePanelLabel}>Project handoff</p>
-                  <p className={styles.assistantGuideText}>
-                    Need detailed pricing or site coordination? Move into the structured quote
-                    flow or WhatsApp.
-                  </p>
-                </div>
-                <span className={styles.assistantGuideResponse}>{CONTACT.whatsappResponseTime}</span>
-              </div>
-              <div className={styles.assistantGuideActions}>
-                <Link
-                  className={cn(styles.assistantGuideAction, styles.assistantGuideActionPrimary)}
-                  href="/quote"
-                >
-                  Open quote form
-                </Link>
-                <a
-                  className={styles.assistantGuideAction}
-                  href={CONTACT_LINKS.whatsapp}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  WhatsApp Oduzz
-                </a>
-              </div>
-            </div>
-
-            <div className={styles.assistantGuideFoot}>
-              <p className={styles.assistantGuideFootText}>
-                Knowledge source updated {lastUpdatedLabel}. Recommendations remain preliminary
-                until site inspection.
-              </p>
-            </div>
-          </aside>
-
-          <div className={cn("oduzzAssistantPanel", styles.assistantPagePanel)}>
-            <div className="oduzzAssistantHead">
-              <div className={styles.assistantHeadMeta}>
-                <span className={styles.assistantHeadKicker}>Oduzz Assistant</span>
-                <strong>Project planning, with a sharper front desk feel</strong>
-                <span>{headerMeta}</span>
-              </div>
-              <div className={styles.assistantHeadActions}>
-                <span className={styles.assistantStage}>{stageLabel}</span>
-                <button
-                  type="button"
-                  className={cn("btn", "outline", styles.assistantClearBtn)}
-                  onClick={onReset}
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-
-            <div
-              className={cn("oduzzAssistantBody", styles.assistantPageBody)}
-              ref={bodyRef}
-              role="log"
-              aria-live="polite"
-            >
-              {messages.map((message, index) => (
-                <div
-                  key={`${message.role}-${index}`}
-                  className={`assistantMessageRow ${message.role === "user" ? "user" : "assistant"}`}
-                >
-                  <div className="assistantMessageBadge" aria-hidden="true">
-                    {message.role === "user" ? "You" : "OE"}
-                  </div>
-                  <div className="assistantMessageStack">
-                    <div className="assistantMessageMeta">
-                      <strong>{message.role === "user" ? "You" : "Oduzz Assistant"}</strong>
-                      <span>{message.role === "user" ? "Request received" : "Guided response"}</span>
-                    </div>
-                    <div className={`oduzzMsg ${message.role === "user" ? "user" : "assistant"}`}>
-                      {message.text}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {isResponding ? (
-                <div className="assistantMessageRow assistant" aria-label="Assistant is typing">
-                  <div className="assistantMessageBadge" aria-hidden="true">
-                    OE
-                  </div>
-                  <div className="assistantMessageStack">
-                    <div className="assistantMessageMeta">
-                      <strong>Oduzz Assistant</strong>
-                      <span>Preparing reply</span>
-                    </div>
-                    <div className="oduzzMsg assistant assistantTyping">Oduzz is thinking...</div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className={cn("oduzzAssistantComposer", styles.assistantPageComposer)}>
-              {isQuoteFlow ? (
-                <div className={styles.assistantUploadPanel}>
-                  <div>
-                    <p className={styles.assistantUploadLabel}>Optional project photos</p>
-                    <p className={styles.assistantUploadHint}>
-                      Upload up to {MAX_QUOTE_IMAGE_COUNT} images,{" "}
-                      {Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB each. They are stored
-                      for human review only.
-                    </p>
-                  </div>
-                  <label className={cn("assistantUploadButton", styles.assistantUploadButton)}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleQuoteImageChange}
-                      disabled={isUploadingQuoteImage || isResponding}
-                    />
-                    {isUploadingQuoteImage ? "Uploading..." : "Add images"}
-                  </label>
-                </div>
-              ) : null}
-
-              {quoteFlowOptions.length ? (
-                <div className={styles.assistantFlowOptions} aria-label="Current assistant suggestions">
-                  {quoteFlowOptions.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      className={styles.assistantFlowOption}
-                      onClick={() => onQuickPrompt(option)}
-                      disabled={isResponding}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className={styles.assistantComposerRow}>
-                <div className={styles.assistantInputShell}>
-                  <textarea
-                    value={input}
-                    onChange={(event) => setInput(event.target.value.slice(0, MAX_INPUT_CHARS))}
-                    onKeyDown={onKeyDown}
-                    placeholder="Ask Oduzz about solar sizing, wiring, lighting..."
-                    rows={3}
-                    maxLength={MAX_INPUT_CHARS}
-                    aria-label="Ask Oduzz a question"
-                    disabled={isResponding}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className={cn("btn", "primary", styles.assistantSendBtn)}
-                  onClick={onSend}
+            <div className={styles.composerRow}>
+              <div className={styles.inputShell}>
+                <textarea
+                  value={input}
+                  onChange={(event) => setInput(event.target.value.slice(0, MAX_INPUT_CHARS))}
+                  onKeyDown={onKeyDown}
+                  placeholder="Ask about solar sizing, wiring, lighting, or quotes..."
+                  rows={1}
+                  maxLength={MAX_INPUT_CHARS}
+                  aria-label="Ask Oduzz a question"
                   disabled={isResponding}
-                >
-                  {isResponding ? "Replying..." : "Send"}
-                </button>
+                />
               </div>
-              <div className={styles.assistantComposerMeta}>
-                <p className={styles.assistantHint}>Press Enter to send. Use Shift+Enter for a new line.</p>
-                <p className={cn(styles.assistantHint, styles.assistantHintCount)}>
-                  {input.length}/{MAX_INPUT_CHARS} characters
-                </p>
-              </div>
-              {assistantStatus ? <p className="assistantStatus">{assistantStatus}</p> : null}
-              {quoteResult ? (
-                <div className={styles.assistantQuoteResult}>
-                  <div className={styles.assistantQuoteResultHead}>
-                    <div>
-                      <p className={styles.assistantQuoteResultLabel}>Qualified lead package</p>
-                      <h4 className={styles.assistantQuoteResultTitle}>
-                        Send this quote brief into the next step
-                      </h4>
-                    </div>
-                    <span className={styles.assistantQuoteResultMeta}>{quoteResult.referenceId}</span>
-                  </div>
-                  <pre className={styles.assistantQuoteResultSummary}>{buildQuoteSummary(quoteResult)}</pre>
-                  <div className={styles.assistantQuoteResultActions}>
-                    <Link
-                      className={cn(styles.assistantGuideAction, styles.assistantGuideActionPrimary)}
-                      href={`/quote${quotePrefillSearch}`}
-                    >
-                      Review in quote form
-                    </Link>
-                    <a
-                      className={styles.assistantGuideAction}
-                      href={quoteWhatsAppUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Send to WhatsApp
-                    </a>
-                  </div>
-                </div>
-              ) : null}
+              <button
+                type="button"
+                className={cn("btn", "primary", styles.sendBtn)}
+                onClick={onSend}
+                disabled={isResponding}
+              >
+                {isResponding ? "Replying..." : "Send"}
+              </button>
             </div>
+
+            {showCharacterCount ? (
+              <div className={styles.composerMeta}>
+                <span>
+                  {input.length}/{MAX_INPUT_CHARS}
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
       </Container>

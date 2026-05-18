@@ -52,23 +52,6 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           subtitle="Browse selected electrical projects across wiring, lighting, solar, and finishing work with clear scope, duration, and outcome context."
         />
 
-        <div className="seoCardGrid seoIntroCard">
-          <article className="card seoInfoCard">
-            <h2 className="cardTitle">What these projects show</h2>
-            <p className="p">
-              Selected case studies across solar, wiring, lighting, and finishing work completed
-              with cleaner routing, safer planning, and better installation outcomes.
-            </p>
-          </article>
-          <article className="card seoInfoCard">
-            <h2 className="cardTitle">Why clients review them</h2>
-            <p className="p">
-              They help clients inspect the quality of execution, understand project scope, and
-              request similar work with more confidence.
-            </p>
-          </article>
-        </div>
-
         <div className="seoContentCard seoIntroCard">
           <div className="seoContentGrid">
             <div>
