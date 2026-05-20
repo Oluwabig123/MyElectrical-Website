@@ -664,10 +664,6 @@ export default function AssistantClient() {
   return (
     <section className={cn("section", styles.assistantPage)}>
       <Container className={styles.assistantContainer}>
-        <div className={styles.pageIntro}>
-          <h1>Oduzz AI Electrical Assistant</h1>
-          <p>Ask about solar sizing, wiring, lighting, products, CCTV, and quote preparation.</p>
-        </div>
         <div className={styles.chatShell}>
           <header className={styles.chatHeader}>
             <div className={styles.chatBrand}>

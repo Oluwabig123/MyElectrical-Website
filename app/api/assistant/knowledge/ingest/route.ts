@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       success: true,
       documentId: result.documentId,
       chunkCount: result.chunkCount,
+      deactivatedCount: result.deactivatedCount,
     });
   } catch (error) {
     const message =

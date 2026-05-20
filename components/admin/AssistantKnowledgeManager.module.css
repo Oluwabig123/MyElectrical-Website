@@ -1,0 +1,121 @@
+.uploadPanel {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.uploadTitle {
+  margin: 0;
+  color: rgba(247, 251, 255, 0.96);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.uploadHint {
+  margin: 0;
+  color: rgba(214, 223, 238, 0.78);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.dropZone {
+  margin-top: 2px;
+  padding: 16px 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dropZone p {
+  margin: 0;
+  color: rgba(236, 242, 250, 0.9);
+  font-size: 13px;
+}
+
+.dropZoneActive {
+  border-color: rgba(255, 212, 0, 0.58);
+  background: rgba(255, 212, 0, 0.08);
+}
+
+.uploadButton {
+  position: relative;
+  overflow: hidden;
+}
+
+.uploadButton input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 18px;
+}
+
+.form {
+  margin: 0;
+}
+
+.listWrap {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.listItem {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.listItemCopy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.itemTitle {
+  margin: 0;
+  color: rgba(247, 251, 255, 0.97);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.itemActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.itemActions :global(.btn) {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

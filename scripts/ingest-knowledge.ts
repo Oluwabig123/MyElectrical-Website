@@ -74,6 +74,7 @@ async function ingestFile(filePath: string) {
     sourceType: "manual",
     sourceUrl,
     content,
+    replaceExistingTitle: true,
   });
 
   return {
@@ -82,6 +83,7 @@ async function ingestFile(filePath: string) {
     category,
     documentId: result.documentId,
     chunkCount: result.chunkCount,
+    deactivatedCount: result.deactivatedCount,
   };
 }
 
@@ -103,7 +105,7 @@ async function main() {
       const result = await ingestFile(filePath);
       successCount += 1;
       console.log(
-        `Ingested ${result.fileName} -> ${result.documentId} (${result.chunkCount} chunks) [${result.category}]`,
+        `Ingested ${result.fileName} -> ${result.documentId} (${result.chunkCount} chunks, deactivated ${result.deactivatedCount}) [${result.category}]`,
       );
     } catch (error) {
       failureCount += 1;

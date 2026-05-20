@@ -28,6 +28,7 @@ export type KnowledgeDocumentInput = {
   sourceType?: string | null;
   sourceUrl?: string | null;
   content: string;
+  replaceExistingTitle?: boolean | null;
 };
 
 type OpenAIEmbeddingPayload = {
@@ -88,6 +89,17 @@ function sanitizeMultilineText(value: unknown) {
 
 function sanitizeChunkText(value: string) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function sanitizeBoolean(value: unknown, fallback = true) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+
+  const normalized = sanitizeText(value).toLowerCase();
+  if (["true", "1", "yes", "y", "on"].includes(normalized)) return true;
+  if (["false", "0", "no", "n", "off"].includes(normalized)) return false;
+
+  return fallback;
 }
 
 function countWords(value: string) {
@@ -257,6 +269,7 @@ export async function ingestKnowledgeDocument(input: KnowledgeDocumentInput) {
   const category = sanitizeText(input.category) || null;
   const sourceType = sanitizeText(input.sourceType) || "manual";
   const sourceUrl = sanitizeText(input.sourceUrl) || null;
+  const replaceExistingTitle = sanitizeBoolean(input.replaceExistingTitle, true);
 
   if (!title) {
     throw new Error("Document title is required.");
@@ -316,9 +329,42 @@ export async function ingestKnowledgeDocument(input: KnowledgeDocumentInput) {
     throw new Error(chunkInsertError.message || "Could not insert document chunks.");
   }
 
+  let deactivatedCount = 0;
+
+  if (replaceExistingTitle) {
+    const { data: staleRows, error: staleLookupError } = await supabaseAdmin!
+      .from("documents")
+      .select("id")
+      .ilike("title", title)
+      .eq("is_active", true)
+      .neq("id", documentRow.id);
+
+    if (staleLookupError) {
+      throw new Error(staleLookupError.message || "Could not check previous document versions.");
+    }
+
+    const staleIds = (Array.isArray(staleRows) ? staleRows : [])
+      .map((row) => sanitizeText((row as { id?: unknown })?.id))
+      .filter(Boolean);
+
+    if (staleIds.length > 0) {
+      const { error: deactivateError } = await supabaseAdmin!
+        .from("documents")
+        .update({ is_active: false })
+        .in("id", staleIds);
+
+      if (deactivateError) {
+        throw new Error(deactivateError.message || "Could not deactivate previous document versions.");
+      }
+
+      deactivatedCount = staleIds.length;
+    }
+  }
+
   return {
     documentId: documentRow.id,
     chunkCount: chunkRows.length,
+    deactivatedCount,
   };
 }
 
@@ -644,5 +690,6 @@ export function sanitizeKnowledgePayload(body: unknown) {
     sourceType: sanitizeText(record.source_type || record.sourceType) || "manual",
     sourceUrl: sanitizeText(record.source_url || record.sourceUrl) || null,
     content: sanitizeMultilineText(record.content),
+    replaceExistingTitle: sanitizeBoolean(record.replace_existing ?? record.replaceExistingTitle, true),
   };
 }

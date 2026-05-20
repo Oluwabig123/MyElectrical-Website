@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import ProductsAdminManager from "@/components/products/ProductsAdminManager";
+import AssistantKnowledgeManager from "@/components/admin/AssistantKnowledgeManager";
 import Container from "@/components/layout/Container";
 import { getAdminSession, sanitizeNextPath } from "@/lib/admin-auth";
 import { buildMetadata } from "@/lib/seo";
@@ -10,9 +10,9 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   ...buildMetadata({
-    title: "Admin Products",
-    description: "Admin workspace for managing cloud products.",
-    path: "/admin/products",
+    title: "Admin Assistant Knowledge",
+    description: "Admin workspace for managing assistant knowledge documents.",
+    path: "/admin/assistant-knowledge",
     image: "/hero/lightings.webp",
   }),
   robots: {
@@ -21,11 +21,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AdminProductsPage() {
+export default async function AdminAssistantKnowledgePage() {
   const adminSession = await getAdminSession();
 
   if (!adminSession) {
-    redirect(`/admin/login?next=${encodeURIComponent(sanitizeNextPath("/admin/products"))}`);
+    redirect(
+      `/admin/login?next=${encodeURIComponent(sanitizeNextPath("/admin/assistant-knowledge"))}`,
+    );
   }
 
   return (
@@ -33,19 +35,19 @@ export default async function AdminProductsPage() {
       <Container>
         <div className="sectionHeader">
           <div className="kicker">Admin</div>
-          <h1 className="h2">Product Manager</h1>
+          <h1 className="h2">Assistant Knowledge</h1>
           <p className="p">
-            Signed in as {adminSession.email}. This workspace is reserved for product
-            administration.
+            Signed in as {adminSession.email}. Manage business documents that power assistant
+            responses.
           </p>
           <div className="chips">
-            <Link className="chip" href="/admin/assistant-knowledge">
-              Open Assistant Knowledge
+            <Link className="chip" href="/admin/products">
+              Open Product Manager
             </Link>
           </div>
         </div>
 
-        <ProductsAdminManager />
+        <AssistantKnowledgeManager />
       </Container>
     </section>
   );
