@@ -10,6 +10,9 @@ const DEFAULT_MAX_OUTPUT_TOKENS = readPositiveInt(process.env.OPENAI_MAX_OUTPUT_
 const CHUNK_MIN_WORDS = 500;
 const CHUNK_TARGET_WORDS = 700;
 const CHUNK_MAX_WORDS = 900;
+const PRIMARY_SIMILARITY_THRESHOLD = 0.72;
+const SECONDARY_SIMILARITY_THRESHOLD = 0.35;
+const KEYWORD_CONTEXT_SLICE_CHARS = 2000;
 
 const NO_KNOWLEDGE_MESSAGE =
   "I don’t have that exact information in the Oduzz knowledge base yet, but I can help you prepare the right details for the Oduzz team.";
@@ -50,6 +53,13 @@ type ChunkMatch = {
   source_url: string | null;
   similarity: number;
   metadata: Record<string, unknown> | null;
+};
+
+type KnowledgeDocumentRow = {
+  title: string | null;
+  category: string | null;
+  source_url: string | null;
+  content: string | null;
 };
 
 type ChatReply = {
@@ -316,6 +326,58 @@ function isQuoteIntent(text: string) {
   return /(quote|estimate|pricing|price|budget|inspection|site visit|whatsapp|contact)/i.test(text);
 }
 
+const SEARCH_STOP_WORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "and",
+  "or",
+  "to",
+  "of",
+  "for",
+  "in",
+  "on",
+  "my",
+  "your",
+  "our",
+  "about",
+  "with",
+  "can",
+  "could",
+  "please",
+  "tell",
+  "need",
+  "help",
+  "project",
+]);
+
+function toSearchTokens(text: string) {
+  return Array.from(
+    new Set(
+      sanitizeText(text)
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .map((token) => token.trim())
+        .filter((token) => token.length >= 3 && !SEARCH_STOP_WORDS.has(token)),
+    ),
+  ).slice(0, 12);
+}
+
+function scoreDocumentByTokens(document: KnowledgeDocumentRow, tokens: string[]) {
+  const title = sanitizeText(document.title).toLowerCase();
+  const category = sanitizeText(document.category).toLowerCase();
+  const content = sanitizeText(document.content).toLowerCase();
+
+  let score = 0;
+  for (const token of tokens) {
+    if (title.includes(token)) score += 3;
+    if (category.includes(token)) score += 2;
+    if (content.includes(token)) score += 1;
+  }
+
+  return score;
+}
+
 function buildSources(matches: ChunkMatch[]) {
   const seen = new Set<string>();
   const sources: ChatReply["sources"] = [];
@@ -356,6 +418,47 @@ async function findRelevantChunks(userQuestion: string, matchCount = 6, similari
   return (Array.isArray(data) ? data : []) as ChunkMatch[];
 }
 
+async function findKeywordRelevantChunks(userQuestion: string, matchCount = 4) {
+  ensureServerConfig();
+
+  const tokens = toSearchTokens(userQuestion);
+  if (!tokens.length) return [] as ChunkMatch[];
+
+  const { data, error } = await supabaseAdmin!
+    .from("documents")
+    .select("title, category, source_url, content")
+    .eq("is_active", true)
+    .limit(120);
+
+  if (error) {
+    throw new Error(error.message || "Keyword search failed.");
+  }
+
+  const ranked = (Array.isArray(data) ? (data as KnowledgeDocumentRow[]) : [])
+    .map((row) => ({
+      row,
+      score: scoreDocumentByTokens(row, tokens),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, Math.max(1, matchCount));
+
+  return ranked.map((entry, index) => {
+    const content = sanitizeText(entry.row.content).slice(0, KEYWORD_CONTEXT_SLICE_CHARS);
+    return {
+      chunk_text: content,
+      title: sanitizeText(entry.row.title) || "Oduzz knowledge",
+      category: sanitizeText(entry.row.category) || "General",
+      source_url: sanitizeText(entry.row.source_url) || null,
+      similarity: Math.max(0.18, 0.34 - index * 0.03),
+      metadata: {
+        retrieval: "keyword_fallback",
+        score: entry.score,
+      },
+    } as ChunkMatch;
+  });
+}
+
 function buildSystemInstructions() {
   return [
     "You are Oduzz Electrical Concepts' AI assistant.",
@@ -367,7 +470,8 @@ function buildSystemInstructions() {
     "Do not invent exact prices, warranties, stock availability, or technical specs unless they are present in the provided context.",
     "For safety-critical issues, recommend a qualified electrician and offer WhatsApp handoff.",
     "For quote-ready users, collect name, location, phone/WhatsApp number, service type, and project details.",
-    "If context is not enough, reply exactly with this sentence: \"I don’t have that exact information in the Oduzz knowledge base yet, but I can help you prepare the right details for the Oduzz team.\"",
+    "If retrieved context is provided, use it directly and do not return the fallback sentence.",
+    "Use this fallback sentence only when no retrieved context exists: \"I don’t have that exact information in the Oduzz knowledge base yet, but I can help you prepare the right details for the Oduzz team.\"",
     "Do not pretend to be a licensed on-site inspector.",
     "Never provide dangerous DIY electrical instructions.",
     "Never recommend unsafe wiring, bypasses, overloaded breakers, or unverified solar configurations.",
@@ -491,11 +595,19 @@ export async function generateAssistantChatReply(rawMessages: unknown): Promise<
   }
 
   const quoteIntentDetected = isQuoteIntent(latestUserMessage.content);
-  const primaryMatches = await findRelevantChunks(latestUserMessage.content, 6, 0.72);
-  const matches =
+  const primaryMatches = await findRelevantChunks(
+    latestUserMessage.content,
+    6,
+    PRIMARY_SIMILARITY_THRESHOLD,
+  );
+  const secondaryMatches =
     primaryMatches.length > 0
       ? primaryMatches
-      : await findRelevantChunks(latestUserMessage.content, 6, 0.5);
+      : await findRelevantChunks(latestUserMessage.content, 6, SECONDARY_SIMILARITY_THRESHOLD);
+  const matches =
+    secondaryMatches.length > 0
+      ? secondaryMatches
+      : await findKeywordRelevantChunks(latestUserMessage.content, 4);
 
   if (!matches.length) {
     return {
