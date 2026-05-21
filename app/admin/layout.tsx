@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import AdminWorkspaceShell from "@/components/admin/AdminWorkspaceShell";
+import Container from "@/components/layout/Container";
+import { getAdminSession } from "@/lib/admin-auth";
 
 export const metadata: Metadata = {
   robots: {
@@ -16,10 +19,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  const adminSession = await getAdminSession();
+
+  return (
+    <section className="section">
+      <Container>
+        <AdminWorkspaceShell adminEmail={adminSession?.email ?? null}>
+          {children}
+        </AdminWorkspaceShell>
+      </Container>
+    </section>
+  );
 }

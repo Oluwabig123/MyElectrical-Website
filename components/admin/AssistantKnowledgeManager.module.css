@@ -1,35 +1,101 @@
-.uploadPanel {
+.workspace {
   display: grid;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 18px;
+}
+
+.composeColumn {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
 }
 
-.uploadTitle {
-  margin: 0;
-  color: rgba(247, 251, 255, 0.96);
-  font-size: 15px;
-  font-weight: 700;
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.uploadHint {
+.panelEyebrow,
+.metricLabel,
+.previewMetaLabel {
+  margin: 0;
+  color: rgba(255, 212, 0, 0.78);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.panelTitle,
+.uploadTitle,
+.previewTitle {
+  margin: 0;
+  color: rgba(247, 251, 255, 0.96);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.panelNote,
+.uploadHint,
+.metricHint,
+.previewSourceFallback,
+.previewSnippet {
   margin: 0;
   color: rgba(214, 223, 238, 0.78);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.6;
+}
+
+.metricStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metricCard {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.metricValue {
+  margin: 0;
+  color: rgba(247, 251, 255, 0.96);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.uploadPanel {
+  display: grid;
+  gap: 10px;
 }
 
 .dropZone {
   margin-top: 2px;
-  padding: 16px 14px;
+  padding: 18px 16px;
   border: 1px dashed rgba(255, 255, 255, 0.24);
-  border-radius: 14px;
+  border-radius: 16px;
   display: grid;
   gap: 10px;
   justify-items: start;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.16);
 }
 
 .dropZone p {
@@ -55,20 +121,58 @@
   cursor: pointer;
 }
 
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: 18px;
-}
-
 .form {
   margin: 0;
 }
 
-.listWrap {
+.formGrid {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  align-content: start;
+}
+
+.formActions {
+  align-items: center;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 0.7fr));
+  gap: 12px;
+}
+
+.searchField,
+.filterField {
+  display: grid;
+  gap: 6px;
+}
+
+.searchField span,
+.filterField span,
+.previewLabel {
+  color: rgba(247, 251, 255, 0.88);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.searchField input,
+.filterField select {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(247, 251, 255, 0.94);
+  font: inherit;
+}
+
+.libraryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 14px;
+  align-items: start;
 }
 
 .list {
@@ -83,15 +187,40 @@
   display: grid;
   gap: 10px;
   padding: 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.listItemActive {
+  border-color: rgba(255, 212, 0, 0.3);
+  background: rgba(255, 212, 0, 0.06);
+}
+
+.listButton {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .listItemCopy {
   display: grid;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
+}
+
+.itemTitleRow,
+.tagRow,
+.previewHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .itemTitle {
@@ -100,6 +229,43 @@
   font-size: 15px;
   font-weight: 700;
   line-height: 1.35;
+}
+
+.tag,
+.tagMuted,
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.tag {
+  border: 1px solid rgba(255, 212, 0, 0.24);
+  background: rgba(255, 212, 0, 0.08);
+  color: rgba(255, 237, 160, 0.96);
+}
+
+.tagMuted {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(214, 223, 238, 0.84);
+}
+
+.statusPillActive {
+  border: 1px solid rgba(120, 224, 148, 0.3);
+  background: rgba(120, 224, 148, 0.1);
+  color: rgba(214, 255, 223, 0.96);
+}
+
+.statusPillInactive {
+  border: 1px solid rgba(255, 93, 93, 0.24);
+  background: rgba(255, 93, 93, 0.08);
+  color: rgba(255, 219, 219, 0.96);
 }
 
 .itemActions {
@@ -114,8 +280,93 @@
   font-size: 13px;
 }
 
-@media (max-width: 980px) {
-  .layout {
+.previewPanel {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  position: sticky;
+  top: 20px;
+}
+
+.previewMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.previewMetaCard {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.previewMetaCard strong {
+  color: rgba(247, 251, 255, 0.95);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.previewSource {
+  display: grid;
+  gap: 8px;
+}
+
+.previewSource a {
+  color: rgba(255, 212, 0, 0.9);
+  word-break: break-word;
+}
+
+.previewBody {
+  display: grid;
+  gap: 8px;
+}
+
+.previewContent {
+  margin: 0;
+  max-height: 420px;
+  overflow: auto;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.16);
+  color: rgba(236, 242, 250, 0.92);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 1180px) {
+  .workspace,
+  .libraryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .previewPanel {
+    position: static;
+  }
+
+  .metricStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .toolbar,
+  .formGrid,
+  .previewMetaGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .metricStrip {
     grid-template-columns: 1fr;
   }
 }

@@ -1,0 +1,121 @@
+.shell {
+  display: grid;
+  gap: 18px;
+}
+
+.intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.introCopy {
+  display: grid;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: rgba(255, 212, 0, 0.82);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: rgba(247, 251, 255, 0.97);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.08;
+}
+
+.lead,
+.hintLabel,
+.hintValue {
+  margin: 0;
+  color: rgba(214, 223, 238, 0.8);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.metaCard {
+  min-width: 220px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  gap: 4px;
+}
+
+.hintLabel {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hintValue {
+  color: rgba(247, 251, 255, 0.95);
+}
+
+.formBody {
+  display: grid;
+  gap: 6px;
+}
+
+.passwordWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.passwordWrap :global(input) {
+  margin: 0;
+}
+
+.toggleButton {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(247, 251, 255, 0.9);
+  font: inherit;
+  cursor: pointer;
+}
+
+.helperRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.helperText {
+  margin: 0;
+  color: rgba(214, 223, 238, 0.72);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.submittingText {
+  color: rgba(255, 212, 0, 0.86);
+}
+
+@media (max-width: 640px) {
+  .passwordWrap {
+    grid-template-columns: 1fr;
+  }
+
+  .metaCard {
+    min-width: 0;
+    width: 100%;
+  }
+}

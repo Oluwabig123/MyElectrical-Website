@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import ProductsAdminManager from "@/components/products/ProductsAdminManager";
-import Container from "@/components/layout/Container";
 import { getAdminSession, sanitizeNextPath } from "@/lib/admin-auth";
 import { buildMetadata } from "@/lib/seo";
 
@@ -22,31 +20,9 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminProductsPage() {
-  const adminSession = await getAdminSession();
-
-  if (!adminSession) {
+  if (!(await getAdminSession())) {
     redirect(`/admin/login?next=${encodeURIComponent(sanitizeNextPath("/admin/products"))}`);
   }
 
-  return (
-    <section className="section">
-      <Container>
-        <div className="sectionHeader">
-          <div className="kicker">Admin</div>
-          <h1 className="h2">Product Manager</h1>
-          <p className="p">
-            Signed in as {adminSession.email}. This workspace is reserved for product
-            administration.
-          </p>
-          <div className="chips">
-            <Link className="chip" href="/admin/assistant-knowledge">
-              Open Assistant Knowledge
-            </Link>
-          </div>
-        </div>
-
-        <ProductsAdminManager />
-      </Container>
-    </section>
-  );
+  return <ProductsAdminManager />;
 }

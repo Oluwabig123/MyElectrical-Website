@@ -34,9 +34,19 @@ function extensionFromName(fileName: string) {
 }
 
 async function readPdfText(buffer: Buffer) {
-  // Force the Node/CJS build so Next route bundling does not pick a browser-oriented export
-  // that depends on DOM globals like DOMMatrix.
-  const { PDFParse } = require("pdf-parse") as typeof import("pdf-parse");
+  // Load the parser by absolute file path at runtime so Next/Turbopack cannot
+  // rewrite it to the browser build, which depends on DOM globals like DOMMatrix.
+  const pdfParseRuntimePath = path.join(
+    process.cwd(),
+    "node_modules",
+    "pdf-parse",
+    "dist",
+    "pdf-parse",
+    "cjs",
+    "index.cjs",
+  );
+  const runtimeRequire = (0, eval)("require") as NodeRequire;
+  const { PDFParse } = runtimeRequire(pdfParseRuntimePath) as typeof import("pdf-parse");
   const parser = new PDFParse({ data: buffer });
   try {
     const result = await parser.getText();

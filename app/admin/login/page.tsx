@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
-import Container from "@/components/layout/Container";
 import {
   getAdminSession,
   hasAdminAuthConfig,
@@ -46,28 +45,8 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
   const isConfigured = hasAdminAuthConfig() && isSupabaseConfigured;
 
   return (
-    <section className="section">
-      <Container>
-        <div className="sectionHeader">
-          <div className="kicker">Admin</div>
-          <h1 className="h2">Sign in to Product Manager</h1>
-          <p className="p">
-            This route is protected. Only approved admin accounts can access the product manager.
-          </p>
-        </div>
-
-        <article className="card productsAdminShell">
-          {!isConfigured ? (
-            <p className="formStatus error">
-              Admin access is not configured. Add `NEXT_PUBLIC_SUPABASE_URL`,
-              `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `ADMIN_EMAIL` or `ADMIN_EMAILS`, and
-              `ADMIN_SESSION_SECRET`.
-            </p>
-          ) : null}
-
-          <AdminLoginForm nextPath={nextPath} isConfigured={isConfigured} />
-        </article>
-      </Container>
-    </section>
+    <article className="card productsAdminShell">
+      <AdminLoginForm nextPath={nextPath} isConfigured={isConfigured} />
+    </article>
   );
 }
