@@ -1,4 +1,5 @@
 import path from "node:path";
+import { createRequire } from "node:module";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
@@ -7,6 +8,7 @@ const DOCX_MIME_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
 const TEXT_MIME_TYPES = new Set(["text/plain", "text/markdown", "application/octet-stream"]);
+const require = createRequire(import.meta.url);
 
 function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -32,7 +34,9 @@ function extensionFromName(fileName: string) {
 }
 
 async function readPdfText(buffer: Buffer) {
-  const { PDFParse } = await import("pdf-parse");
+  // Force the Node/CJS build so Next route bundling does not pick a browser-oriented export
+  // that depends on DOM globals like DOMMatrix.
+  const { PDFParse } = require("pdf-parse/dist/pdf-parse/cjs/index.cjs") as typeof import("pdf-parse");
   const parser = new PDFParse({ data: buffer });
   try {
     const result = await parser.getText();
