@@ -36,7 +36,7 @@ function extensionFromName(fileName: string) {
 async function readPdfText(buffer: Buffer) {
   // Force the Node/CJS build so Next route bundling does not pick a browser-oriented export
   // that depends on DOM globals like DOMMatrix.
-  const { PDFParse } = require("pdf-parse/dist/pdf-parse/cjs/index.cjs") as typeof import("pdf-parse");
+  const { PDFParse } = require("pdf-parse") as typeof import("pdf-parse");
   const parser = new PDFParse({ data: buffer });
   try {
     const result = await parser.getText();
