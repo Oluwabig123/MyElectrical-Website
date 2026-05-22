@@ -5,34 +5,27 @@ import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/layout/Container";
 import { buildWhatsAppUrl } from "@/data/contact";
-import { oduzzAssistantDoc } from "@/data/oduzz-assistant-doc";
+import {
+  buildFlowCompletionMessage,
+  createConsultationWhatsAppUrl,
+  detectSafetyConcern,
+  generateConsultationSummary,
+  getAssistantFlow,
+  getAssistantFlowChoices,
+  resolveAssistantFlowId,
+  startAssistantFlow,
+  type ConsultationAnswerMap,
+  type ConsultationSummary,
+} from "@/lib/assistant-flow-helpers";
+import { type AssistantFlowId } from "@/lib/assistant-flows";
 import {
   buildFallbackAssistantReply,
-  buildSolarRecommendation,
   clampMessage,
   INITIAL_ASSISTANT_MESSAGE,
   MAX_INPUT_CHARS,
   MAX_MESSAGES,
-  normalize,
-  shouldStartQuoteFlow,
-  shouldStartSolarSizingFlow,
-  toNumber,
 } from "@/lib/assistant-core";
-import {
-  BUDGET_OPTIONS,
-  INITIAL_QUOTE_FORM,
-  SERVICE_OPTIONS,
-  URGENCY_OPTIONS,
-  buildQuotePrefillSearch,
-  buildQuoteSummary,
-  buildQuoteWhatsAppMessage,
-  createQuoteReference,
-  isValidPhone,
-  matchQuoteBudget,
-  matchQuoteService,
-  matchQuoteUrgency,
-  sanitizePhoneInput,
-} from "@/lib/quote-request";
+import { buildQuotePrefillSearch, buildQuoteSummary, createQuoteReference } from "@/lib/quote-request";
 import {
   MAX_QUOTE_IMAGE_COUNT,
   MAX_QUOTE_IMAGE_SIZE_BYTES,
@@ -42,48 +35,16 @@ import {
 } from "@/lib/quote-lead-storage";
 import styles from "./AssistantClient.module.css";
 
-const QUICK_STARTS = [
-  { label: "Size my solar system", prompt: "Size my solar system" },
-  { label: "Recommend electrical materials", prompt: "Recommend electrical materials for my project" },
-  { label: "I need wiring help", prompt: "I need wiring help" },
-  { label: "Lighting recommendation", prompt: "Lighting recommendation for my space" },
-  { label: "CCTV / smart home", prompt: "CCTV / smart home options for my property" },
-  { label: "Request a quote", prompt: "Start quote intake" },
-  { label: "Continue on WhatsApp", prompt: "Continue on WhatsApp for quote support" },
-] as const;
-
-const QUOTE_STAGE_ORDER = [
-  "quote-service",
-  "quote-location",
-  "quote-details",
-  "quote-urgency",
-  "quote-budget",
-  "quote-name",
-  "quote-phone",
-] as const;
-
 type AssistantMessage = {
   role: "assistant" | "user";
   text: string;
+  isSafety?: boolean;
   usedKnowledgeBase?: boolean;
-  quoteIntentDetected?: boolean;
-  sources?: Array<{
-    title: string;
-    category: string;
-  }>;
 };
 
-type Stage =
-  | "idle"
-  | "solar-loads"
-  | "solar-location"
-  | "solar-backup"
-  | (typeof QUOTE_STAGE_ORDER)[number];
-
-type SolarDraft = {
-  loadsWatts: number | null;
-  location: string;
-  backupHours: number | null;
+type CompletedConsultation = {
+  flowId: AssistantFlowId;
+  summary: ConsultationSummary;
 };
 
 function cn(...classNames: Array<string | false | null | undefined>) {
@@ -100,7 +61,6 @@ function renderMessageText(text: string) {
         .split("\n")
         .map((line) => line.trim())
         .filter(Boolean);
-
       const isListBlock =
         lines.length > 1 && lines.every((line) => /^(\d+\.\s|[-*]\s)/.test(line));
 
@@ -149,193 +109,96 @@ async function requestAssistantReply(messages: AssistantMessage[]) {
 
   return {
     answer: String(payload.answer || payload.text || "").trim(),
-    sources: Array.isArray(payload.sources)
-      ? payload.sources
-          .map((item: unknown) => {
-            const source = (item && typeof item === "object" ? item : {}) as {
-              title?: unknown;
-              category?: unknown;
-            };
-
-            return {
-              title: String(source.title || "").trim(),
-              category: String(source.category || "").trim(),
-            };
-          })
-          .filter((item: { title: string; category: string }) => item.title)
-      : [],
     usedKnowledgeBase: Boolean(payload.usedKnowledgeBase),
-    quoteIntentDetected: Boolean(payload.quoteIntentDetected),
   };
 }
 
+const FLOW_CHOICES = getAssistantFlowChoices();
+
 export default function AssistantClient() {
   const [input, setInput] = useState("");
-  const [stage, setStage] = useState<Stage>("idle");
-  const [draft, setDraft] = useState<SolarDraft>({
-    loadsWatts: null,
-    location: "",
-    backupHours: null,
-  });
-  const [quoteDraft, setQuoteDraft] = useState({
-    ...INITIAL_QUOTE_FORM,
-    imageUrls: [] as string[],
-  });
-  const [quoteResult, setQuoteResult] = useState<typeof INITIAL_QUOTE_FORM | null>(null);
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       role: "assistant",
       text: INITIAL_ASSISTANT_MESSAGE,
     },
   ]);
+  const [activeFlowId, setActiveFlowId] = useState<AssistantFlowId | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<ConsultationAnswerMap>({});
+  const [completion, setCompletion] = useState<CompletedConsultation | null>(null);
   const [isResponding, setIsResponding] = useState(false);
-  const [isUploadingQuoteImage, setIsUploadingQuoteImage] = useState(false);
   const [assistantStatus, setAssistantStatus] = useState("");
+  const [quoteImageUrls, setQuoteImageUrls] = useState<string[]>([]);
+  const [quoteReferenceId, setQuoteReferenceId] = useState("");
+  const [isUploadingQuoteImage, setIsUploadingQuoteImage] = useState(false);
   const bodyRef = useRef<HTMLDivElement | null>(null);
-  const isQuoteFlow = stage.startsWith("quote-");
-  const quoteStageIndex = isQuoteFlow
-    ? QUOTE_STAGE_ORDER.findIndex((item) => item === stage) + 1
-    : 0;
-  const quotePrefillSearch = useMemo(
-    () => (quoteResult ? buildQuotePrefillSearch(quoteResult, { source: "assistant" }) : ""),
-    [quoteResult],
-  );
-  const quoteWhatsAppUrl = useMemo(() => {
-    if (!quoteResult) return "";
-    return buildWhatsAppUrl(
-      encodeURIComponent(buildQuoteWhatsAppMessage(quoteResult, { source: "assistant" })),
-    );
-  }, [quoteResult]);
-  const quoteFlowOptions = useMemo(() => {
-    if (stage === "quote-service") return SERVICE_OPTIONS;
-    if (stage === "quote-urgency") return URGENCY_OPTIONS;
-    if (stage === "quote-budget") return BUDGET_OPTIONS;
-    return [];
-  }, [stage]);
-  const headerStatus = useMemo(() => {
-    if (isResponding) return "Replying";
-    if (stage.startsWith("solar-")) return "Solar sizing";
-    if (stage.startsWith("quote-")) return `Quote ${quoteStageIndex}/${QUOTE_STAGE_ORDER.length}`;
-    return "";
-  }, [isResponding, quoteStageIndex, stage]);
-  const showWelcomePrompts = messages.length === 1 && messages[0]?.role === "assistant" && !isQuoteFlow && !quoteResult;
-  const showCharacterCount = input.length >= MAX_INPUT_CHARS - 80;
-  const activeQuoteData = isQuoteFlow ? quoteDraft : quoteResult;
-  const activeQuoteChips = [
-    activeQuoteData?.service ? `Service: ${activeQuoteData.service}` : "",
-    activeQuoteData?.location ? `Location: ${activeQuoteData.location}` : "",
-    activeQuoteData?.urgency ? `Urgency: ${activeQuoteData.urgency}` : "",
-    activeQuoteData?.budget ? `Budget: ${activeQuoteData.budget}` : "",
-    `Photos: ${Array.isArray(activeQuoteData?.imageUrls) ? activeQuoteData?.imageUrls.length : 0}/${MAX_QUOTE_IMAGE_COUNT}`,
-  ].filter(Boolean);
-  const quoteSummaryRows = useMemo(() => {
-    if (!quoteResult) return [];
 
-    return [
-      { label: "Service", value: quoteResult.service || "Pending" },
-      { label: "Location", value: quoteResult.location || "Pending" },
-      { label: "Urgency", value: quoteResult.urgency || "Pending" },
-      { label: "Budget", value: quoteResult.budget || "Pending" },
-      { label: "Contact", value: quoteResult.name || "Pending" },
-      { label: "Phone", value: quoteResult.phone || "Pending" },
-      { label: "Brief", value: quoteResult.details || "Pending" },
-    ];
-  }, [quoteResult]);
+  const activeFlow = activeFlowId ? getAssistantFlow(activeFlowId) : null;
+  const totalQuestions = activeFlow?.questions.length || 0;
+  const isBusy = isResponding || isUploadingQuoteImage;
+  const headerState = useMemo(() => {
+    if (isResponding) return "Replying";
+    if (activeFlow) return `${activeFlow.label} ${currentQuestionIndex + 1}/${totalQuestions}`;
+    if (completion) return "Summary ready";
+    return "Consultation desk";
+  }, [activeFlow, completion, currentQuestionIndex, isResponding, totalQuestions]);
+  const showCharacterCount = input.length >= MAX_INPUT_CHARS - 80;
+  const activeQuotePhotoCount = activeFlowId === "quote" ? quoteImageUrls.length : 0;
+  const completionQuoteLink = completion
+    ? `/quote${buildQuotePrefillSearch(completion.summary.quoteForm, { source: "assistant" })}`
+    : "/quote";
 
   useEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
     body.scrollTop = body.scrollHeight;
-  }, [messages, isResponding]);
+  }, [assistantStatus, completion, isResponding, messages]);
 
-  function addAssistant(
+  function addAssistantMessage(
     text: string,
     metadata?: {
+      isSafety?: boolean;
       usedKnowledgeBase?: boolean;
-      quoteIntentDetected?: boolean;
-      sources?: Array<{ title: string; category: string }>;
     },
   ) {
     const safeText = clampMessage(text);
     const nextMessage: AssistantMessage = {
       role: "assistant",
       text: safeText,
+      isSafety: Boolean(metadata?.isSafety),
       usedKnowledgeBase: Boolean(metadata?.usedKnowledgeBase),
-      quoteIntentDetected: Boolean(metadata?.quoteIntentDetected),
-      sources: metadata?.sources || [],
     };
-    setMessages((prev) => [...prev, nextMessage].slice(-MAX_MESSAGES));
+    setMessages((prev) => [
+      ...prev,
+      nextMessage,
+    ].slice(-MAX_MESSAGES));
   }
 
-  function resetQuoteDraft() {
-    setQuoteDraft({ ...INITIAL_QUOTE_FORM, imageUrls: [] });
-  }
-
-  function startQuoteFlow(raw = "") {
-    const inferredService = matchQuoteService(raw);
-    const referenceId = createQuoteReference();
+  function resetAssistant() {
+    if (isBusy) return;
+    setInput("");
+    setActiveFlowId(null);
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    setCompletion(null);
     setAssistantStatus("");
-    setQuoteResult(null);
-    setQuoteDraft({
-      ...INITIAL_QUOTE_FORM,
-      imageUrls: [],
-      referenceId,
-      service: inferredService || "",
-    });
-
-    if (inferredService) {
-      setStage("quote-location");
-      addAssistant(
-        `I can prepare a quote brief for ${inferredService}. What location is this project in?`,
-      );
-      return;
-    }
-
-    setStage("quote-service");
-    addAssistant(
-      [
-        "I can turn this into a quote-ready brief.",
-        "First, what service do you need?",
-        SERVICE_OPTIONS.map((option, index) => `${index + 1}. ${option}`).join("\n"),
-      ].join("\n"),
-    );
+    setQuoteImageUrls([]);
+    setQuoteReferenceId("");
+    setMessages([{ role: "assistant", text: INITIAL_ASSISTANT_MESSAGE }]);
   }
 
-  async function finishQuoteFlow(
-    finalDraft: typeof INITIAL_QUOTE_FORM,
-    history: AssistantMessage[],
-  ) {
-    const completedDraft = {
-      ...finalDraft,
-      referenceId: finalDraft.referenceId || createQuoteReference(),
-      imageUrls: Array.isArray(finalDraft.imageUrls) ? finalDraft.imageUrls : [],
-    };
-
-    setQuoteResult(completedDraft);
-    setStage("idle");
-    setQuoteDraft({ ...INITIAL_QUOTE_FORM, imageUrls: [] });
-    setAssistantStatus("Quote intake ready. Saving the lead record...");
-    addAssistant(
-      [
-        buildQuoteSummary(completedDraft),
-        "",
-        "Next step: open the quote form for review or send this summary straight to WhatsApp.",
-      ].join("\n"),
-    );
-
-    const { saved } = await saveQuoteLead({
-      form: completedDraft,
-      source: "assistant",
-      channel: "assistant-chat",
-      summary: buildQuoteSummary(completedDraft),
-      conversation: Array.isArray(history) ? history.slice(-12) : [],
-    });
-
-    setAssistantStatus(
-      saved
-        ? "Quote intake saved and ready for handoff."
-        : "Quote intake ready. Lead storage is unavailable, but handoff still works.",
-    );
+  function startFlow(flowId: AssistantFlowId) {
+    const { introMessage } = startAssistantFlow(flowId);
+    setInput("");
+    setAssistantStatus("");
+    setActiveFlowId(flowId);
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    setCompletion(null);
+    setQuoteImageUrls([]);
+    setQuoteReferenceId(flowId === "quote" ? createQuoteReference() : "");
+    setMessages([{ role: "assistant", text: introMessage }]);
   }
 
   async function handleQuoteImageChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -344,33 +207,32 @@ export default function AssistantClient() {
 
     if (!files.length) return;
 
-    if (!isQuoteFlow) {
-      setAssistantStatus("Start a quote intake first if you want to attach project photos.");
+    if (activeFlowId !== "quote") {
+      setAssistantStatus("Photo upload is only available during the quote flow.");
       return;
     }
 
     if (!canUploadQuoteImages()) {
       setAssistantStatus(
-        "Image uploads need Supabase configuration. To keep costs down, images are stored only for human review.",
+        "Image uploads need Supabase configuration. You can still send photos on WhatsApp.",
       );
       return;
     }
 
-    const existingCount = Array.isArray(quoteDraft.imageUrls) ? quoteDraft.imageUrls.length : 0;
-    const remainingSlots = MAX_QUOTE_IMAGE_COUNT - existingCount;
+    const remainingSlots = MAX_QUOTE_IMAGE_COUNT - quoteImageUrls.length;
 
     if (remainingSlots <= 0) {
-      setAssistantStatus(`You already added the maximum of ${MAX_QUOTE_IMAGE_COUNT} images.`);
+      setAssistantStatus(`You already added the maximum of ${MAX_QUOTE_IMAGE_COUNT} photos.`);
       return;
     }
 
-    const selectedFiles = files.slice(0, remainingSlots);
+    const referenceId = quoteReferenceId || createQuoteReference();
+    setQuoteReferenceId(referenceId);
     setIsUploadingQuoteImage(true);
     setAssistantStatus("");
 
-    const referenceId = quoteDraft.referenceId || createQuoteReference();
     const { imageUrls, error } = await uploadQuoteLeadImages({
-      files: selectedFiles,
+      files: files.slice(0, remainingSlots),
       referenceId,
     });
 
@@ -381,33 +243,91 @@ export default function AssistantClient() {
       return;
     }
 
-    setQuoteDraft((current) => ({
-      ...current,
-      referenceId,
-      imageUrls: [...(current.imageUrls || []), ...imageUrls].slice(0, MAX_QUOTE_IMAGE_COUNT),
-    }));
+    setQuoteImageUrls((current) => [...current, ...imageUrls].slice(0, MAX_QUOTE_IMAGE_COUNT));
     setAssistantStatus(
-      `${imageUrls.length} image(s) uploaded. They will be included in the saved lead and handoff summary.`,
+      `${imageUrls.length} photo(s) uploaded. They will be included in the quote handoff.`,
     );
   }
 
-  async function handleGeneralIntent(history: AssistantMessage[], raw: string) {
-    if (/cancel|stop|start over|reset|exit/.test(normalize(raw))) {
-      setAssistantStatus("");
-      addAssistant("No guided flow is active right now. Ask a question or start a quote intake.");
+  async function completeGuidedFlow(
+    flowId: AssistantFlowId,
+    nextAnswers: ConsultationAnswerMap,
+    nextHistory: AssistantMessage[],
+  ) {
+    const summary = generateConsultationSummary(flowId, nextAnswers, {
+      referenceId: flowId === "quote" ? quoteReferenceId || createQuoteReference() : "",
+      imageUrls: flowId === "quote" ? quoteImageUrls : [],
+    });
+
+    setCompletion({ flowId, summary });
+    setActiveFlowId(null);
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    setQuoteImageUrls([]);
+    setQuoteReferenceId("");
+    addAssistantMessage(buildFlowCompletionMessage(flowId));
+
+    if (flowId !== "quote") {
+      setAssistantStatus("Summary ready. Continue with a quote or WhatsApp below.");
       return;
     }
 
-    if (shouldStartQuoteFlow(raw)) {
-      startQuoteFlow(raw);
+    setAssistantStatus("Quote summary ready. Saving the lead...");
+    const { saved } = await saveQuoteLead({
+      form: summary.quoteForm,
+      source: "assistant",
+      channel: "assistant-chat",
+      summary: buildQuoteSummary(summary.quoteForm),
+      conversation: nextHistory.slice(-12),
+    });
+
+    setAssistantStatus(
+      saved
+        ? "Quote summary saved. Continue with a quote or WhatsApp below."
+        : "Quote summary ready. Lead storage is unavailable, but handoff still works.",
+    );
+  }
+
+  async function handleGuidedReply(raw: string, nextHistory: AssistantMessage[]) {
+    if (!activeFlowId || !activeFlow) return;
+
+    const question = activeFlow.questions[currentQuestionIndex];
+    if (!question) return;
+
+    const nextAnswers = {
+      ...answers,
+      [question.id]: clampMessage(raw),
+    };
+    setAnswers(nextAnswers);
+
+    const safetyMessage = detectSafetyConcern(raw);
+    if (safetyMessage) {
+      addAssistantMessage(safetyMessage, { isSafety: true });
+    }
+
+    const isLastQuestion = currentQuestionIndex >= activeFlow.questions.length - 1;
+    if (isLastQuestion) {
+      await completeGuidedFlow(activeFlowId, nextAnswers, nextHistory);
       return;
     }
 
-    if (shouldStartSolarSizingFlow(raw)) {
-      setStage("solar-loads");
-      setAssistantStatus("");
-      setQuoteResult(null);
-      addAssistant("Share your total load in watts, for example 1800W.");
+    const nextQuestionIndex = currentQuestionIndex + 1;
+    setCurrentQuestionIndex(nextQuestionIndex);
+    addAssistantMessage(activeFlow.questions[nextQuestionIndex].prompt);
+  }
+
+  async function handleFreeformReply(raw: string, nextHistory: AssistantMessage[]) {
+    const matchedFlowId = resolveAssistantFlowId(raw);
+    if (matchedFlowId) {
+      startFlow(matchedFlowId);
+      return;
+    }
+
+    const safetyMessage = detectSafetyConcern(raw);
+    if (safetyMessage) {
+      addAssistantMessage(safetyMessage, { isSafety: true });
+      addAssistantMessage(buildFallbackAssistantReply(raw));
+      setAssistantStatus("Safety first. Request inspection if the issue looks hazardous.");
       return;
     }
 
@@ -415,243 +335,51 @@ export default function AssistantClient() {
     setAssistantStatus("");
 
     try {
-      const reply = await requestAssistantReply(history);
-      addAssistant(reply.answer || buildFallbackAssistantReply(raw), {
+      const reply = await requestAssistantReply(nextHistory);
+      addAssistantMessage(reply.answer || buildFallbackAssistantReply(raw), {
         usedKnowledgeBase: reply.usedKnowledgeBase,
-        quoteIntentDetected: reply.quoteIntentDetected,
-        sources: reply.sources,
       });
     } catch {
-      addAssistant(buildFallbackAssistantReply(raw));
+      addAssistantMessage(buildFallbackAssistantReply(raw));
       setAssistantStatus(
-        "Sorry, I couldn’t complete that request right now. Please try again or continue on WhatsApp.",
+        "Sorry, I could not complete that request right now. Please try again or continue on WhatsApp.",
       );
     } finally {
       setIsResponding(false);
     }
   }
 
-  function handleSolarFlow(raw: string) {
-    const command = normalize(raw);
-    if (/cancel|stop|start over|reset|exit/.test(command)) {
-      setStage("idle");
-      setDraft({ loadsWatts: null, location: "", backupHours: null });
-      setAssistantStatus("");
-      addAssistant("Solar sizing flow cancelled. Ask another question anytime.");
-      return;
-    }
-
-    if (stage === "solar-loads") {
-      const watts = toNumber(raw);
-      if (!Number.isFinite(watts) || watts <= 0) {
-        addAssistant("Enter a valid load in watts, for example 1200W or 2500.");
-        return;
-      }
-      setDraft((current) => ({ ...current, loadsWatts: watts }));
-      setStage("solar-location");
-      addAssistant("Great. What is your location? Example: Ikorodu, Lagos.");
-      return;
-    }
-
-    if (stage === "solar-location") {
-      const location = String(raw || "").trim();
-      if (!location) {
-        addAssistant("Please provide a location.");
-        return;
-      }
-      setDraft((current) => ({ ...current, location }));
-      setStage("solar-backup");
-      addAssistant("How many backup hours do you need?");
-      return;
-    }
-
-    if (stage === "solar-backup") {
-      const backupHours = toNumber(raw);
-      if (!Number.isFinite(backupHours) || backupHours <= 0) {
-        addAssistant("Enter backup time in hours, for example 6 or 8.");
-        return;
-      }
-
-      const payload = {
-        loadsWatts: draft.loadsWatts || 0,
-        location: draft.location,
-        backupHours,
-      };
-      const recommendation = buildSolarRecommendation(payload);
-
-      addAssistant(
-        [
-          "Preliminary sizing:",
-          `Load: ${payload.loadsWatts}W`,
-          `Location: ${payload.location} (sun hours used: ${recommendation.sunHours})`,
-          `Backup: ${backupHours}h`,
-          `Recommended inverter: ${recommendation.inverterKVA} kVA`,
-          `Recommended solar array: ${recommendation.solarWp} Wp`,
-          `Estimated battery bank: ${recommendation.batteryKWh} kWh (~${recommendation.batteryAhAt48V}Ah @48V)`,
-          oduzzAssistantDoc.policy.note,
-        ].join("\n"),
-      );
-
-      setStage("idle");
-      setDraft({ loadsWatts: null, location: "", backupHours: null });
-      addAssistant("Ask another sizing question or request a quote summary.");
-    }
-  }
-
-  async function handleQuoteFlow(raw: string, history: AssistantMessage[]) {
-    const command = normalize(raw);
-    if (/cancel|stop|start over|reset|exit/.test(command)) {
-      setStage("idle");
-      resetQuoteDraft();
-      setAssistantStatus("");
-      addAssistant("Quote intake cancelled. Ask another question anytime.");
-      return;
-    }
-
-    if (stage === "quote-service") {
-      const service = matchQuoteService(raw);
-      if (!service) {
-        addAssistant("Choose a service from the suggestions, or type the closest match.");
-        return;
-      }
-      setQuoteDraft((current) => ({ ...current, service }));
-      setStage("quote-location");
-      addAssistant(`Noted. What location is this ${service.toLowerCase()} project in?`);
-      return;
-    }
-
-    if (stage === "quote-location") {
-      const location = String(raw || "").trim();
-      if (!location) {
-        addAssistant("Please share the project location.");
-        return;
-      }
-      setQuoteDraft((current) => ({ ...current, location }));
-      setStage("quote-details");
-      addAssistant(
-        "Briefly describe the job scope. Include the property type, current setup, or what needs to be installed or fixed.",
-      );
-      return;
-    }
-
-    if (stage === "quote-details") {
-      const details = String(raw || "").trim();
-      if (details.length < 8) {
-        addAssistant("Add a bit more detail so the quote brief is actually useful.");
-        return;
-      }
-      setQuoteDraft((current) => ({ ...current, details }));
-      setStage("quote-urgency");
-      addAssistant(
-        [
-          "How urgent is this request?",
-          URGENCY_OPTIONS.map((option, index) => `${index + 1}. ${option}`).join("\n"),
-        ].join("\n"),
-      );
-      return;
-    }
-
-    if (stage === "quote-urgency") {
-      const urgency = matchQuoteUrgency(raw);
-      if (!urgency) {
-        addAssistant("Choose an urgency option from the suggestions, or type the closest match.");
-        return;
-      }
-      setQuoteDraft((current) => ({ ...current, urgency }));
-      setStage("quote-budget");
-      addAssistant(
-        [
-          "What budget direction best fits this project?",
-          BUDGET_OPTIONS.map((option, index) => `${index + 1}. ${option}`).join("\n"),
-        ].join("\n"),
-      );
-      return;
-    }
-
-    if (stage === "quote-budget") {
-      const budget = matchQuoteBudget(raw);
-      if (!budget) {
-        addAssistant("Choose a budget direction from the suggestions, or type the closest match.");
-        return;
-      }
-      setQuoteDraft((current) => ({ ...current, budget }));
-      setStage("quote-name");
-      addAssistant("Who should Oduzz address this quote to?");
-      return;
-    }
-
-    if (stage === "quote-name") {
-      const name = String(raw || "").trim();
-      if (name.length < 2) {
-        addAssistant("Please share the contact name for this quote.");
-        return;
-      }
-      setQuoteDraft((current) => ({ ...current, name }));
-      setStage("quote-phone");
-      addAssistant("Finally, what phone number should Oduzz use for follow-up?");
-      return;
-    }
-
-    if (stage === "quote-phone") {
-      const phone = sanitizePhoneInput(raw);
-      if (!isValidPhone(phone)) {
-        addAssistant("Enter a valid phone number with 10 to 15 digits.");
-        return;
-      }
-
-      const finalDraft = {
-        ...quoteDraft,
-        phone,
-      };
-
-      await finishQuoteFlow(finalDraft, history);
-    }
-  }
-
-  function onSend() {
-    const raw = input.trim().slice(0, MAX_INPUT_CHARS);
-    if (!raw || isResponding) return;
-    void sendMessage(raw);
-    setInput("");
-  }
-
   async function sendMessage(raw: string) {
     const safeRaw = String(raw || "").trim().slice(0, MAX_INPUT_CHARS);
     if (!safeRaw) return;
+    const command = safeRaw.toLowerCase();
+
+    if (/^(cancel|stop|reset|clear|start over)$/i.test(command)) {
+      resetAssistant();
+      return;
+    }
+
+    if (!activeFlowId && completion) {
+      setCompletion(null);
+    }
 
     const userMessage: AssistantMessage = { role: "user", text: clampMessage(safeRaw) };
     const nextHistory = [...messages, userMessage].slice(-MAX_MESSAGES);
-
     setMessages(nextHistory);
 
-    if (stage.startsWith("solar-")) {
-      handleSolarFlow(safeRaw);
+    if (activeFlowId) {
+      await handleGuidedReply(safeRaw, nextHistory);
       return;
     }
 
-    if (stage.startsWith("quote-")) {
-      await handleQuoteFlow(safeRaw, nextHistory);
-      return;
-    }
-
-    await handleGeneralIntent(nextHistory, safeRaw);
+    await handleFreeformReply(safeRaw, nextHistory);
   }
 
-  function onQuickPrompt(prompt: string) {
-    if (isResponding) return;
+  function onSend() {
+    if (!input.trim() || isBusy) return;
+    const raw = input;
     setInput("");
-    void sendMessage(prompt);
-  }
-
-  function onReset() {
-    if (isResponding) return;
-    setStage("idle");
-    setDraft({ loadsWatts: null, location: "", backupHours: null });
-    resetQuoteDraft();
-    setQuoteResult(null);
-    setInput("");
-    setAssistantStatus("");
-    setMessages([{ role: "assistant", text: INITIAL_ASSISTANT_MESSAGE }]);
+    void sendMessage(raw);
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -659,6 +387,11 @@ export default function AssistantClient() {
       event.preventDefault();
       onSend();
     }
+  }
+
+  function onQuickAction(flowId: AssistantFlowId) {
+    if (isBusy) return;
+    startFlow(flowId);
   }
 
   return (
@@ -679,29 +412,28 @@ export default function AssistantClient() {
               </div>
               <div className={styles.chatBrandCopy}>
                 <strong>Oduzz AI</strong>
-                <span>Knowledge-base chat</span>
+                <span>{headerState}</span>
               </div>
             </div>
 
             <div className={styles.chatHeaderActions}>
-              {headerStatus ? <span className={styles.chatState}>{headerStatus}</span> : null}
               <button
                 type="button"
                 className={styles.chatClearBtn}
-                onClick={onReset}
-                disabled={isResponding}
+                onClick={resetAssistant}
+                disabled={isBusy}
               >
                 Clear
               </button>
             </div>
           </header>
 
-          <div
-            className={styles.chatThread}
-            ref={bodyRef}
-            role="log"
-            aria-live="polite"
-          >
+          <div className={styles.chatIntro}>
+            <h1>Electrical consultation desk</h1>
+            <p>Choose a service or type your question. The assistant will guide the next step.</p>
+          </div>
+
+          <div className={styles.chatThread} ref={bodyRef} role="log" aria-live="polite">
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
@@ -719,46 +451,16 @@ export default function AssistantClient() {
                   <div
                     className={cn(
                       styles.messageBubble,
-                      message.role === "user" ? styles.messageBubbleUser : styles.messageBubbleAssistant,
+                      message.role === "user"
+                        ? styles.messageBubbleUser
+                        : styles.messageBubbleAssistant,
+                      message.isSafety && styles.messageBubbleSafety,
                     )}
                   >
                     {renderMessageText(message.text)}
                   </div>
-                  {message.role === "assistant" && message.usedKnowledgeBase ? (
+                  {message.usedKnowledgeBase ? (
                     <p className={styles.messageSourceTag}>Based on Oduzz knowledge base</p>
-                  ) : null}
-                  {message.role === "assistant" &&
-                  message.quoteIntentDetected &&
-                  !quoteResult &&
-                  !isQuoteFlow ? (
-                    <a
-                      className={cn("btn", "outline", styles.inlineWhatsAppBtn)}
-                      href={buildWhatsAppUrl(
-                        encodeURIComponent(
-                          "Hi Oduzz, I need help with a quote. Please guide me on next steps.",
-                        ),
-                      )}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Continue on WhatsApp
-                    </a>
-                  ) : null}
-
-                  {showWelcomePrompts && index === 0 ? (
-                    <div className={styles.quickChipRow}>
-                      {QUICK_STARTS.map((item) => (
-                        <button
-                          key={item.label}
-                          type="button"
-                          className={styles.quickChip}
-                          onClick={() => onQuickPrompt(item.prompt)}
-                          disabled={isResponding}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
                   ) : null}
                 </div>
               </div>
@@ -790,52 +492,48 @@ export default function AssistantClient() {
               </p>
             ) : null}
 
-            {isQuoteFlow ? (
-              <div className={styles.inlineCard}>
-                <div className={styles.inlineCardHead}>
-                  <p className={styles.inlineCardLabel}>Quote flow</p>
-                  <span className={styles.inlineCardMeta}>
-                    Step {quoteStageIndex} / {QUOTE_STAGE_ORDER.length}
-                  </span>
-                </div>
-                <div className={styles.inlineChipRow}>
-                  {activeQuoteChips.map((chip) => (
-                    <span key={chip} className={styles.inlineChip}>
-                      {chip}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {quoteResult ? (
-              <div className={styles.inlineCard}>
-                <div className={styles.inlineCardHead}>
+            {completion ? (
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryHead}>
                   <div>
-                    <p className={styles.inlineCardLabel}>Quote ready</p>
-                    <h3 className={styles.inlineCardTitle}>Ready for a formal quote?</h3>
+                    <p className={styles.summaryLabel}>{completion.summary.title}</p>
+                    <h2 className={styles.summaryTitle}>{completion.summary.service}</h2>
                   </div>
-                  <span className={styles.inlineCardMeta}>{quoteResult.referenceId}</span>
+                  {completion.summary.quoteForm.referenceId ? (
+                    <span className={styles.summaryMeta}>
+                      {completion.summary.quoteForm.referenceId}
+                    </span>
+                  ) : null}
                 </div>
-                <div className={styles.quoteSummaryGrid}>
-                  {quoteSummaryRows.map((item) => (
-                    <div key={item.label} className={styles.quoteSummaryItem}>
-                      <span>{item.label}</span>
-                      <strong>{item.value}</strong>
+
+                <div className={styles.summaryGrid}>
+                  {completion.summary.rows.map((row) => (
+                    <div key={`${row.label}-${row.value}`} className={styles.summaryItem}>
+                      <span>{row.label}</span>
+                      <strong>{row.value}</strong>
                     </div>
                   ))}
+                  {completion.summary.quoteForm.imageUrls.length ? (
+                    <div className={styles.summaryItem}>
+                      <span>Uploads</span>
+                      <strong>{completion.summary.quoteForm.imageUrls.length} photo(s)</strong>
+                    </div>
+                  ) : null}
                 </div>
-                <div className={styles.inlineActions}>
-                  <Link className={cn("btn", "primary", styles.inlineActionPrimary)} href={`/quote${quotePrefillSearch}`}>
-                    Open quote form
+
+                <p className={styles.summaryNext}>{completion.summary.nextStep}</p>
+
+                <div className={styles.summaryActions}>
+                  <Link className={cn("btn", "primary", styles.summaryActionPrimary)} href={completionQuoteLink}>
+                    Request Full Quote
                   </Link>
                   <a
-                    className={cn("btn", "outline", styles.inlineActionSecondary)}
-                    href={quoteWhatsAppUrl}
+                    className={cn("btn", "outline", styles.summaryActionSecondary)}
+                    href={completion.summary.whatsappUrl}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    WhatsApp Oduzz
+                    Continue on WhatsApp
                   </a>
                 </div>
               </div>
@@ -843,12 +541,27 @@ export default function AssistantClient() {
           </div>
 
           <div className={styles.composerDock}>
-            {isQuoteFlow ? (
+            <div className={styles.quickChipRow} aria-label="Assistant services">
+              {FLOW_CHOICES.map((flow) => (
+                <button
+                  key={flow.id}
+                  type="button"
+                  className={cn(styles.quickChip, activeFlowId === flow.id && styles.quickChipActive)}
+                  onClick={() => onQuickAction(flow.id)}
+                  disabled={isBusy}
+                >
+                  {flow.chipLabel}
+                </button>
+              ))}
+            </div>
+
+            {activeFlowId === "quote" ? (
               <div className={styles.uploadRow}>
                 <div className={styles.uploadCopy}>
-                  <span className={styles.uploadLabel}>Project photos</span>
+                  <span className={styles.uploadLabel}>Optional photos</span>
                   <p className={styles.uploadText}>
-                    Optional. Up to {MAX_QUOTE_IMAGE_COUNT} photos, {Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB each.
+                    {activeQuotePhotoCount}/{MAX_QUOTE_IMAGE_COUNT} uploaded. Up to{" "}
+                    {Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB each.
                   </p>
                 </div>
                 <label className={cn("assistantUploadButton", styles.uploadButton)}>
@@ -857,26 +570,33 @@ export default function AssistantClient() {
                     accept="image/*"
                     multiple
                     onChange={handleQuoteImageChange}
-                    disabled={isUploadingQuoteImage || isResponding}
+                    disabled={isBusy}
                   />
                   {isUploadingQuoteImage ? "Uploading..." : "Add photos"}
                 </label>
               </div>
             ) : null}
 
-            {quoteFlowOptions.length ? (
-              <div className={styles.quickChipRow} aria-label="Current assistant suggestions">
-                {quoteFlowOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className={styles.quickChip}
-                    onClick={() => onQuickPrompt(option)}
-                    disabled={isResponding}
-                  >
-                    {option}
-                  </button>
-                ))}
+            {completion ? (
+              <div className={styles.inlineWhatsAppRow}>
+                <a
+                  className={cn("btn", "outline", styles.inlineWhatsAppBtn)}
+                  href={createConsultationWhatsAppUrl(completion.flowId, completion.summary.whatsappText)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Share summary on WhatsApp
+                </a>
+                <a
+                  className={cn("btn", "outline", styles.inlineWhatsAppBtn)}
+                  href={buildWhatsAppUrl(
+                    encodeURIComponent("Hello Oduzz, I need help with the next step for my project."),
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  General WhatsApp
+                </a>
               </div>
             ) : null}
 
@@ -886,18 +606,22 @@ export default function AssistantClient() {
                   value={input}
                   onChange={(event) => setInput(event.target.value.slice(0, MAX_INPUT_CHARS))}
                   onKeyDown={onKeyDown}
-                  placeholder="Ask about solar sizing, wiring, lighting, or quotes..."
+                  placeholder={
+                    activeFlow
+                      ? "Type your reply here..."
+                      : "Ask a question or choose a service..."
+                  }
                   rows={1}
                   maxLength={MAX_INPUT_CHARS}
                   aria-label="Ask Oduzz a question"
-                  disabled={isResponding}
+                  disabled={isBusy}
                 />
               </div>
               <button
                 type="button"
                 className={cn("btn", "primary", styles.sendBtn)}
                 onClick={onSend}
-                disabled={isResponding}
+                disabled={isBusy}
               >
                 {isResponding ? "Replying..." : "Send"}
               </button>

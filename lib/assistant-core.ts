@@ -5,7 +5,7 @@ export const MAX_INPUT_CHARS = 600;
 export const MAX_MESSAGE_CHARS = 1200;
 export const MAX_MESSAGES = 40;
 export const INITIAL_ASSISTANT_MESSAGE =
-  "Hi, I can help with solar sizing, wiring, lighting, and quotes.";
+  "Select a service or type your question. I can guide solar sizing, wiring, lighting, CCTV, materials, and quote planning.";
 
 export function normalize(text: unknown) {
   return String(text || "").trim().toLowerCase();
@@ -109,5 +109,5 @@ export function buildFallbackAssistantReply(raw: unknown) {
     return `You can call ${CONTACT.phoneDisplay}, send WhatsApp at ${CONTACT_LINKS.whatsapp}, or email ${CONTACT.email}. Typical WhatsApp response is ${CONTACT.whatsappResponseTime}.`;
   }
 
-  return "Ask about wiring, solar sizing, lighting, products, contact, or quote preparation. Example: 'What details do you need for a solar quote?'";
+  return "Ask about wiring, solar sizing, lighting, CCTV, materials, contact, or quote preparation. You can also start with one of the guided service chips.";
 }
