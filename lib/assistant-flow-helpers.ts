@@ -22,6 +22,15 @@ export type ConsultationSummary = {
   whatsappText: string;
 };
 
+const TECHNICAL_FLOW_IDS = new Set<AssistantFlowId>([
+  "solar",
+  "battery",
+  "inverter",
+  "panels",
+  "protection",
+  "safety",
+]);
+
 function normalizeText(value: unknown) {
   return String(value || "")
     .trim()
@@ -45,6 +54,10 @@ export function getAssistantFlow(flowId: AssistantFlowId) {
 
 export function getAssistantFlowChoices() {
   return assistantFlowOrder.map((flowId) => assistantFlows[flowId]);
+}
+
+export function isTechnicalAssistantFlow(flowId: AssistantFlowId) {
+  return TECHNICAL_FLOW_IDS.has(flowId);
 }
 
 export function resolveAssistantFlowId(text: unknown) {

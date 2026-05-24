@@ -1,0 +1,20 @@
+{
+  "title": "Replace with verified panel title",
+  "manufacturer": "Brand",
+  "model": "ExactModel",
+  "type": "solar_panel",
+  "source": "Datasheet reference",
+  "enabled": false,
+  "notes": [
+    "Template only. Replace all values with verified datasheet values before enabling."
+  ],
+  "specifications": {
+    "wattage": null,
+    "voc": null,
+    "vmp": null,
+    "isc": null,
+    "imp": null,
+    "temperature_coefficient_voc": null
+  },
+  "metadata": {}
+}

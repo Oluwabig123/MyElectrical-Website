@@ -12,12 +12,14 @@ import {
   generateConsultationSummary,
   getAssistantFlow,
   getAssistantFlowChoices,
+  isTechnicalAssistantFlow,
   resolveAssistantFlowId,
   startAssistantFlow,
   type ConsultationAnswerMap,
   type ConsultationSummary,
 } from "@/lib/assistant-flow-helpers";
 import { type AssistantFlowId } from "@/lib/assistant-flows";
+import type { SizingRecommendation } from "@/lib/engineering/types";
 import {
   buildFallbackAssistantReply,
   clampMessage,
@@ -45,6 +47,7 @@ type AssistantMessage = {
 type CompletedConsultation = {
   flowId: AssistantFlowId;
   summary: ConsultationSummary;
+  recommendation?: SizingRecommendation | null;
 };
 
 function cn(...classNames: Array<string | false | null | undefined>) {
@@ -113,6 +116,50 @@ async function requestAssistantReply(messages: AssistantMessage[]) {
   };
 }
 
+async function requestWorkflowRecommendation({
+  flowId,
+  answers,
+  sessionId,
+}: {
+  flowId: AssistantFlowId;
+  answers: ConsultationAnswerMap;
+  sessionId: string;
+}) {
+  const response = await fetch("/api/assistant/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mode: "workflow",
+      flowId,
+      answers,
+      sessionId,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error || "Workflow request failed.");
+  }
+
+  return {
+    answer: String(payload.answer || "").trim(),
+    usedKnowledgeBase: Boolean(payload.usedKnowledgeBase),
+    recommendation: (payload.recommendation || null) as SizingRecommendation | null,
+  };
+}
+
+function buildRecommendationWhatsAppText(recommendation: SizingRecommendation) {
+  return [
+    "Hello Oduzz Electrical Concepts, I need help with this setup:",
+    "",
+    recommendation.quoteSummary,
+    "",
+    "Please advise and quote.",
+  ].join("\n");
+}
+
 const FLOW_CHOICES = getAssistantFlowChoices();
 
 export default function AssistantClient() {
@@ -133,6 +180,7 @@ export default function AssistantClient() {
   const [quoteReferenceId, setQuoteReferenceId] = useState("");
   const [isUploadingQuoteImage, setIsUploadingQuoteImage] = useState(false);
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const sessionIdRef = useRef(`assistant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
   const activeFlow = activeFlowId ? getAssistantFlow(activeFlowId) : null;
   const totalQuestions = activeFlow?.questions.length || 0;
@@ -148,6 +196,11 @@ export default function AssistantClient() {
   const completionQuoteLink = completion
     ? `/quote${buildQuotePrefillSearch(completion.summary.quoteForm, { source: "assistant" })}`
     : "/quote";
+  const completionWhatsAppUrl = completion
+    ? completion.recommendation
+      ? buildWhatsAppUrl(encodeURIComponent(buildRecommendationWhatsAppText(completion.recommendation)))
+      : createConsultationWhatsAppUrl(completion.flowId, completion.summary.whatsappText)
+    : buildWhatsAppUrl();
 
   useEffect(() => {
     const body = bodyRef.current;
@@ -259,7 +312,35 @@ export default function AssistantClient() {
       imageUrls: flowId === "quote" ? quoteImageUrls : [],
     });
 
-    setCompletion({ flowId, summary });
+    let recommendation: SizingRecommendation | null = null;
+
+    if (isTechnicalAssistantFlow(flowId)) {
+      setIsResponding(true);
+      setAssistantStatus("Checking verified specs, calculations, and safety limits...");
+
+      try {
+        const result = await requestWorkflowRecommendation({
+          flowId,
+          answers: nextAnswers,
+          sessionId: sessionIdRef.current,
+        });
+
+        recommendation = result.recommendation;
+        if (result.answer) {
+          addAssistantMessage(result.answer, {
+            usedKnowledgeBase: result.usedKnowledgeBase,
+          });
+        }
+      } catch {
+        setAssistantStatus(
+          "I could not finish the technical validation right now. The consultation summary is still ready for quote or WhatsApp handoff.",
+        );
+      } finally {
+        setIsResponding(false);
+      }
+    }
+
+    setCompletion({ flowId, summary, recommendation });
     setActiveFlowId(null);
     setCurrentQuestionIndex(0);
     setAnswers({});
@@ -268,7 +349,13 @@ export default function AssistantClient() {
     addAssistantMessage(buildFlowCompletionMessage(flowId));
 
     if (flowId !== "quote") {
-      setAssistantStatus("Summary ready. Continue with a quote or WhatsApp below.");
+      if (recommendation?.confidenceLevel) {
+        setAssistantStatus(
+          `Summary ready. ${recommendation.confidenceLevel === "high" ? "Validated against verified specs." : "Some details still need verification."}`,
+        );
+      } else if (!assistantStatus) {
+        setAssistantStatus("Summary ready. Continue with a quote or WhatsApp below.");
+      }
       return;
     }
 
@@ -411,7 +498,7 @@ export default function AssistantClient() {
                 />
               </div>
               <div className={styles.chatBrandCopy}>
-                <strong>Oduzz AI</strong>
+                <strong>Oduzz AI Electrical Consultant</strong>
                 <span>{headerState}</span>
               </div>
             </div>
@@ -429,8 +516,8 @@ export default function AssistantClient() {
           </header>
 
           <div className={styles.chatIntro}>
-            <h1>Electrical consultation desk</h1>
-            <p>Choose a service or type your question. The assistant will guide the next step.</p>
+            <h1>Guided electrical consultation</h1>
+            <p>Choose a service. The assistant will collect the essentials and validate the next step.</p>
           </div>
 
           <div className={styles.chatThread} ref={bodyRef} role="log" aria-live="polite">
@@ -493,50 +580,162 @@ export default function AssistantClient() {
             ) : null}
 
             {completion ? (
-              <div className={styles.summaryCard}>
-                <div className={styles.summaryHead}>
-                  <div>
-                    <p className={styles.summaryLabel}>{completion.summary.title}</p>
-                    <h2 className={styles.summaryTitle}>{completion.summary.service}</h2>
+              <>
+                {completion.recommendation ? (
+                  <div className={styles.recommendationCard}>
+                    <div className={styles.recommendationHead}>
+                      <div>
+                        <p className={styles.summaryLabel}>Recommended setup</p>
+                        <h2 className={styles.summaryTitle}>Oduzz AI Electrical Consultant</h2>
+                      </div>
+                      <span className={styles.confidenceBadge}>
+                        {completion.recommendation.confidenceLevel} confidence
+                      </span>
+                    </div>
+
+                    {completion.recommendation.safetyNote ? (
+                      <div className={styles.safetyCard}>
+                        <p className={styles.safetyTitle}>Safety note</p>
+                        <p className={styles.safetyText}>{completion.recommendation.safetyNote}</p>
+                      </div>
+                    ) : null}
+
+                    {completion.recommendation.verifiedSpecs.length ? (
+                      <div className={styles.recommendationSection}>
+                        <p className={styles.recommendationLabel}>Verified specs used</p>
+                        <div className={styles.recommendationGrid}>
+                          {completion.recommendation.verifiedSpecs.map((row) => (
+                            <div key={`${row.label}-${row.value}`} className={styles.recommendationItem}>
+                              <span>{row.label}</span>
+                              <strong>{row.value}</strong>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {completion.recommendation.calculations.length ? (
+                      <div className={styles.recommendationSection}>
+                        <p className={styles.recommendationLabel}>Calculation</p>
+                        <div className={styles.recommendationGrid}>
+                          {completion.recommendation.calculations.map((row) => (
+                            <div key={`${row.label}-${row.value}`} className={styles.recommendationItem}>
+                              <span>{row.label}</span>
+                              <strong>{row.value}</strong>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {completion.recommendation.decision.length ? (
+                      <div className={styles.recommendationSection}>
+                        <p className={styles.recommendationLabel}>Decision</p>
+                        <ul className={styles.recommendationList}>
+                          {completion.recommendation.decision.map((item, index) => (
+                            <li key={`${index}-${item}`}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+
+                    {completion.recommendation.recommendedComponents.length ? (
+                      <div className={styles.recommendationSection}>
+                        <p className={styles.recommendationLabel}>Recommended components</p>
+                        <div className={styles.componentList}>
+                          {completion.recommendation.recommendedComponents.map((item) => (
+                            <div key={`${item.category}-${item.recommendation}`} className={styles.componentItem}>
+                              <div className={styles.componentHead}>
+                                <strong>{item.category}</strong>
+                                <span>{item.confidence}</span>
+                              </div>
+                              <p>{item.recommendation}</p>
+                              {item.note ? <small>{item.note}</small> : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {completion.recommendation.missingInformation.length ? (
+                      <div className={styles.recommendationSection}>
+                        <p className={styles.recommendationLabel}>Missing information</p>
+                        <ul className={styles.recommendationList}>
+                          {completion.recommendation.missingInformation.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
-                  {completion.summary.quoteForm.referenceId ? (
-                    <span className={styles.summaryMeta}>
-                      {completion.summary.quoteForm.referenceId}
-                    </span>
-                  ) : null}
-                </div>
+                ) : null}
 
-                <div className={styles.summaryGrid}>
-                  {completion.summary.rows.map((row) => (
-                    <div key={`${row.label}-${row.value}`} className={styles.summaryItem}>
-                      <span>{row.label}</span>
-                      <strong>{row.value}</strong>
+                <div className={styles.summaryCard}>
+                  <div className={styles.summaryHead}>
+                    <div>
+                      <p className={styles.summaryLabel}>{completion.summary.title}</p>
+                      <h2 className={styles.summaryTitle}>{completion.summary.service}</h2>
                     </div>
-                  ))}
-                  {completion.summary.quoteForm.imageUrls.length ? (
-                    <div className={styles.summaryItem}>
-                      <span>Uploads</span>
-                      <strong>{completion.summary.quoteForm.imageUrls.length} photo(s)</strong>
-                    </div>
-                  ) : null}
-                </div>
+                    {completion.summary.quoteForm.referenceId ? (
+                      <span className={styles.summaryMeta}>
+                        {completion.summary.quoteForm.referenceId}
+                      </span>
+                    ) : null}
+                  </div>
 
-                <p className={styles.summaryNext}>{completion.summary.nextStep}</p>
+                  <div className={styles.summaryGrid}>
+                    {completion.recommendation
+                      ? [
+                          { label: "Service", value: completion.recommendation.projectSummary.service },
+                          { label: "Location", value: completion.recommendation.projectSummary.location },
+                          { label: "Appliances", value: completion.recommendation.projectSummary.appliances },
+                          { label: "Backup target", value: completion.recommendation.projectSummary.backupTarget },
+                          {
+                            label: "Recommended setup",
+                            value: completion.recommendation.projectSummary.recommendedSetup,
+                          },
+                          { label: "Confidence", value: completion.recommendation.projectSummary.confidence },
+                        ].map((row) => (
+                          <div key={`${row.label}-${row.value}`} className={styles.summaryItem}>
+                            <span>{row.label}</span>
+                            <strong>{row.value}</strong>
+                          </div>
+                        ))
+                      : completion.summary.rows.map((row) => (
+                          <div key={`${row.label}-${row.value}`} className={styles.summaryItem}>
+                            <span>{row.label}</span>
+                            <strong>{row.value}</strong>
+                          </div>
+                        ))}
+                    {completion.summary.quoteForm.imageUrls.length ? (
+                      <div className={styles.summaryItem}>
+                        <span>Uploads</span>
+                        <strong>{completion.summary.quoteForm.imageUrls.length} photo(s)</strong>
+                      </div>
+                    ) : null}
+                  </div>
 
-                <div className={styles.summaryActions}>
-                  <Link className={cn("btn", "primary", styles.summaryActionPrimary)} href={completionQuoteLink}>
-                    Request Full Quote
-                  </Link>
-                  <a
-                    className={cn("btn", "outline", styles.summaryActionSecondary)}
-                    href={completion.summary.whatsappUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Continue on WhatsApp
-                  </a>
+                  <p className={styles.summaryNext}>
+                    {completion.recommendation
+                      ? completion.recommendation.projectSummary.nextStep
+                      : completion.summary.nextStep}
+                  </p>
+
+                  <div className={styles.summaryActions}>
+                    <Link className={cn("btn", "primary", styles.summaryActionPrimary)} href={completionQuoteLink}>
+                      Request Full Quote
+                    </Link>
+                    <a
+                      className={cn("btn", "outline", styles.summaryActionSecondary)}
+                      href={completionWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Continue on WhatsApp
+                    </a>
+                  </div>
                 </div>
-              </div>
+              </>
             ) : null}
           </div>
 
@@ -581,7 +780,7 @@ export default function AssistantClient() {
               <div className={styles.inlineWhatsAppRow}>
                 <a
                   className={cn("btn", "outline", styles.inlineWhatsAppBtn)}
-                  href={createConsultationWhatsAppUrl(completion.flowId, completion.summary.whatsappText)}
+                  href={completionWhatsAppUrl}
                   target="_blank"
                   rel="noreferrer"
                 >

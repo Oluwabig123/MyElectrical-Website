@@ -1,11 +1,16 @@
 export type AssistantFlowId =
   | "solar"
-  | "materials"
+  | "battery"
+  | "inverter"
+  | "panels"
+  | "protection"
+  | "safety"
   | "wiring"
   | "lighting"
   | "cctv"
   | "quote"
-  | "whatsapp";
+  | "whatsapp"
+  | "materials";
 
 export type AssistantFlowQuestion = {
   id: string;
@@ -52,9 +57,24 @@ export const assistantFlows: Record<AssistantFlowId, AssistantFlowDefinition> = 
         summaryLabel: "Backup target",
       },
       {
-        id: "existing_setup",
-        prompt: "Do you already have an inverter or battery?",
-        summaryLabel: "Existing setup",
+        id: "existing_inverter",
+        prompt: "Do you already have an inverter? If yes, what is the exact model or spec label?",
+        summaryLabel: "Existing inverter",
+      },
+      {
+        id: "existing_battery",
+        prompt: "Do you already have a battery? If yes, what is the exact model or spec label?",
+        summaryLabel: "Existing battery",
+      },
+      {
+        id: "panel_details",
+        prompt: "Do you already have solar panels? If yes, share model or wattage, Voc, Vmp, Isc, Imp, and quantity.",
+        summaryLabel: "Solar panels",
+      },
+      {
+        id: "load_surge_details",
+        prompt: "If AC, freezer, or pump is included, what is the HP or nameplate rating?",
+        summaryLabel: "Compressor load details",
       },
       {
         id: "usage_mode",
@@ -78,41 +98,39 @@ export const assistantFlows: Record<AssistantFlowId, AssistantFlowDefinition> = 
       },
     ],
   },
-  materials: {
-    id: "materials",
-    label: "Materials recommendation",
-    chipLabel: "Recommend electrical materials",
-    intro: "Sure. I will help you choose safer and better materials.",
+  battery: {
+    id: "battery",
+    label: "Battery sizing",
+    chipLabel: "Recommend battery size",
+    intro: "Sure. I will help you size the battery storage properly.",
     aliases: [
-      "recommend electrical materials",
-      "materials",
-      "electrical materials",
-      "cables",
-      "wires",
+      "recommend battery size",
+      "battery size",
+      "battery sizing",
+      "battery recommendation",
     ],
-    quoteService: "Residential / commercial wiring",
-    nextStep: "Next step: confirm the project scope or request a quote for a practical material list.",
+    quoteService: "Battery recommendation",
+    nextStep: "Next step: confirm the battery model, usable energy target, and installation arrangement before quote approval.",
     questions: [
       {
-        id: "project_type",
-        prompt:
-          "What project are the materials for? For example: house wiring, lighting, sockets, DB, solar, CCTV.",
-        summaryLabel: "Project type",
+        id: "appliances",
+        prompt: "What appliances or total load should the battery support?",
+        summaryLabel: "Load",
       },
       {
-        id: "job_state",
-        prompt: "Is this for a new installation, repair, upgrade, or replacement?",
-        summaryLabel: "Job stage",
+        id: "backup_hours",
+        prompt: "How many hours of backup do you need?",
+        summaryLabel: "Backup target",
       },
       {
-        id: "scale",
-        prompt: "What quantity or area are you working on?",
-        summaryLabel: "Scale",
+        id: "existing_inverter",
+        prompt: "What inverter model or battery voltage is this for?",
+        summaryLabel: "Inverter",
       },
       {
-        id: "quality_tier",
-        prompt: "Do you prefer standard quality or premium quality materials?",
-        summaryLabel: "Quality",
+        id: "existing_battery",
+        prompt: "Do you already have a battery model in mind or installed?",
+        summaryLabel: "Battery model",
       },
       {
         id: "budget",
@@ -122,6 +140,160 @@ export const assistantFlows: Record<AssistantFlowId, AssistantFlowDefinition> = 
       {
         id: "location",
         prompt: "Where is the project location?",
+        summaryLabel: "Location",
+      },
+    ],
+  },
+  inverter: {
+    id: "inverter",
+    label: "Inverter recommendation",
+    chipLabel: "Recommend inverter",
+    intro: "Good. I will help you select a practical inverter class.",
+    aliases: ["recommend inverter", "inverter recommendation", "which inverter", "inverter size"],
+    quoteService: "Inverter recommendation",
+    nextStep: "Next step: confirm the exact model, battery voltage, and compressor loads before final quote.",
+    questions: [
+      {
+        id: "appliances",
+        prompt: "What appliances do you want to power?",
+        summaryLabel: "Appliances",
+      },
+      {
+        id: "backup_hours",
+        prompt: "How many hours of backup do you need?",
+        summaryLabel: "Backup target",
+      },
+      {
+        id: "load_surge_details",
+        prompt: "If AC, freezer, or pump is included, what is the HP or nameplate rating?",
+        summaryLabel: "Compressor load details",
+      },
+      {
+        id: "existing_battery",
+        prompt: "Do you already have a battery or preferred battery voltage?",
+        summaryLabel: "Battery context",
+      },
+      {
+        id: "usage_mode",
+        prompt: "Is this mainly backup only or full solar use?",
+        summaryLabel: "Usage mode",
+      },
+      {
+        id: "budget",
+        prompt: "What is your budget range?",
+        summaryLabel: "Budget",
+      },
+    ],
+  },
+  panels: {
+    id: "panels",
+    label: "Solar panel recommendation",
+    chipLabel: "Recommend solar panels",
+    intro: "Great. I will help validate a safe panel arrangement.",
+    aliases: ["recommend solar panels", "solar panels", "panel configuration", "panel string"],
+    quoteService: "Solar panel recommendation",
+    nextStep: "Next step: confirm the inverter model and the exact panel datasheet before installation.",
+    questions: [
+      {
+        id: "existing_inverter",
+        prompt: "What inverter or charge controller model should the panels match?",
+        summaryLabel: "Inverter",
+      },
+      {
+        id: "panel_details",
+        prompt: "What panel model or datasheet values do you have? Share wattage, Voc, Vmp, Isc, Imp, and quantity if known.",
+        summaryLabel: "Panel details",
+      },
+      {
+        id: "appliances",
+        prompt: "What load or energy target should the solar array support?",
+        summaryLabel: "Energy target",
+      },
+      {
+        id: "backup_hours",
+        prompt: "How many hours of backup or recharge support do you need?",
+        summaryLabel: "Backup target",
+      },
+      {
+        id: "usage_mode",
+        prompt: "Is this backup-only, hybrid daytime use, or full solar use?",
+        summaryLabel: "Usage mode",
+      },
+      {
+        id: "budget",
+        prompt: "What is your budget range?",
+        summaryLabel: "Budget",
+      },
+    ],
+  },
+  protection: {
+    id: "protection",
+    label: "Protection recommendation",
+    chipLabel: "Recommend protection components",
+    intro: "Sure. I will help outline the protection and cable requirements.",
+    aliases: ["protection components", "breaker size", "spd", "dc breaker", "protection recommendation"],
+    quoteService: "Protection recommendation",
+    nextStep: "Next step: validate the final current levels and cable charts before procurement.",
+    questions: [
+      {
+        id: "existing_inverter",
+        prompt: "What inverter or main equipment model is this protection setup for?",
+        summaryLabel: "Main equipment",
+      },
+      {
+        id: "existing_battery",
+        prompt: "What battery model or voltage is involved?",
+        summaryLabel: "Battery",
+      },
+      {
+        id: "panel_details",
+        prompt: "What panel model, string count, or PV current details are available?",
+        summaryLabel: "PV details",
+      },
+      {
+        id: "appliances",
+        prompt: "What load or installation scope should we protect?",
+        summaryLabel: "Load scope",
+      },
+      {
+        id: "location",
+        prompt: "Where is the installation location?",
+        summaryLabel: "Location",
+      },
+    ],
+  },
+  safety: {
+    id: "safety",
+    label: "Safety review",
+    chipLabel: "Check if my setup is safe",
+    intro: "Okay. I will check the situation with safety first.",
+    aliases: ["check if my setup is safe", "is this safe", "safety review", "safe setup"],
+    quoteService: "Safety review",
+    nextStep: "Next step: isolate hazards, send clear photos or labels, and request inspection if risk signs are present.",
+    questions: [
+      {
+        id: "issue",
+        prompt: "What setup or fault are you concerned about?",
+        summaryLabel: "Issue",
+      },
+      {
+        id: "existing_inverter",
+        prompt: "What inverter or main equipment model is involved, if any?",
+        summaryLabel: "Equipment",
+      },
+      {
+        id: "existing_battery",
+        prompt: "What battery model or battery voltage is involved, if any?",
+        summaryLabel: "Battery",
+      },
+      {
+        id: "panel_details",
+        prompt: "What panel, breaker, cable, or wiring details do you have?",
+        summaryLabel: "Technical details",
+      },
+      {
+        id: "location",
+        prompt: "Where is the installation location?",
         summaryLabel: "Location",
       },
     ],
@@ -338,14 +510,67 @@ export const assistantFlows: Record<AssistantFlowId, AssistantFlowDefinition> = 
       },
     ],
   },
+  materials: {
+    id: "materials",
+    label: "Materials recommendation",
+    chipLabel: "Recommend electrical materials",
+    intro: "Sure. I will help you choose safer and better materials.",
+    aliases: [
+      "recommend electrical materials",
+      "materials",
+      "electrical materials",
+      "cables",
+      "wires",
+    ],
+    quoteService: "Residential / commercial wiring",
+    nextStep: "Next step: confirm the project scope or request a quote for a practical material list.",
+    questions: [
+      {
+        id: "project_type",
+        prompt:
+          "What project are the materials for? For example: house wiring, lighting, sockets, DB, solar, CCTV.",
+        summaryLabel: "Project type",
+      },
+      {
+        id: "job_state",
+        prompt: "Is this for a new installation, repair, upgrade, or replacement?",
+        summaryLabel: "Job stage",
+      },
+      {
+        id: "scale",
+        prompt: "What quantity or area are you working on?",
+        summaryLabel: "Scale",
+      },
+      {
+        id: "quality_tier",
+        prompt: "Do you prefer standard quality or premium quality materials?",
+        summaryLabel: "Quality",
+      },
+      {
+        id: "budget",
+        prompt: "What is your budget range?",
+        summaryLabel: "Budget",
+      },
+      {
+        id: "location",
+        prompt: "Where is the project location?",
+        summaryLabel: "Location",
+      },
+    ],
+  },
 };
 
 export const assistantFlowOrder: AssistantFlowId[] = [
   "solar",
-  "materials",
+  "battery",
+  "inverter",
+  "panels",
+  "protection",
+  "safety",
   "wiring",
-  "lighting",
   "cctv",
   "quote",
   "whatsapp",
+  "lighting",
+  "materials",
 ];

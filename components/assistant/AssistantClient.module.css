@@ -290,6 +290,139 @@
     rgba(255, 255, 255, 0.03);
 }
 
+.recommendationCard {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 212, 0, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 212, 0, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.03);
+}
+
+.recommendationHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.confidenceBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 212, 0, 0.16);
+  background: rgba(255, 212, 0, 0.08);
+  color: rgba(255, 246, 220, 0.95);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.safetyCard {
+  display: grid;
+  gap: 4px;
+  padding: 12px 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 146, 101, 0.26);
+  background: rgba(255, 146, 101, 0.08);
+}
+
+.safetyTitle,
+.recommendationLabel {
+  margin: 0;
+  color: rgba(255, 212, 0, 0.94);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.safetyText {
+  margin: 0;
+  color: rgba(247, 251, 255, 0.92);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.recommendationSection {
+  display: grid;
+  gap: 10px;
+}
+
+.recommendationGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.recommendationItem,
+.componentItem {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 10, 18, 0.34);
+}
+
+.recommendationItem span,
+.componentItem small {
+  color: rgba(214, 223, 238, 0.62);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.recommendationItem strong,
+.componentHead strong {
+  color: rgba(244, 248, 255, 0.92);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.recommendationList {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(244, 248, 255, 0.92);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.recommendationList li + li {
+  margin-top: 6px;
+}
+
+.componentList {
+  display: grid;
+  gap: 10px;
+}
+
+.componentHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.componentHead span {
+  color: rgba(223, 250, 255, 0.86);
+  font-size: 11px;
+  text-transform: capitalize;
+}
+
+.componentItem p {
+  margin: 0;
+  color: rgba(244, 248, 255, 0.88);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .summaryHead {
   display: flex;
   align-items: center;
@@ -572,6 +705,10 @@
   }
 
   .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendationGrid {
     grid-template-columns: 1fr;
   }
 

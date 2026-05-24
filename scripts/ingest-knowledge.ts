@@ -1,120 +1,29 @@
 import { loadEnvConfig } from "@next/env";
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import matter from "gray-matter";
 
 loadEnvConfig(process.cwd());
 
-const KNOWLEDGE_DIR = path.join(process.cwd(), "knowledge", "oduzz");
-
-function titleFromFilename(filename: string) {
-  return filename
-    .replace(/\.md$/i, "")
-    .split(/[-_]+/)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function inferCategory(filename: string) {
-  const key = filename.toLowerCase();
-
-  if (key.includes("solar") || key.includes("inverter")) return "Solar Installation";
-  if (key.includes("cable") || key.includes("wire")) return "Cables & Wires";
-  if (key.includes("switch") || key.includes("socket")) return "Switches & Sockets";
-  if (key.includes("lighting")) return "Lighting";
-  if (key.includes("protection") || key.includes("distribution")) return "Protection & Distribution";
-  if (key.includes("cctv") || key.includes("smart-home")) return "CCTV & Smart Home";
-  if (key.includes("quote") || key.includes("inspection")) return "Quote & Inspection";
-  if (key.includes("safety")) return "Safety";
-  if (key.includes("faq")) return "FAQ";
-  if (key.includes("service")) return "Electrical Services";
-  if (key.includes("product") || key.includes("catalog")) return "Products";
-  if (key.includes("company")) return "Company";
-
-  return "General";
-}
-
-function extractH1(content: string) {
-  const match = content.match(/^#\s+(.+)$/m);
-  return match ? match[1].trim() : "";
-}
-
-async function readMarkdownFiles() {
-  const entries = await fs.readdir(KNOWLEDGE_DIR, { withFileTypes: true });
-
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".md"))
-    .map((entry) => path.join(KNOWLEDGE_DIR, entry.name))
-    .sort();
-}
-
-async function ingestFile(filePath: string) {
-  const { ingestKnowledgeDocument } = await import("../lib/assistant-rag");
-  const raw = await fs.readFile(filePath, "utf8");
-  const parsed = matter(raw);
-  const fileName = path.basename(filePath);
-  const fallbackTitle = titleFromFilename(fileName);
-
-  const title =
-    String(parsed.data?.title || "").trim() || extractH1(parsed.content) || fallbackTitle;
-
-  const category = String(parsed.data?.category || "").trim() || inferCategory(fileName);
-
-  const sourceUrl = String(parsed.data?.source_url || parsed.data?.sourceUrl || "").trim() || null;
-
-  const content = parsed.content.trim();
-
-  if (!content) {
-    throw new Error(`Skipping ${fileName}: empty content.`);
-  }
-
-  const result = await ingestKnowledgeDocument({
-    title,
-    category,
-    sourceType: "manual",
-    sourceUrl,
-    content,
-    replaceExistingTitle: true,
-  });
-
-  return {
-    fileName,
-    title,
-    category,
-    documentId: result.documentId,
-    chunkCount: result.chunkCount,
-    deactivatedCount: result.deactivatedCount,
-  };
-}
-
 async function main() {
-  const files = await readMarkdownFiles();
+  const { ingestLegacyKnowledgeMarkdown, ingestStructuredKnowledge } = await import(
+    "@/lib/knowledge/ingest-knowledge"
+  );
 
-  if (!files.length) {
-    console.log("No markdown files found in knowledge/oduzz.");
-    return;
+  console.log("Ingesting structured knowledge from /knowledge-base ...");
+  const structured = await ingestStructuredKnowledge();
+
+  for (const item of structured) {
+    console.log(
+      `Structured: ${item.filePath} [${item.productType}] ${item.enabled ? "enabled" : "disabled"}`,
+    );
   }
 
-  console.log(`Found ${files.length} markdown files in knowledge/oduzz.`);
+  console.log("Ingesting legacy markdown knowledge from /knowledge/oduzz ...");
+  const legacy = await ingestLegacyKnowledgeMarkdown();
 
-  let successCount = 0;
-  let failureCount = 0;
-
-  for (const filePath of files) {
-    try {
-      const result = await ingestFile(filePath);
-      successCount += 1;
-      console.log(
-        `Ingested ${result.fileName} -> ${result.documentId} (${result.chunkCount} chunks, deactivated ${result.deactivatedCount}) [${result.category}]`,
-      );
-    } catch (error) {
-      failureCount += 1;
-      const message = error instanceof Error ? error.message : "Unknown error";
-      console.error(`Failed ${path.basename(filePath)}: ${message}`);
-    }
+  for (const item of legacy) {
+    console.log(`Legacy: ${item.filePath} [${item.category}] (${item.chunkCount} chunks)`);
   }
 
-  console.log(`Done. Success: ${successCount}. Failed: ${failureCount}.`);
+  console.log(`Done. Structured: ${structured.length}. Legacy: ${legacy.length}.`);
 }
 
 void main().catch((error) => {

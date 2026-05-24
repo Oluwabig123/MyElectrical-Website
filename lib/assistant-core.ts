@@ -5,7 +5,7 @@ export const MAX_INPUT_CHARS = 600;
 export const MAX_MESSAGE_CHARS = 1200;
 export const MAX_MESSAGES = 40;
 export const INITIAL_ASSISTANT_MESSAGE =
-  "Select a service or type your question. I can guide solar sizing, wiring, lighting, CCTV, materials, and quote planning.";
+  "Select a service or type your question. I can guide solar sizing, battery and inverter decisions, protection planning, wiring support, CCTV, and quote handoff.";
 
 export function normalize(text: unknown) {
   return String(text || "").trim().toLowerCase();

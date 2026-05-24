@@ -1,0 +1,20 @@
+{
+  "title": "Replace with verified protection component title",
+  "manufacturer": "Brand",
+  "model": "ExactModel",
+  "type": "breaker",
+  "source": "Datasheet reference",
+  "enabled": false,
+  "notes": [
+    "Template only. Add verified breaker, isolator, fuse, or SPD values before enabling."
+  ],
+  "specifications": {
+    "current_rating_a": null,
+    "voltage_rating_v": null,
+    "dc_rated": null,
+    "ac_rated": null,
+    "poles": null,
+    "component_role": "battery_breaker | pv_isolator | ac_breaker | dc_spd | ac_spd | fuse"
+  },
+  "metadata": {}
+}

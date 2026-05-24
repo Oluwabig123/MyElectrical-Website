@@ -1,0 +1,21 @@
+{
+  "title": "Oduzz assistant FAQ",
+  "manufacturer": "Oduzz Electrical Concept",
+  "model": "faq-v1",
+  "type": "faq",
+  "source": "Internal FAQ summary",
+  "enabled": true,
+  "notes": [
+    "Use for grounded operational guidance, not for technical product specs."
+  ],
+  "specifications": {
+    "items": [
+      "Site inspection may be required before final pricing.",
+      "Unsafe electrical faults should be isolated and inspected by a technician.",
+      "Product compatibility should be confirmed with verified model specifications."
+    ]
+  },
+  "metadata": {
+    "kind": "faq"
+  }
+}

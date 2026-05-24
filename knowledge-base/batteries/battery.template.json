@@ -1,0 +1,23 @@
+{
+  "title": "Replace with verified battery title",
+  "manufacturer": "Brand",
+  "model": "ExactModel",
+  "type": "battery",
+  "source": "Manual or datasheet reference",
+  "enabled": false,
+  "notes": [
+    "Template only. Replace all values with verified manual values before enabling."
+  ],
+  "specifications": {
+    "nominal_voltage": null,
+    "capacity_ah": null,
+    "capacity_kwh": null,
+    "usable_dod": null,
+    "max_charge_current_a": null,
+    "max_discharge_current_a": null,
+    "supported_series": null,
+    "supported_parallel": null,
+    "communication": null
+  },
+  "metadata": {}
+}

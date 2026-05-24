@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   buildProductCatalog,
@@ -876,12 +877,12 @@ export default function ProductsAdminManager() {
               </label>
               {adminForm.imageUrl ? (
                 <div className="productsAdminImagePreviewWrap">
-                  <img
+                  <Image
                     src={adminForm.imageUrl}
                     alt="Product preview"
+                    width={960}
+                    height={280}
                     className="productsAdminImagePreview"
-                    loading="lazy"
-                    decoding="async"
                   />
                 </div>
               ) : null}
@@ -988,12 +989,12 @@ export default function ProductsAdminManager() {
                 {adminCatalog.items.map((item) => (
                   <li key={item.id} className="productsAdminItem">
                     {item.imageUrl ? (
-                      <img
+                      <Image
                         src={item.imageUrl}
                         alt={item.name}
+                        width={72}
+                        height={72}
                         className="productsAdminThumb"
-                        loading="lazy"
-                        decoding="async"
                       />
                     ) : null}
                     <div className="productsAdminItemCopy">

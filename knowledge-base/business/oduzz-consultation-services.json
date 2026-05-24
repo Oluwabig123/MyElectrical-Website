@@ -1,0 +1,30 @@
+{
+  "title": "Oduzz consultation services",
+  "manufacturer": "Oduzz Electrical Concept",
+  "model": "services-v1",
+  "type": "business",
+  "source": "Internal service summary",
+  "enabled": true,
+  "notes": [
+    "Use for customer-facing service descriptions and handoff language."
+  ],
+  "specifications": {
+    "service_areas": [
+      "Solar and inverter installation",
+      "Wiring and fault diagnosis",
+      "Lighting design and fitting",
+      "CCTV and smart home setup"
+    ],
+    "locations": [
+      "Ikorodu",
+      "Lagos"
+    ],
+    "handoff_channels": [
+      "Quote page",
+      "WhatsApp"
+    ]
+  },
+  "metadata": {
+    "kind": "business_overview"
+  }
+}

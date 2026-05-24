@@ -1,0 +1,24 @@
+{
+  "title": "Replace with verified inverter title",
+  "manufacturer": "Brand",
+  "model": "ExactModel",
+  "type": "hybrid_inverter",
+  "source": "Manual or datasheet reference",
+  "enabled": false,
+  "notes": [
+    "Template only. Replace all values with verified manual values before enabling."
+  ],
+  "specifications": {
+    "battery_voltage": null,
+    "rated_power_w": null,
+    "surge_power_w": null,
+    "max_pv_voc": null,
+    "mppt_min_v": null,
+    "mppt_max_v": null,
+    "max_pv_power_w": null,
+    "max_pv_current_a": null,
+    "max_charge_current_a": null,
+    "batteryless_supported": null
+  },
+  "metadata": {}
+}

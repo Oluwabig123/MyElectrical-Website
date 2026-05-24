@@ -174,10 +174,6 @@ function formatNumber(value: number, maximumFractionDigits = 1) {
   }).format(value);
 }
 
-function normalizeText(value: unknown) {
-  return sanitizeText(value).toLowerCase();
-}
-
 function countWords(value: string) {
   return sanitizeText(value)
     .split(/\s+/)

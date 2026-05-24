@@ -1,5 +1,4 @@
 import path from "node:path";
-import { createRequire } from "node:module";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
@@ -8,8 +7,6 @@ const DOCX_MIME_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
 const TEXT_MIME_TYPES = new Set(["text/plain", "text/markdown", "application/octet-stream"]);
-const require = createRequire(import.meta.url);
-
 function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }

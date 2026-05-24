@@ -18,6 +18,11 @@ const NAV_ITEMS = [
     description: "Catalog, pricing, media",
   },
   {
+    href: "/admin/knowledge-base",
+    label: "Knowledge Base",
+    description: "Structured specs and re-indexing",
+  },
+  {
     href: "/admin/assistant-knowledge",
     label: "Assistant Knowledge",
     description: "Docs, ingestion, retrieval",
@@ -25,6 +30,15 @@ const NAV_ITEMS = [
 ];
 
 function getPageCopy(pathname: string) {
+  if (pathname.startsWith("/admin/knowledge-base")) {
+    return {
+      eyebrow: "Curated KB",
+      title: "Structured engineering knowledge",
+      description:
+        "Manage the curated specs that power product matching, calculations, and confidence grading.",
+    };
+  }
+
   if (pathname.startsWith("/admin/assistant-knowledge")) {
     return {
       eyebrow: "Knowledge Ops",

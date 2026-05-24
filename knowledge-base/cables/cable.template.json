@@ -1,0 +1,17 @@
+{
+  "title": "Replace with verified cable chart title",
+  "manufacturer": "Brand",
+  "model": "ChartOrSeries",
+  "type": "cable",
+  "source": "Ampacity chart or datasheet reference",
+  "enabled": false,
+  "notes": [
+    "Template only. Add real cable chart values before enabling."
+  ],
+  "specifications": {
+    "use_case": "battery | pv | ac | earthing",
+    "sizes_mm2": [],
+    "ampacity_map": {}
+  },
+  "metadata": {}
+}
