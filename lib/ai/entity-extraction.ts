@@ -18,6 +18,7 @@ export type ConsultationEntities = {
   inverter_voltage?: string;
   inverter_size?: string;
   inverter_type?: string;
+  total_load_watts?: number;
   battery_voltage?: string;
   battery_model?: string;
   panel_model?: string;
@@ -139,7 +140,12 @@ export function extractConsultationEntities(input: unknown): ConsultationEntitie
   const entities: ConsultationEntities = {};
   const inverterVoltage = text.match(/\b(?:inverter[^.\n,;]{0,30})?(12|24|48|96)\s*v\b/i)?.[1];
   const batteryVoltage = text.match(/\bbattery[^.\n,;]{0,30}?(12|24|48|96)\s*v\b/i)?.[1];
-  const inverterSize = text.match(/\b(\d+(?:\.\d+)?)\s*(kva|kw|va|w)\b/i);
+  const inverterSize =
+    text.match(/\binverter[^.\n,;]{0,30}?(\d+(?:\.\d+)?)\s*(kva|kw|va|w)\b/i) ||
+    text.match(/\b(\d+(?:\.\d+)?)\s*kva\b/i);
+  const totalLoad =
+    text.match(/\b(?:total\s+load|load|appliances?\s+need|power)\s*(?:is|=|:)?\s*(\d+(?:\.\d+)?)\s*(kw|w)\b/i) ||
+    text.match(/\b(\d+(?:\.\d+)?)\s*(kw|w)\s+(?:load|total load)\b/i);
   const backupHours =
     text.match(/\b(?:for|backup|last|run|running|need)\s*(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i)?.[1] ||
     text.match(/\b(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i)?.[1];
@@ -151,7 +157,12 @@ export function extractConsultationEntities(input: unknown): ConsultationEntitie
 
   if (inverterVoltage) entities.inverter_voltage = `${inverterVoltage.toUpperCase()}V`;
   if (batteryVoltage) entities.battery_voltage = `${batteryVoltage.toUpperCase()}V`;
-  if (inverterSize) entities.inverter_size = `${inverterSize[1]}${inverterSize[2]}`.replace(/\s+/g, "");
+  if (inverterSize) entities.inverter_size = `${inverterSize[1]}${inverterSize[2] || "kVA"}`.replace(/\s+/g, "");
+  if (totalLoad) {
+    const amount = Number(totalLoad[1]);
+    const unit = totalLoad[2].toLowerCase();
+    if (Number.isFinite(amount)) entities.total_load_watts = unit === "kw" ? amount * 1000 : amount;
+  }
   if (inverterType) entities.inverter_type = inverterType.toLowerCase();
   if (backupHours) entities.backup_hours = Number(backupHours);
   if (budget) entities.budget = budget.replace(/\s+/g, " ").trim();

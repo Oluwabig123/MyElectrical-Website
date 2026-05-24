@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { generateAssistantChatReply } from "@/lib/assistant-rag";
 import {
+  activateConsultation,
   runConsultationEngine,
-  type ConsultationState,
 } from "@/lib/ai/consultation-engine";
+import type { ConsultationState } from "@/lib/ai/consultation-state";
 import type { ConsultationIntentContext } from "@/lib/ai/intent-context";
 
 function sanitizeText(value: unknown) {
@@ -38,17 +39,31 @@ export async function POST(request: Request) {
 
   const messages = payload as { messages?: unknown };
   const latestUserMessage = getLatestUserMessage(messages.messages);
-
-  if (!latestUserMessage) {
-    return NextResponse.json({ error: "Please enter a message before sending." }, { status: 400 });
-  }
-
   const intentContext = (payload as { intentContext?: unknown }).intentContext as
     | ConsultationIntentContext
     | undefined;
   const consultationState = (payload as { consultationState?: unknown }).consultationState as
     | ConsultationState
     | undefined;
+  const activationMode = sanitizeText((payload as { mode?: unknown }).mode) === "activate_consultation";
+
+  if (activationMode && intentContext) {
+    const result = activateConsultation({
+      intentContext,
+      state: consultationState,
+    });
+
+    return NextResponse.json({
+      answer: result.answer,
+      sources: result.sources,
+      usedKnowledgeBase: result.usedKnowledgeBase,
+      consultationState: result.state,
+    });
+  }
+
+  if (!latestUserMessage) {
+    return NextResponse.json({ error: "Please enter a message before sending." }, { status: 400 });
+  }
 
   if (intentContext || consultationState) {
     try {

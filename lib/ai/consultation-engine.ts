@@ -5,19 +5,19 @@ import {
   type ConsultationEntities,
 } from "@/lib/ai/entity-extraction";
 import {
+  createConsultationState,
+  normalizeConsultationState,
+  type ConsultationState,
+} from "@/lib/ai/consultation-state";
+import {
   getConsultationIntentLabel,
   type ConsultationIntent,
   type ConsultationIntentContext,
 } from "@/lib/ai/intent-context";
 import { validateInput } from "@/lib/ai/validation";
 import { runAssistantWorkflow, type WorkflowFlowId } from "@/lib/ai/workflows";
+import { buildPlanningSizing, getProtectionChecklist } from "@/lib/engineering/consultation-priority";
 import type { SizingRecommendation } from "@/lib/engineering/types";
-
-export type ConsultationState = {
-  intent?: ConsultationIntent;
-  collected: ConsultationEntities;
-  missing: string[];
-};
 
 export type ConsultationEngineRequest = {
   messages: AssistantChatMessage[];
@@ -63,7 +63,8 @@ export function mergeConsultationState(
   extracted: ConsultationEntities,
   intent?: ConsultationIntent,
 ): ConsultationState {
-  const collected: ConsultationEntities = { ...(previous?.collected || {}) };
+  const normalized = normalizeConsultationState(previous, intent);
+  const collected: ConsultationEntities = { ...normalized.collected };
 
   for (const [key, value] of Object.entries(extracted) as Array<[keyof ConsultationEntities, ConsultationEntities[keyof ConsultationEntities]]>) {
     if (!hasValue(value)) continue;
@@ -100,7 +101,8 @@ export function mergeConsultationState(
   }
 
   return {
-    intent: intent || previous?.intent,
+    ...normalized,
+    intent: intent || normalized.intent,
     collected,
     missing: [],
   };
@@ -126,14 +128,14 @@ function determineMissingFields(state: ConsultationState) {
   const missing: string[] = [];
 
   if (intent === "battery_sizing") {
-    if (!hasValue(collected.appliances)) missing.push("appliance list");
+    if (!hasValue(collected.total_load_watts) && !hasValue(collected.appliances)) missing.push("load or appliance list");
     if (!hasValue(collected.backup_hours)) missing.push("backup hours");
     if (!hasValue(collected.inverter_voltage)) missing.push("inverter or battery voltage");
     if (hasCompressorWithoutRating(state)) missing.push("freezer/AC/pump wattage or type");
   }
 
   if (intent === "inverter_recommendation") {
-    if (!hasValue(collected.appliances)) missing.push("appliance list");
+    if (!hasValue(collected.total_load_watts) && !hasValue(collected.appliances)) missing.push("load or appliance list");
     if (hasCompressorWithoutRating(state)) missing.push("compressor load HP or wattage");
     if (!hasValue(collected.battery_voltage) && !hasValue(collected.inverter_voltage)) {
       missing.push("preferred battery voltage");
@@ -150,7 +152,7 @@ function determineMissingFields(state: ConsultationState) {
   }
 
   if (intent === "solar_sizing") {
-    if (!hasValue(collected.appliances)) missing.push("appliance list");
+    if (!hasValue(collected.total_load_watts) && !hasValue(collected.appliances)) missing.push("load or appliance list");
     if (!hasValue(collected.backup_hours)) missing.push("backup hours");
     if (hasCompressorWithoutRating(state)) missing.push("compressor load HP or wattage");
   }
@@ -183,6 +185,7 @@ function formatCollected(state: ConsultationState) {
     .join(" ");
 
   if (inverter.trim() !== "inverter") lines.push(inverter);
+  if (collected.total_load_watts) lines.push(`${collected.total_load_watts}W total load`);
   if (collected.battery_voltage) lines.push(`${collected.battery_voltage} battery context`);
   if (collected.appliances?.length) lines.push(...collected.appliances);
   if (collected.backup_hours) lines.push(`${collected.backup_hours}-hour backup target`);
@@ -194,7 +197,7 @@ function formatCollected(state: ConsultationState) {
 
 function buildInvalidResponse() {
   return [
-    "I couldn't identify sizing information.",
+    "I couldn't identify useful sizing information.",
     "",
     "Please provide information like:",
     "",
@@ -203,6 +206,109 @@ function buildInvalidResponse() {
     "- AC",
     "- Fans",
     "- Bulbs",
+  ].join("\n");
+}
+
+function buildActivationResponse(state: ConsultationState) {
+  const intent = state.intent;
+  const captured = formatCollected(state);
+
+  if (captured.length) return buildMissingQuestion(state);
+
+  if (intent === "solar_sizing") {
+    return [
+      "Great, I'll help size your solar system.",
+      "",
+      "I can help recommend:",
+      "",
+      "- Battery size",
+      "- Inverter compatibility",
+      "- Panel configuration",
+      "- Protection components",
+      "",
+      "Let's start with your load.",
+      "",
+      "Do you already know your total load in watts, or should I help estimate it from your appliances?",
+    ].join("\n");
+  }
+
+  if (intent === "battery_sizing") {
+    return [
+      "Great, I'll help recommend a practical battery size.",
+      "",
+      "I can work from either your total load in watts or a normal appliance list.",
+      "",
+      "Tell me what you want the battery to power and the backup hours you want.",
+    ].join("\n");
+  }
+
+  if (intent === "inverter_recommendation") {
+    return [
+      "Great, I'll help recommend an inverter that fits the load.",
+      "",
+      "We'll check load first, then battery voltage, startup loads, and protection.",
+      "",
+      "What appliances do you want to power, or what is your total load in watts?",
+    ].join("\n");
+  }
+
+  if (intent === "panel_recommendation") {
+    return [
+      "Great, I'll help recommend a safe solar panel direction.",
+      "",
+      "We'll confirm the inverter or charge controller first, then match panel wattage, voltage, and stringing.",
+      "",
+      "What inverter or charge controller model should the panels work with?",
+    ].join("\n");
+  }
+
+  if (intent === "safety_check") {
+    return "Okay, I'll check the setup with safety first.\n\nTell me what looks unsafe, or send the inverter, battery, panel, breaker, or wiring details you have.";
+  }
+
+  if (intent === "wiring_help") {
+    return "I can guide you safely.\n\nWhat wiring issue are you experiencing: tripping, burnt socket, no power, extension work, renovation, or new wiring?";
+  }
+
+  if (intent === "cctv") {
+    return "Great, I'll help plan the CCTV or smart home setup.\n\nTell me the property type and the areas you want to monitor.";
+  }
+
+  if (intent === "quote") {
+    return "Sure, I'll help prepare a useful quote request.\n\nWhat service do you need, and where is the project located?";
+  }
+
+  return `You're currently in ${intent ? getConsultationIntentLabel(intent) : "Consultation"}.\n\nTell me what you want to achieve, and I'll guide the next step.`;
+}
+
+function buildKnownLoadPlanningResponse(state: ConsultationState) {
+  const planning = buildPlanningSizing(state);
+  if (!planning) return null;
+
+  const inverterKw = Math.max(3, Math.ceil(planning.inverterRecommendedWatts / 1000));
+  const preferredInverterKw = Math.max(inverterKw + 1, 5);
+
+  return [
+    "Great.",
+    "",
+    `Your appliances need about ${planning.energyRequiredKwh.toFixed(1)}kWh of energy.`,
+    "",
+    "After inverter losses and safe lithium battery usage:",
+    "",
+    `Recommended battery storage: about ${planning.batteryRequiredKwh.toFixed(1)}kWh.`,
+    "",
+    "Recommended direction:",
+    "",
+    `- Battery: about ${planning.batteryRangeLabel} lithium`,
+    `- Inverter: minimum ${inverterKw}kW, ${preferredInverterKw}kW recommended where budget allows`,
+    "- Solar array: estimated after we agree how fast you want to recharge the battery",
+    "- Protection components included",
+    "",
+    "Protection checklist:",
+    "",
+    ...getProtectionChecklist().map((item) => `- ${item}`),
+    "",
+    "This is a planning estimate. Final panel stringing and exact protection sizes require the inverter model, battery model, and panel specifications.",
   ].join("\n");
 }
 
@@ -289,6 +395,25 @@ function answersFromState(state: ConsultationState) {
   };
 }
 
+export function activateConsultation({
+  intentContext,
+  state,
+}: {
+  intentContext: ConsultationIntentContext;
+  state?: ConsultationState | null;
+}): ConsultationEngineResult {
+  const nextState = normalizeConsultationState(state || createConsultationState(intentContext.intent), intentContext.intent);
+  nextState.missing = determineMissingFields(nextState);
+  nextState.confidence = formatCollected(nextState).length ? 0.35 : 0.1;
+
+  return {
+    answer: buildActivationResponse(nextState),
+    state: nextState,
+    sources: [],
+    usedKnowledgeBase: false,
+  };
+}
+
 export async function runConsultationEngine({
   messages,
   intentContext,
@@ -299,6 +424,7 @@ export async function runConsultationEngine({
   const validation = validateInput(userMessage);
   const merged = mergeConsultationState(state, extractConsultationEntities(userMessage), intent);
   merged.missing = determineMissingFields(merged);
+  merged.confidence = Math.min(0.95, formatCollected(merged).length * 0.12);
 
   if (intent && validation.category === "GREETING") {
     return {
@@ -336,11 +462,44 @@ export async function runConsultationEngine({
   }
 
   if (intent && validation.category === "QUESTION" && !Object.keys(extractConsultationEntities(userMessage)).length) {
+    if (/help me (?:calculate|estimate)|from appliances|don't know|do not know/i.test(userMessage)) {
+      return {
+        answer: [
+          "No problem. List the appliances you want to power.",
+          "",
+          "If you know the wattages, include them. If not, I can use safe planning estimates like:",
+          "",
+          "- LED bulb: 8-15W",
+          "- Fan: 60-100W",
+          "- TV: 80-150W",
+          "- Laptop: 50-100W",
+          "- Router: 10-20W",
+          "",
+          "For AC, freezer, or pump, I'll ask one extra question because startup current matters.",
+        ].join("\n"),
+        state: merged,
+        sources: [],
+        usedKnowledgeBase: false,
+      };
+    }
+
     const result = await generateAssistantChatReply(messages);
     return {
       ...result,
       state: merged,
     };
+  }
+
+  if (intent && (merged.intent === "solar_sizing" || merged.intent === "battery_sizing") && merged.collected.total_load_watts && merged.collected.backup_hours) {
+    const answer = buildKnownLoadPlanningResponse(merged);
+    if (answer) {
+      return {
+        answer,
+        state: merged,
+        sources: [],
+        usedKnowledgeBase: false,
+      };
+    }
   }
 
   if (intent && merged.missing.length > 0) {

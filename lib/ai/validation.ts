@@ -44,7 +44,7 @@ export function validateInput(input: unknown): InputValidationResult {
     return { category: "CONSULTATION_DATA", reason: "Consultation entities detected." };
   }
 
-  if (/[?]$/.test(value) || /^(what|how|why|can|should|is|are|do|does|tell me)\b/.test(value)) {
+  if (/[?]$/.test(value) || /^(what|how|why|can|should|is|are|do|does|tell me|help me)\b/.test(value)) {
     return { category: "QUESTION", reason: "Question detected." };
   }
 
