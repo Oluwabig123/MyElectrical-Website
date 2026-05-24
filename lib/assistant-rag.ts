@@ -6,6 +6,7 @@ import {
 import { CONTACT } from "@/data/contact";
 import { oduzzAssistantDoc } from "@/data/oduzz-assistant-doc";
 import { buildSolarRecommendation } from "@/lib/assistant-core";
+import { detectConversationIntent } from "@/lib/ai/intent-context";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
@@ -441,6 +442,7 @@ export async function ingestKnowledgeDocument(input: KnowledgeDocumentInput) {
 }
 
 function isQuoteIntent(text: string) {
+  if (detectConversationIntent(text) === "LOAD_ESTIMATION") return false;
   return /(quote|estimate|pricing|price|budget|inspection|site visit|whatsapp|contact)/i.test(text);
 }
 

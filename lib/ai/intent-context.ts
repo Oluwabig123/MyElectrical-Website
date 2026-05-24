@@ -12,6 +12,8 @@ export type ConsultationIntent =
   | "lighting_recommendation"
   | "whatsapp";
 
+export type ConversationIntent = "LOAD_ESTIMATION";
+
 export type ConsultationWorkflow = "consultation";
 
 export type ConsultationIntentContext = {
@@ -34,6 +36,32 @@ function resolveSessionId(session: SetConsultationIntentInput["session"]) {
   }
 
   return "";
+}
+
+function normalizeConversationText(value: unknown) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[’']/g, "'")
+    .replace(/\s+/g, " ");
+}
+
+export function detectConversationIntent(input: unknown): ConversationIntent | null {
+  const value = normalizeConversationText(input);
+  if (!value) return null;
+
+  const loadEstimationPatterns = [
+    /\bhelp\s+(?:me\s+)?estimate\s+(?:it|my\s+load|load)\b/,
+    /\bhelp\s+me\s+estimate\b/,
+    /\bestimate\s+my\s+load\b/,
+    /\bcalculate\s+(?:my\s+)?load\b/,
+    /\bhelp\s+(?:me\s+)?calculate\s+(?:my\s+)?load\b/,
+    /\bi\s+(?:do not|don't)\s+know\s+(?:my\s+)?load\b/,
+    /\bi\s+(?:do not|don't)\s+know\s+(?:my\s+)?watts?\b/,
+    /\bi\s+(?:do not|don't)\s+know\s+(?:the\s+)?wattage\b/,
+  ];
+
+  return loadEstimationPatterns.some((pattern) => pattern.test(value)) ? "LOAD_ESTIMATION" : null;
 }
 
 export function setConsultationIntent({

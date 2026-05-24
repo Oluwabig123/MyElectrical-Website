@@ -10,6 +10,7 @@ import {
   type ConsultationState,
 } from "@/lib/ai/consultation-state";
 import {
+  detectConversationIntent,
   getConsultationIntentLabel,
   type ConsultationIntent,
   type ConsultationIntentContext,
@@ -207,6 +208,45 @@ function buildInvalidResponse() {
     "- Fans",
     "- Bulbs",
   ].join("\n");
+}
+
+function buildLoadEstimationResponse() {
+  return [
+    "Great, I'll help estimate your load.",
+    "",
+    "Please list the appliances you want to power.",
+    "",
+    "Example:",
+    "",
+    "• 1 TV",
+    "• 1 freezer",
+    "• 3 fans",
+    "• 8 bulbs",
+    "• 1 laptop",
+    "• AC (if any)",
+    "",
+    "I'll estimate:",
+    "",
+    "✓ total load",
+    "",
+    "✓ battery size",
+    "",
+    "✓ inverter size",
+    "",
+    "✓ solar panels",
+    "",
+    "✓ protection components",
+  ].join("\n");
+}
+
+function enterLoadEstimationWorkflow(state: ConsultationState | null | undefined): ConsultationState {
+  return {
+    ...normalizeConsultationState(state || createConsultationState("solar_sizing"), "solar_sizing"),
+    intent: "solar_sizing",
+    childState: "load_estimation",
+    missing: [],
+    confidence: 0.2,
+  };
 }
 
 function buildActivationResponse(state: ConsultationState) {
@@ -421,6 +461,18 @@ export async function runConsultationEngine({
 }: ConsultationEngineRequest): Promise<ConsultationEngineResult> {
   const intent = intentContext?.intent || state?.intent;
   const userMessage = latestUserMessage(messages);
+  const conversationIntent = detectConversationIntent(userMessage);
+
+  if (conversationIntent === "LOAD_ESTIMATION") {
+    return {
+      answer: buildLoadEstimationResponse(),
+      state: enterLoadEstimationWorkflow(state),
+      sources: [],
+      usedKnowledgeBase: false,
+      quoteIntentDetected: false,
+    };
+  }
+
   const validation = validateInput(userMessage);
   const merged = mergeConsultationState(state, extractConsultationEntities(userMessage), intent);
   merged.missing = determineMissingFields(merged);

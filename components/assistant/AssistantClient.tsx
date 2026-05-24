@@ -10,6 +10,7 @@ import { buildWhatsAppUrl } from "@/data/contact";
 import { createConsultationWhatsAppUrl, type ConsultationSummary } from "@/lib/assistant-flow-helpers";
 import { assistantFlows, assistantFlowOrder, type AssistantFlowId } from "@/lib/assistant-flows";
 import {
+  detectConversationIntent,
   getConsultationIntentLabel,
   setConsultationIntent,
   type ConsultationIntent,
@@ -121,6 +122,7 @@ function resolveAssistantFlowId(text: unknown) {
     .toLowerCase()
     .replace(/\s+/g, " ");
   if (!value) return null;
+  if (detectConversationIntent(value) === "LOAD_ESTIMATION") return null;
 
   return (
     assistantFlowOrder.find((flowId) =>
@@ -401,11 +403,6 @@ export default function AssistantClient() {
               </button>
             </div>
           </header>
-
-          <div className={styles.chatIntro}>
-            <h1>Guided electrical consultation</h1>
-            <p>Choose a service. The assistant will collect the essentials and validate the next step.</p>
-          </div>
 
           <AssistantChat
             messages={messages}

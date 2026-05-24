@@ -4,8 +4,12 @@ import {
   activateConsultation,
   runConsultationEngine,
 } from "@/lib/ai/consultation-engine";
-import type { ConsultationState } from "@/lib/ai/consultation-state";
-import type { ConsultationIntentContext } from "@/lib/ai/intent-context";
+import { createConsultationState, type ConsultationState } from "@/lib/ai/consultation-state";
+import {
+  detectConversationIntent,
+  setConsultationIntent,
+  type ConsultationIntentContext,
+} from "@/lib/ai/intent-context";
 
 function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -84,6 +88,33 @@ export async function POST(request: Request) {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Sorry, the assistant could not complete this consultation.";
+
+      return NextResponse.json({ error: message }, { status: buildStatusCode(message) });
+    }
+  }
+
+  if (detectConversationIntent(latestUserMessage) === "LOAD_ESTIMATION") {
+    try {
+      const nextIntentContext = setConsultationIntent({ intent: "solar_sizing" });
+      const nextState = createConsultationState("solar_sizing");
+      nextState.childState = "load_estimation";
+      const result = await runConsultationEngine({
+        messages: (Array.isArray(messages.messages) ? messages.messages : []) as never,
+        intentContext: nextIntentContext,
+        state: nextState,
+      });
+
+      return NextResponse.json({
+        answer: result.answer,
+        sources: result.sources,
+        usedKnowledgeBase: result.usedKnowledgeBase,
+        recommendation: result.recommendation,
+        consultationState: result.state,
+        quoteIntentDetected: false,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Sorry, the assistant could not start load estimation.";
 
       return NextResponse.json({ error: message }, { status: buildStatusCode(message) });
     }

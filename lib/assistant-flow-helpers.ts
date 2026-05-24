@@ -6,6 +6,7 @@ import {
   type AssistantFlowDefinition,
   type AssistantFlowId,
 } from "@/lib/assistant-flows";
+import { detectConversationIntent } from "@/lib/ai/intent-context";
 
 export type ConsultationAnswerMap = Record<string, string>;
 
@@ -62,6 +63,7 @@ export function isTechnicalAssistantFlow(flowId: AssistantFlowId) {
 export function resolveAssistantFlowId(text: unknown) {
   const value = normalizeText(text);
   if (!value) return null;
+  if (detectConversationIntent(value) === "LOAD_ESTIMATION") return null;
 
   const match = assistantFlowOrder.find((flowId) =>
     assistantFlows[flowId].aliases.some((alias) => value.includes(normalizeText(alias))),
