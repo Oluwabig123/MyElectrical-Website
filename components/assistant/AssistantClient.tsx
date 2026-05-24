@@ -5,20 +5,15 @@ import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/layout/Container";
 import { buildWhatsAppUrl } from "@/data/contact";
+import { createConsultationWhatsAppUrl, type ConsultationSummary } from "@/lib/assistant-flow-helpers";
+import { assistantFlows, assistantFlowOrder, type AssistantFlowId } from "@/lib/assistant-flows";
 import {
-  buildFlowCompletionMessage,
-  createConsultationWhatsAppUrl,
-  detectSafetyConcern,
-  generateConsultationSummary,
-  getAssistantFlow,
-  getAssistantFlowChoices,
-  isTechnicalAssistantFlow,
-  resolveAssistantFlowId,
-  startAssistantFlow,
-  type ConsultationAnswerMap,
-  type ConsultationSummary,
-} from "@/lib/assistant-flow-helpers";
-import { type AssistantFlowId } from "@/lib/assistant-flows";
+  getConsultationIntentLabel,
+  setConsultationIntent,
+  type ConsultationIntent,
+  type ConsultationIntentContext,
+} from "@/lib/ai/intent-context";
+import type { ConsultationState } from "@/lib/ai/consultation-engine";
 import type { SizingRecommendation } from "@/lib/engineering/types";
 import {
   buildFallbackAssistantReply,
@@ -27,12 +22,11 @@ import {
   MAX_INPUT_CHARS,
   MAX_MESSAGES,
 } from "@/lib/assistant-core";
-import { buildQuotePrefillSearch, buildQuoteSummary, createQuoteReference } from "@/lib/quote-request";
+import { buildQuotePrefillSearch, createQuoteReference } from "@/lib/quote-request";
 import {
   MAX_QUOTE_IMAGE_COUNT,
   MAX_QUOTE_IMAGE_SIZE_BYTES,
   canUploadQuoteImages,
-  saveQuoteLead,
   uploadQuoteLeadImages,
 } from "@/lib/quote-lead-storage";
 import styles from "./AssistantClient.module.css";
@@ -91,6 +85,20 @@ function renderMessageText(text: string) {
 }
 
 async function requestAssistantReply(messages: AssistantMessage[]) {
+  return requestConsultationReply({
+    messages,
+  });
+}
+
+async function requestConsultationReply({
+  messages,
+  intentContext,
+  consultationState,
+}: {
+  messages: AssistantMessage[];
+  intentContext?: ConsultationIntentContext | null;
+  consultationState?: ConsultationState | null;
+}) {
   const response = await fetch("/api/assistant/chat", {
     method: "POST",
     headers: {
@@ -101,6 +109,8 @@ async function requestAssistantReply(messages: AssistantMessage[]) {
         role: message.role,
         content: message.text,
       })),
+      intentContext,
+      consultationState,
     }),
   });
 
@@ -113,39 +123,7 @@ async function requestAssistantReply(messages: AssistantMessage[]) {
   return {
     answer: String(payload.answer || payload.text || "").trim(),
     usedKnowledgeBase: Boolean(payload.usedKnowledgeBase),
-  };
-}
-
-async function requestWorkflowRecommendation({
-  flowId,
-  answers,
-  sessionId,
-}: {
-  flowId: AssistantFlowId;
-  answers: ConsultationAnswerMap;
-  sessionId: string;
-}) {
-  const response = await fetch("/api/assistant/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      mode: "workflow",
-      flowId,
-      answers,
-      sessionId,
-    }),
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(payload.error || "Workflow request failed.");
-  }
-
-  return {
-    answer: String(payload.answer || "").trim(),
-    usedKnowledgeBase: Boolean(payload.usedKnowledgeBase),
+    consultationState: (payload.consultationState || null) as ConsultationState | null,
     recommendation: (payload.recommendation || null) as SizingRecommendation | null,
   };
 }
@@ -160,7 +138,36 @@ function buildRecommendationWhatsAppText(recommendation: SizingRecommendation) {
   ].join("\n");
 }
 
-const FLOW_CHOICES = getAssistantFlowChoices();
+const FLOW_CHOICES = assistantFlowOrder.map((flowId) => assistantFlows[flowId]);
+
+const FLOW_INTENTS: Record<AssistantFlowId, ConsultationIntent> = {
+  solar: "solar_sizing",
+  battery: "battery_sizing",
+  inverter: "inverter_recommendation",
+  panels: "panel_recommendation",
+  protection: "protection_recommendation",
+  safety: "safety_check",
+  wiring: "wiring_help",
+  lighting: "lighting_recommendation",
+  cctv: "cctv",
+  quote: "quote",
+  whatsapp: "whatsapp",
+  materials: "materials_recommendation",
+};
+
+function resolveAssistantFlowId(text: unknown) {
+  const value = String(text || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+  if (!value) return null;
+
+  return (
+    assistantFlowOrder.find((flowId) =>
+      assistantFlows[flowId].aliases.some((alias) => value.includes(alias.toLowerCase())),
+    ) || null
+  );
+}
 
 export default function AssistantClient() {
   const [input, setInput] = useState("");
@@ -170,9 +177,8 @@ export default function AssistantClient() {
       text: INITIAL_ASSISTANT_MESSAGE,
     },
   ]);
-  const [activeFlowId, setActiveFlowId] = useState<AssistantFlowId | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<ConsultationAnswerMap>({});
+  const [intentContext, setIntentContext] = useState<ConsultationIntentContext | null>(null);
+  const [consultationState, setConsultationState] = useState<ConsultationState | null>(null);
   const [completion, setCompletion] = useState<CompletedConsultation | null>(null);
   const [isResponding, setIsResponding] = useState(false);
   const [assistantStatus, setAssistantStatus] = useState("");
@@ -182,17 +188,16 @@ export default function AssistantClient() {
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const sessionIdRef = useRef(`assistant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
-  const activeFlow = activeFlowId ? getAssistantFlow(activeFlowId) : null;
-  const totalQuestions = activeFlow?.questions.length || 0;
+  const activeIntent = intentContext?.intent || consultationState?.intent || null;
   const isBusy = isResponding || isUploadingQuoteImage;
   const headerState = useMemo(() => {
     if (isResponding) return "Replying";
-    if (activeFlow) return `${activeFlow.label} ${currentQuestionIndex + 1}/${totalQuestions}`;
+    if (activeIntent) return getConsultationIntentLabel(activeIntent);
     if (completion) return "Summary ready";
     return "Consultation desk";
-  }, [activeFlow, completion, currentQuestionIndex, isResponding, totalQuestions]);
+  }, [activeIntent, completion, isResponding]);
   const showCharacterCount = input.length >= MAX_INPUT_CHARS - 80;
-  const activeQuotePhotoCount = activeFlowId === "quote" ? quoteImageUrls.length : 0;
+  const activeQuotePhotoCount = activeIntent === "quote" ? quoteImageUrls.length : 0;
   const completionQuoteLink = completion
     ? `/quote${buildQuotePrefillSearch(completion.summary.quoteForm, { source: "assistant" })}`
     : "/quote";
@@ -231,9 +236,8 @@ export default function AssistantClient() {
   function resetAssistant() {
     if (isBusy) return;
     setInput("");
-    setActiveFlowId(null);
-    setCurrentQuestionIndex(0);
-    setAnswers({});
+    setIntentContext(null);
+    setConsultationState(null);
     setCompletion(null);
     setAssistantStatus("");
     setQuoteImageUrls([]);
@@ -242,16 +246,21 @@ export default function AssistantClient() {
   }
 
   function startFlow(flowId: AssistantFlowId) {
-    const { introMessage } = startAssistantFlow(flowId);
+    const nextIntentContext = setConsultationIntent({
+      intent: FLOW_INTENTS[flowId],
+      session: sessionIdRef.current,
+    });
     setInput("");
-    setAssistantStatus("");
-    setActiveFlowId(flowId);
-    setCurrentQuestionIndex(0);
-    setAnswers({});
+    setAssistantStatus(`${assistantFlows[flowId].label} selected.`);
+    setIntentContext(nextIntentContext);
+    setConsultationState({
+      intent: nextIntentContext.intent,
+      collected: {},
+      missing: [],
+    });
     setCompletion(null);
     setQuoteImageUrls([]);
     setQuoteReferenceId(flowId === "quote" ? createQuoteReference() : "");
-    setMessages([{ role: "assistant", text: introMessage }]);
   }
 
   async function handleQuoteImageChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -260,7 +269,7 @@ export default function AssistantClient() {
 
     if (!files.length) return;
 
-    if (activeFlowId !== "quote") {
+    if (activeIntent !== "quote") {
       setAssistantStatus("Photo upload is only available during the quote flow.");
       return;
     }
@@ -302,119 +311,10 @@ export default function AssistantClient() {
     );
   }
 
-  async function completeGuidedFlow(
-    flowId: AssistantFlowId,
-    nextAnswers: ConsultationAnswerMap,
-    nextHistory: AssistantMessage[],
-  ) {
-    const summary = generateConsultationSummary(flowId, nextAnswers, {
-      referenceId: flowId === "quote" ? quoteReferenceId || createQuoteReference() : "",
-      imageUrls: flowId === "quote" ? quoteImageUrls : [],
-    });
-
-    let recommendation: SizingRecommendation | null = null;
-
-    if (isTechnicalAssistantFlow(flowId)) {
-      setIsResponding(true);
-      setAssistantStatus("Checking verified specs, calculations, and safety limits...");
-
-      try {
-        const result = await requestWorkflowRecommendation({
-          flowId,
-          answers: nextAnswers,
-          sessionId: sessionIdRef.current,
-        });
-
-        recommendation = result.recommendation;
-        if (result.answer) {
-          addAssistantMessage(result.answer, {
-            usedKnowledgeBase: result.usedKnowledgeBase,
-          });
-        }
-      } catch {
-        setAssistantStatus(
-          "I could not finish the technical validation right now. The consultation summary is still ready for quote or WhatsApp handoff.",
-        );
-      } finally {
-        setIsResponding(false);
-      }
-    }
-
-    setCompletion({ flowId, summary, recommendation });
-    setActiveFlowId(null);
-    setCurrentQuestionIndex(0);
-    setAnswers({});
-    setQuoteImageUrls([]);
-    setQuoteReferenceId("");
-    addAssistantMessage(buildFlowCompletionMessage(flowId));
-
-    if (flowId !== "quote") {
-      if (recommendation?.confidenceLevel) {
-        setAssistantStatus(
-          `Summary ready. ${recommendation.confidenceLevel === "high" ? "Validated against verified specs." : "Some details still need verification."}`,
-        );
-      } else if (!assistantStatus) {
-        setAssistantStatus("Summary ready. Continue with a quote or WhatsApp below.");
-      }
-      return;
-    }
-
-    setAssistantStatus("Quote summary ready. Saving the lead...");
-    const { saved } = await saveQuoteLead({
-      form: summary.quoteForm,
-      source: "assistant",
-      channel: "assistant-chat",
-      summary: buildQuoteSummary(summary.quoteForm),
-      conversation: nextHistory.slice(-12),
-    });
-
-    setAssistantStatus(
-      saved
-        ? "Quote summary saved. Continue with a quote or WhatsApp below."
-        : "Quote summary ready. Lead storage is unavailable, but handoff still works.",
-    );
-  }
-
-  async function handleGuidedReply(raw: string, nextHistory: AssistantMessage[]) {
-    if (!activeFlowId || !activeFlow) return;
-
-    const question = activeFlow.questions[currentQuestionIndex];
-    if (!question) return;
-
-    const nextAnswers = {
-      ...answers,
-      [question.id]: clampMessage(raw),
-    };
-    setAnswers(nextAnswers);
-
-    const safetyMessage = detectSafetyConcern(raw);
-    if (safetyMessage) {
-      addAssistantMessage(safetyMessage, { isSafety: true });
-    }
-
-    const isLastQuestion = currentQuestionIndex >= activeFlow.questions.length - 1;
-    if (isLastQuestion) {
-      await completeGuidedFlow(activeFlowId, nextAnswers, nextHistory);
-      return;
-    }
-
-    const nextQuestionIndex = currentQuestionIndex + 1;
-    setCurrentQuestionIndex(nextQuestionIndex);
-    addAssistantMessage(activeFlow.questions[nextQuestionIndex].prompt);
-  }
-
   async function handleFreeformReply(raw: string, nextHistory: AssistantMessage[]) {
     const matchedFlowId = resolveAssistantFlowId(raw);
-    if (matchedFlowId) {
+    if (matchedFlowId && !intentContext) {
       startFlow(matchedFlowId);
-      return;
-    }
-
-    const safetyMessage = detectSafetyConcern(raw);
-    if (safetyMessage) {
-      addAssistantMessage(safetyMessage, { isSafety: true });
-      addAssistantMessage(buildFallbackAssistantReply(raw));
-      setAssistantStatus("Safety first. Request inspection if the issue looks hazardous.");
       return;
     }
 
@@ -422,7 +322,19 @@ export default function AssistantClient() {
     setAssistantStatus("");
 
     try {
-      const reply = await requestAssistantReply(nextHistory);
+      const reply =
+        intentContext || consultationState
+          ? await requestConsultationReply({
+              messages: nextHistory,
+              intentContext,
+              consultationState,
+            })
+          : await requestAssistantReply(nextHistory);
+
+      if (reply.consultationState) {
+        setConsultationState(reply.consultationState);
+      }
+
       addAssistantMessage(reply.answer || buildFallbackAssistantReply(raw), {
         usedKnowledgeBase: reply.usedKnowledgeBase,
       });
@@ -446,18 +358,13 @@ export default function AssistantClient() {
       return;
     }
 
-    if (!activeFlowId && completion) {
+    if (!activeIntent && completion) {
       setCompletion(null);
     }
 
     const userMessage: AssistantMessage = { role: "user", text: clampMessage(safeRaw) };
     const nextHistory = [...messages, userMessage].slice(-MAX_MESSAGES);
     setMessages(nextHistory);
-
-    if (activeFlowId) {
-      await handleGuidedReply(safeRaw, nextHistory);
-      return;
-    }
 
     await handleFreeformReply(safeRaw, nextHistory);
   }
@@ -745,7 +652,10 @@ export default function AssistantClient() {
                 <button
                   key={flow.id}
                   type="button"
-                  className={cn(styles.quickChip, activeFlowId === flow.id && styles.quickChipActive)}
+                  className={cn(
+                    styles.quickChip,
+                    activeIntent === FLOW_INTENTS[flow.id] && styles.quickChipActive,
+                  )}
                   onClick={() => onQuickAction(flow.id)}
                   disabled={isBusy}
                 >
@@ -754,7 +664,7 @@ export default function AssistantClient() {
               ))}
             </div>
 
-            {activeFlowId === "quote" ? (
+            {activeIntent === "quote" ? (
               <div className={styles.uploadRow}>
                 <div className={styles.uploadCopy}>
                   <span className={styles.uploadLabel}>Optional photos</span>
@@ -806,8 +716,8 @@ export default function AssistantClient() {
                   onChange={(event) => setInput(event.target.value.slice(0, MAX_INPUT_CHARS))}
                   onKeyDown={onKeyDown}
                   placeholder={
-                    activeFlow
-                      ? "Type your reply here..."
+                    activeIntent
+                      ? "Share your setup, question, or next detail..."
                       : "Ask a question or choose a service..."
                   }
                   rows={1}

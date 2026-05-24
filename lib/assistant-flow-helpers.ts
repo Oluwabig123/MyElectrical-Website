@@ -40,11 +40,10 @@ function normalizeText(value: unknown) {
 
 export function startAssistantFlow(flowId: AssistantFlowId) {
   const flow = assistantFlows[flowId];
-  const firstQuestion = flow.questions[0]?.prompt || "";
 
   return {
     flow,
-    introMessage: firstQuestion ? `${flow.intro} ${firstQuestion}` : flow.intro,
+    introMessage: flow.intro,
   };
 }
 
@@ -86,15 +85,21 @@ export function detectSafetyConcern(text: unknown) {
 }
 
 function buildConsultationDetails(flow: AssistantFlowDefinition, answers: ConsultationAnswerMap) {
-  const rows = flow.questions
-    .map((question) => {
-      const value = String(answers[question.id] || "").trim();
-      if (!value) return "";
-      return `${question.summaryLabel}: ${value}`;
+  const rows = Object.entries(answers)
+    .map(([key, value]) => {
+      const safeValue = String(value || "").trim();
+      if (!safeValue) return "";
+      return `${titleFromKey(key)}: ${safeValue}`;
     })
     .filter(Boolean);
 
   return rows.join(" | ");
+}
+
+function titleFromKey(value: string) {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function buildQuoteForm(
@@ -154,13 +159,13 @@ export function generateConsultationSummary(
   },
 ): ConsultationSummary {
   const flow = assistantFlows[flowId];
-  const rows = flow.questions
-    .map((question) => {
-      const value = String(answers[question.id] || "").trim();
-      if (!value) return null;
+  const rows = Object.entries(answers)
+    .map(([key, value]) => {
+      const safeValue = String(value || "").trim();
+      if (!safeValue) return null;
       return {
-        label: question.summaryLabel,
-        value,
+        label: titleFromKey(key),
+        value: safeValue,
       };
     })
     .filter((item): item is { label: string; value: string } => Boolean(item));
