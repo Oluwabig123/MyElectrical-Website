@@ -1,33 +1,13 @@
 import { NextResponse } from "next/server";
-import { generateAssistantChatReply } from "@/lib/assistant-rag";
 import {
   activateConsultation,
-  runConsultationEngine,
+  runConsultationOrchestrator,
 } from "@/lib/ai/consultation-engine";
-import { createConsultationState, type ConsultationState } from "@/lib/ai/consultation-state";
-import {
-  detectConversationIntent,
-  setConsultationIntent,
-  type ConsultationIntentContext,
-} from "@/lib/ai/intent-context";
+import type { ConsultationState } from "@/lib/ai/consultation-state";
+import type { ConsultationIntentContext } from "@/lib/ai/intent-context";
 
 function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function getLatestUserMessage(messages: unknown) {
-  if (!Array.isArray(messages)) return "";
-
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index] as { role?: unknown; content?: unknown; text?: unknown };
-    const role = sanitizeText(message?.role).toLowerCase();
-    if (role !== "user") continue;
-
-    const content = sanitizeText(message?.content || message?.text);
-    if (content) return content;
-  }
-
-  return "";
 }
 
 function buildStatusCode(errorMessage: string) {
@@ -42,7 +22,6 @@ export async function POST(request: Request) {
   const payload = body && typeof body === "object" ? body : {};
 
   const messages = payload as { messages?: unknown };
-  const latestUserMessage = getLatestUserMessage(messages.messages);
   const intentContext = (payload as { intentContext?: unknown }).intentContext as
     | ConsultationIntentContext
     | undefined;
@@ -62,72 +41,25 @@ export async function POST(request: Request) {
       sources: result.sources,
       usedKnowledgeBase: result.usedKnowledgeBase,
       consultationState: result.state,
+      consultationGuide: result.consultationGuide,
     });
   }
 
-  if (!latestUserMessage) {
-    return NextResponse.json({ error: "Please enter a message before sending." }, { status: 400 });
-  }
-
-  if (intentContext || consultationState) {
-    try {
-      const result = await runConsultationEngine({
-        messages: (Array.isArray(messages.messages) ? messages.messages : []) as never,
-        intentContext,
-        state: consultationState,
-      });
-
-      return NextResponse.json({
-        answer: result.answer,
-        sources: result.sources,
-        usedKnowledgeBase: result.usedKnowledgeBase,
-        recommendation: result.recommendation,
-        consultationState: result.state,
-        quoteIntentDetected: result.quoteIntentDetected,
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Sorry, the assistant could not complete this consultation.";
-
-      return NextResponse.json({ error: message }, { status: buildStatusCode(message) });
-    }
-  }
-
-  if (detectConversationIntent(latestUserMessage) === "LOAD_ESTIMATION") {
-    try {
-      const nextIntentContext = setConsultationIntent({ intent: "solar_sizing" });
-      const nextState = createConsultationState("solar_sizing");
-      nextState.childState = "load_estimation";
-      const result = await runConsultationEngine({
-        messages: (Array.isArray(messages.messages) ? messages.messages : []) as never,
-        intentContext: nextIntentContext,
-        state: nextState,
-      });
-
-      return NextResponse.json({
-        answer: result.answer,
-        sources: result.sources,
-        usedKnowledgeBase: result.usedKnowledgeBase,
-        recommendation: result.recommendation,
-        consultationState: result.state,
-        quoteIntentDetected: false,
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Sorry, the assistant could not start load estimation.";
-
-      return NextResponse.json({ error: message }, { status: buildStatusCode(message) });
-    }
-  }
-
   try {
-    const result = await generateAssistantChatReply(messages.messages);
+    const result = await runConsultationOrchestrator({
+      messages: (Array.isArray(messages.messages) ? messages.messages : []) as never,
+      intentContext,
+      state: consultationState,
+    });
 
     return NextResponse.json({
       answer: result.answer,
       sources: result.sources,
       usedKnowledgeBase: result.usedKnowledgeBase,
+      recommendation: result.recommendation,
+      consultationState: result.state,
       quoteIntentDetected: result.quoteIntentDetected,
+      consultationGuide: result.consultationGuide,
     });
   } catch (error) {
     const message =
@@ -135,7 +67,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: message,
+        error: /empty chat|no user message/i.test(message)
+          ? "Please enter a message before sending."
+          : message,
       },
       { status: buildStatusCode(message) },
     );

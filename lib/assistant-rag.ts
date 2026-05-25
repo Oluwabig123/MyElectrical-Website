@@ -6,7 +6,9 @@ import {
 import { CONTACT } from "@/data/contact";
 import { oduzzAssistantDoc } from "@/data/oduzz-assistant-doc";
 import { buildSolarRecommendation } from "@/lib/assistant-core";
-import { detectConversationIntent } from "@/lib/ai/intent-context";
+import { detectConversationIntent, type ConsultationIntent } from "@/lib/ai/intent-context";
+import type { ConsultationEntities } from "@/lib/ai/entity-extraction";
+import type { SizingRecommendation } from "@/lib/engineering/types";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
@@ -73,7 +75,7 @@ type KnowledgeDocumentRow = {
   content: string | null;
 };
 
-type ChatReply = {
+export type ChatReply = {
   answer: string;
   sources: Array<{
     title: string;
@@ -82,6 +84,17 @@ type ChatReply = {
   }>;
   usedKnowledgeBase: boolean;
   quoteIntentDetected: boolean;
+  recommendation?: SizingRecommendation | null;
+};
+
+export type ConsultationDeskContext = {
+  intent?: ConsultationIntent;
+  requiredFields?: string[];
+  missingFields?: string[];
+  nextRecommendedQuestion?: string;
+  collected?: ConsultationEntities;
+  engineeringNotes?: string[];
+  recommendation?: SizingRecommendation | null;
 };
 
 type SolarSizingAnalysis = {
@@ -139,7 +152,7 @@ type ProductRecommendationAnalysis = {
   missingInputs: string[];
 };
 
-type IntentKind = "solar" | "quote" | "wiring" | "cctv" | "lighting" | "product" | "general";
+type IntentKind = "solar" | "quote" | "wiring" | "cctv" | "lighting" | "product" | "contact" | "general";
 
 function readPositiveInt(value: string | undefined, fallback: number) {
   const parsed = Number.parseInt(String(value || ""), 10);
@@ -851,6 +864,172 @@ function analyzeProductRecommendation(messages: AssistantChatMessage[]): Product
   };
 }
 
+function isContactQuestion(messages: AssistantChatMessage[]) {
+  const text = getRecentUserTextLower(messages);
+  return /\b(contact|phone|call|whatsapp|email|address|reach you|talk to)\b/.test(text);
+}
+
+function intentFromConsultation(intent?: ConsultationIntent): IntentKind | null {
+  const map: Partial<Record<ConsultationIntent, IntentKind>> = {
+    battery_sizing: "solar",
+    inverter_recommendation: "solar",
+    panel_recommendation: "solar",
+    solar_sizing: "solar",
+    protection_recommendation: "solar",
+    safety_check: "wiring",
+    wiring_help: "wiring",
+    cctv: "cctv",
+    quote: "quote",
+    materials_recommendation: "product",
+    lighting_recommendation: "lighting",
+    whatsapp: "contact",
+  };
+
+  return intent ? map[intent] || null : null;
+}
+
+function formatKnownParts(parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(", ");
+}
+
+function buildConsultationDeskReply({
+  activeIntent,
+  messages,
+  consultation,
+  analyses,
+}: {
+  activeIntent: IntentKind;
+  messages: AssistantChatMessage[];
+  consultation?: ConsultationDeskContext;
+  analyses: {
+    solar: SolarSizingAnalysis;
+    wiring: WiringIssueAnalysis;
+    cctv: CctvPlanningAnalysis;
+    quote: QuotePrepAnalysis;
+    lighting: LightingPlanningAnalysis;
+    product: ProductRecommendationAnalysis;
+  };
+}) {
+  const latestText = getRecentUserText(messages).toLowerCase();
+  const collected = consultation?.collected || {};
+  const missingFields = consultation?.missingFields || [];
+  const recommendation = consultation?.recommendation;
+
+  if (isContactQuestion(messages)) {
+    const quoteLine =
+      activeIntent === "quote" || /\bquote|estimate|price|pricing|budget\b/.test(latestText)
+        ? "For a quote, include service type, location, urgency, photos/videos where useful, and load details for solar or inverter work."
+        : "";
+
+    return [
+      `You can call or WhatsApp Oduzz on ${CONTACT.phoneDisplay}.`,
+      `Email: ${CONTACT.email}.`,
+      quoteLine,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (recommendation) {
+    return [
+      recommendation.quickAnswer,
+      ...recommendation.decision.slice(0, 4).map((item) => `- ${item}`),
+      recommendation.missingInformation.length
+        ? `Missing before final confirmation: ${recommendation.missingInformation.join("; ")}.`
+        : "",
+      recommendation.projectSummary.nextStep,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (
+    consultation?.intent === "solar_sizing" &&
+    consultation.engineeringNotes?.length &&
+    collected.total_load_watts &&
+    collected.backup_hours
+  ) {
+    return [
+      "Planning estimate:",
+      ...consultation.engineeringNotes.map((item) => `- ${item}`),
+      "Final panel stringing, cable sizes, and protection ratings still need the inverter, battery, panel specs, and site route length.",
+    ].join("\n");
+  }
+
+  if (consultation?.intent === "solar_sizing" && consultation.engineeringNotes?.length) {
+    return [
+      "No problem. List the appliances you want to power.",
+      "",
+      "If you know the wattages, include them. If not, I can use safe planning estimates for TVs, fans, bulbs, laptops, routers, freezers, pumps, or ACs.",
+      "For AC, freezer, or pump, add the HP, wattage, or size if you know it.",
+    ].join("\n");
+  }
+
+  if (activeIntent === "quote") {
+    if (!consultation && analyses.quote.isQuoteIntent) {
+      return buildQuotePrepReply(analyses.quote);
+    }
+
+    const knownParts = formatKnownParts([
+      collected.service_type ? `service: ${collected.service_type}` : analyses.quote.serviceType ? `service: ${analyses.quote.serviceType}` : "",
+      collected.location ? `location: ${collected.location}` : analyses.quote.location ? `location: ${analyses.quote.location}` : "",
+      collected.urgency ? `urgency: ${collected.urgency}` : analyses.quote.urgency ? `urgency: ${analyses.quote.urgency}` : "",
+    ]);
+    const missing = consultation ? missingFields : analyses.quote.missingInputs;
+
+    return [
+      knownParts ? `I can help make this quote-ready. I already have ${knownParts}.` : "I can help make this quote-ready.",
+      missing.length ? "Please send these details to complete the brief:" : "The brief is close. Add any final scope notes or photos if available.",
+      ...missing.map((item) => `- ${item}`),
+      missing.length
+        ? "- short description of the project scope or current issue"
+        : "Helpful remaining detail: a short description of the project scope or current issue.",
+      collected.service_type === "solar/inverter" || analyses.quote.serviceType === "solar/inverter"
+        ? "- load list and desired backup hours"
+        : "",
+      `Best next step: send the details here or on WhatsApp (${CONTACT.phoneDisplay}) so Oduzz can review and prepare the next action.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (activeIntent === "solar" && analyses.solar.isSolarIntent) {
+    return buildSolarSizingReply(analyses.solar);
+  }
+
+  if (activeIntent === "wiring" && analyses.wiring.isWiringIntent) {
+    return buildWiringIssueReply(analyses.wiring);
+  }
+
+  if (activeIntent === "cctv" && analyses.cctv.isCctvIntent) {
+    return buildCctvPlanningReply(analyses.cctv);
+  }
+
+  if (activeIntent === "lighting" && analyses.lighting.isLightingIntent) {
+    return buildLightingPlanningReply(analyses.lighting);
+  }
+
+  if (activeIntent === "product" && analyses.product.isProductIntent) {
+    return buildProductRecommendationReply(analyses.product);
+  }
+
+  if (consultation?.nextRecommendedQuestion && consultation.intent) {
+    const captured = formatKnownParts([
+      collected.service_type ? `service: ${collected.service_type}` : "",
+      collected.location ? `location: ${collected.location}` : "",
+      collected.backup_hours ? `backup: ${collected.backup_hours}h` : "",
+      collected.total_load_watts ? `load: ${formatNumber(collected.total_load_watts, 0)}W` : "",
+    ]);
+
+    return [
+      captured ? `I captured ${captured}.` : `You're in ${consultation.intent.replace(/_/g, " ")} mode.`,
+      consultation.nextRecommendedQuestion,
+    ].join("\n");
+  }
+
+  return "";
+}
+
 function buildSolarSizingReply(analysis: SolarSizingAnalysis) {
   if (!analysis.isSolarIntent) return "";
 
@@ -1060,6 +1239,10 @@ function buildIntentAwareRetrievalQuery(baseQuery: string, intent: IntentKind) {
     return [query, "product compatibility category load installation context authentic materials"].join("\n");
   }
 
+  if (intent === "contact") {
+    return [query, "company contact whatsapp phone email quote handoff"].join("\n");
+  }
+
   return query;
 }
 
@@ -1148,6 +1331,13 @@ function getIntentCategoryScore(match: ChunkMatch, intent: IntentKind) {
     if (has("solar")) return 4;
     if (has("cctv")) return 4;
     if (has("lighting")) return 4;
+    return 0;
+  }
+
+  if (intent === "contact") {
+    if (has("company")) return 10;
+    if (has("faq")) return 6;
+    if (has("quote")) return 4;
     return 0;
   }
 
@@ -1301,14 +1491,27 @@ function buildKnowledgeContext(matches: ChunkMatch[]) {
 async function generateGroundedAnswer({
   messages,
   matches,
+  consultation,
 }: {
   messages: AssistantChatMessage[];
   matches: ChunkMatch[];
+  consultation?: ConsultationDeskContext;
 }) {
   const { openAiApiKey } = ensureServerConfig();
 
   const transcript = buildTranscript(messages);
   const context = buildKnowledgeContext(matches);
+  const consultationContext = consultation
+    ? [
+        consultation.intent ? `Intent: ${consultation.intent}` : "",
+        consultation.requiredFields?.length ? `Required fields: ${consultation.requiredFields.join(", ")}` : "",
+        consultation.missingFields?.length ? `Missing fields: ${consultation.missingFields.join(", ")}` : "",
+        consultation.nextRecommendedQuestion ? `Next recommended question: ${consultation.nextRecommendedQuestion}` : "",
+        consultation.engineeringNotes?.length ? `Engineering notes: ${consultation.engineeringNotes.join(" | ")}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
 
   const response = await fetch(OPENAI_RESPONSES_URL, {
     method: "POST",
@@ -1335,6 +1538,9 @@ async function generateGroundedAnswer({
                 "Retrieved Oduzz knowledge context:",
                 context || "No specific retrieved knowledge context.",
                 "",
+                "Consultation orchestration context:",
+                consultationContext || "No active consultation context.",
+                "",
                 "Conversation transcript:",
                 transcript,
               ].join("\n"),
@@ -1360,7 +1566,12 @@ async function generateGroundedAnswer({
   return answer;
 }
 
-export async function generateAssistantChatReply(rawMessages: unknown): Promise<ChatReply> {
+export async function generateAssistantChatReply(
+  rawMessages: unknown,
+  options: {
+    consultation?: ConsultationDeskContext;
+  } = {},
+): Promise<ChatReply> {
   ensureServerConfig();
 
   const messages = (Array.isArray(rawMessages) ? rawMessages : [])
@@ -1392,23 +1603,29 @@ export async function generateAssistantChatReply(rawMessages: unknown): Promise<
   const solarAnalysis = analyzeSolarSizing(messages);
   const wiringAnalysis = analyzeWiringIssue(messages);
   const cctvAnalysis = analyzeCctvPlanning(messages);
-  const quoteIntentDetected = isQuoteIntent(latestUserMessage.content);
+  const consultationIntent = intentFromConsultation(options.consultation?.intent);
+  const quoteIntentDetected =
+    options.consultation?.intent === "quote" || isQuoteIntent(latestUserMessage.content);
   const quoteAnalysis = analyzeQuotePrep(messages);
   const lightingAnalysis = analyzeLightingPlanning(messages);
   const productAnalysis = analyzeProductRecommendation(messages);
-  const activeIntent: IntentKind = solarAnalysis.isSolarIntent
-    ? "solar"
-    : quoteAnalysis.isQuoteIntent
-      ? "quote"
-      : wiringAnalysis.isWiringIntent
-        ? "wiring"
-        : cctvAnalysis.isCctvIntent
-          ? "cctv"
-          : lightingAnalysis.isLightingIntent
-            ? "lighting"
-            : productAnalysis.isProductIntent
-              ? "product"
-              : "general";
+  const activeIntent: IntentKind =
+    consultationIntent ||
+    (isContactQuestion(messages)
+      ? "contact"
+      : solarAnalysis.isSolarIntent
+        ? "solar"
+        : quoteAnalysis.isQuoteIntent
+          ? "quote"
+          : wiringAnalysis.isWiringIntent
+            ? "wiring"
+            : cctvAnalysis.isCctvIntent
+              ? "cctv"
+              : lightingAnalysis.isLightingIntent
+                ? "lighting"
+                : productAnalysis.isProductIntent
+                  ? "product"
+                  : "general");
   const intentAwareQuery = buildIntentAwareRetrievalQuery(
     retrievalQuery || latestUserMessage.content,
     activeIntent,
@@ -1433,57 +1650,27 @@ export async function generateAssistantChatReply(rawMessages: unknown): Promise<
   );
   const filteredMatches = filterMatchesForIntent(matches, activeIntent);
 
-  if (solarAnalysis.isSolarIntent) {
-    return {
-      answer: buildSolarSizingReply(solarAnalysis),
-      sources: buildSources(filteredMatches),
-      usedKnowledgeBase: filteredMatches.length > 0,
-      quoteIntentDetected,
-    };
-  }
+  const deskAnswer = buildConsultationDeskReply({
+    activeIntent,
+    messages,
+    consultation: options.consultation,
+    analyses: {
+      solar: solarAnalysis,
+      wiring: wiringAnalysis,
+      cctv: cctvAnalysis,
+      quote: quoteAnalysis,
+      lighting: lightingAnalysis,
+      product: productAnalysis,
+    },
+  });
 
-  if (quoteAnalysis.isQuoteIntent) {
+  if (deskAnswer) {
     return {
-      answer: buildQuotePrepReply(quoteAnalysis),
+      answer: deskAnswer,
       sources: buildSources(filteredMatches),
       usedKnowledgeBase: filteredMatches.length > 0,
       quoteIntentDetected,
-    };
-  }
-
-  if (wiringAnalysis.isWiringIntent) {
-    return {
-      answer: buildWiringIssueReply(wiringAnalysis),
-      sources: buildSources(filteredMatches),
-      usedKnowledgeBase: filteredMatches.length > 0,
-      quoteIntentDetected,
-    };
-  }
-
-  if (cctvAnalysis.isCctvIntent) {
-    return {
-      answer: buildCctvPlanningReply(cctvAnalysis),
-      sources: buildSources(filteredMatches),
-      usedKnowledgeBase: filteredMatches.length > 0,
-      quoteIntentDetected,
-    };
-  }
-
-  if (lightingAnalysis.isLightingIntent) {
-    return {
-      answer: buildLightingPlanningReply(lightingAnalysis),
-      sources: buildSources(filteredMatches),
-      usedKnowledgeBase: filteredMatches.length > 0,
-      quoteIntentDetected,
-    };
-  }
-
-  if (productAnalysis.isProductIntent) {
-    return {
-      answer: buildProductRecommendationReply(productAnalysis),
-      sources: buildSources(filteredMatches),
-      usedKnowledgeBase: filteredMatches.length > 0,
-      quoteIntentDetected,
+      recommendation: options.consultation?.recommendation || null,
     };
   }
 
@@ -1491,6 +1678,7 @@ export async function generateAssistantChatReply(rawMessages: unknown): Promise<
     const answer = await generateGroundedAnswer({
       messages,
       matches: [],
+      consultation: options.consultation,
     });
 
     return {
@@ -1498,12 +1686,14 @@ export async function generateAssistantChatReply(rawMessages: unknown): Promise<
       sources: [],
       usedKnowledgeBase: false,
       quoteIntentDetected,
+      recommendation: options.consultation?.recommendation || null,
     };
   }
 
   const answer = await generateGroundedAnswer({
     messages,
     matches: filteredMatches,
+    consultation: options.consultation,
   });
 
   return {
@@ -1511,6 +1701,7 @@ export async function generateAssistantChatReply(rawMessages: unknown): Promise<
     sources: buildSources(filteredMatches),
     usedKnowledgeBase: filteredMatches.length > 0,
     quoteIntentDetected,
+    recommendation: options.consultation?.recommendation || null,
   };
 }
 

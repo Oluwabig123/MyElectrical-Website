@@ -33,6 +33,14 @@ export type ConsultationEntities = {
   load_surge_details?: string;
   issue?: string;
   location?: string;
+  service_type?: string;
+  urgency?: string;
+  property_type?: string;
+  room_purpose?: string;
+  coverage_needs?: string[];
+  project_type?: string;
+  control_zones?: string;
+  has_media_hint?: boolean;
 };
 
 const APPLIANCE_ALIASES = [
@@ -112,7 +120,9 @@ function extractAppliances(text: string) {
 function extractPanelSpecs(text: string): PanelSpecs | undefined {
   const specs: PanelSpecs = {};
   const quantity = text.match(/(\d+)\s*(?:x\s*)?(?:panels?|solar panels?)/i)?.[1];
-  const wattage = text.match(/\b(\d+(?:\.\d+)?)\s*w(?:att)?\s*(?:panel|solar)?\b/i)?.[1];
+  const wattage =
+    text.match(/\b(\d+(?:\.\d+)?)\s*w(?:att)?\s*(?:solar\s*)?panels?\b/i)?.[1] ||
+    text.match(/\b(?:solar\s*)?panels?[^.\n,;]{0,24}?(\d+(?:\.\d+)?)\s*w\b/i)?.[1];
   const voc = text.match(/\bvoc\s*[:=]?\s*(\d+(?:\.\d+)?)/i)?.[1];
   const vmp = text.match(/\bvmp\s*[:=]?\s*(\d+(?:\.\d+)?)/i)?.[1];
   const isc = text.match(/\bisc\s*[:=]?\s*(\d+(?:\.\d+)?)/i)?.[1];
@@ -133,6 +143,112 @@ function extractModel(text: string, label: "battery" | "panel") {
   return match?.[1]?.trim();
 }
 
+function titleCase(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function extractLocation(text: string) {
+  const lower = text.toLowerCase();
+  const knownLocations = [
+    "ikorodu",
+    "lekki",
+    "ajah",
+    "victoria island",
+    "vi",
+    "ikeja",
+    "yaba",
+    "surulere",
+    "lagos island",
+    "mainland",
+    "lagos",
+  ];
+  const direct = knownLocations.find((location) => lower.includes(location));
+
+  if (direct) {
+    return direct === "vi" ? "Victoria Island" : titleCase(direct);
+  }
+
+  const fallback = text.match(
+    /\b(?:in|at|from|around|near|location is|located in)\s+([a-z][a-z\s-]{2,40})(?:[.,;!?]|$)/i,
+  );
+  const candidate = sanitizeText(fallback?.[1] || "").replace(/\s+/g, " ");
+  const genericPlaces = new Set(["the house", "house", "home", "my house", "my home", "shop", "office"]);
+
+  return candidate && !genericPlaces.has(candidate.toLowerCase()) ? titleCase(candidate) : "";
+}
+
+function extractServiceType(text: string) {
+  const lower = text.toLowerCase();
+  if (/(solar|inverter|battery|panel)/.test(lower)) return "solar/inverter";
+  if (/(cctv|camera|surveillance|dvr|nvr|remote viewing|security setup)/.test(lower)) return "CCTV";
+  if (/(wiring|rewiring|breaker|tripping|fault|socket|panel|db|distribution board)/.test(lower)) {
+    return "electrical fault/wiring";
+  }
+  if (/(lighting|chandelier|pop light|downlight|spotlight|fixture)/.test(lower)) return "lighting";
+  if (/(smart home|smart switch|automation)/.test(lower)) return "smart home";
+  if (/(cable|wire|materials?|product|breaker|switch|socket)/.test(lower)) return "materials";
+  return "";
+}
+
+function extractUrgency(text: string) {
+  const lower = text.toLowerCase();
+  if (/(urgent|asap|immediately|today|now|emergency)/.test(lower)) return "urgent";
+  if (/(tomorrow|this week|soon|quickly)/.test(lower)) return "soon";
+  if (/(routine|whenever|no rush|later)/.test(lower)) return "routine";
+  return "";
+}
+
+function extractPropertyType(text: string) {
+  const lower = text.toLowerCase();
+  if (/\b(shop|store|retail)\b/.test(lower)) return "shop";
+  if (/\b(office|workspace)\b/.test(lower)) return "office";
+  if (/\b(home|house|flat|apartment)\b/.test(lower)) return "home";
+  if (/\b(compound|estate)\b/.test(lower)) return "compound";
+  if (/\b(warehouse)\b/.test(lower)) return "warehouse";
+  return "";
+}
+
+function extractRoomPurpose(text: string) {
+  const lower = text.toLowerCase();
+  if (/\b(living room|parlour|sitting room)\b/.test(lower)) return "living room";
+  if (/\b(bedroom)\b/.test(lower)) return "bedroom";
+  if (/\b(kitchen)\b/.test(lower)) return "kitchen";
+  if (/\b(shop|store)\b/.test(lower)) return "shop";
+  if (/\b(office)\b/.test(lower)) return "office";
+  if (/\b(outdoor|compound|exterior)\b/.test(lower)) return "outdoor area";
+  return "";
+}
+
+function extractCoverageNeeds(text: string) {
+  const lower = text.toLowerCase();
+  const needs: string[] = [];
+  if (/(entry|entrance|gate|door)/.test(lower)) needs.push("entry points");
+  if (/(perimeter|outside|exterior|compound)/.test(lower)) needs.push("perimeter");
+  if (/(indoor|inside|counter|stock|hall|room)/.test(lower)) needs.push("indoor zones");
+  if (/(remote view|phone view|remote access)/.test(lower)) needs.push("remote viewing");
+  if (/(backup|inverter|power backup)/.test(lower)) needs.push("backup-aware monitoring");
+  return needs;
+}
+
+function extractProjectType(text: string) {
+  const lower = text.toLowerCase();
+  if (/(new build|new house|new project|new installation)/.test(lower)) return "new installation";
+  if (/(replace|replacement|change old)/.test(lower)) return "replacement";
+  if (/(upgrade|renovation|remodel)/.test(lower)) return "upgrade";
+  return "";
+}
+
+function extractControlZones(text: string) {
+  const explicit = text.match(/(\d+)\s*(?:zones|switch zones|control zones)/i);
+  if (explicit?.[1]) return `${explicit[1]} zones`;
+  if (/(separate switch|different switch|layered control)/i.test(text)) return "multiple zones";
+  return "";
+}
+
 export function extractConsultationEntities(input: unknown): ConsultationEntities {
   const text = sanitizeText(input);
   if (!text) return {};
@@ -145,7 +261,7 @@ export function extractConsultationEntities(input: unknown): ConsultationEntitie
     text.match(/\b(\d+(?:\.\d+)?)\s*kva\b/i);
   const totalLoad =
     text.match(/\b(?:total\s+load|load|appliances?\s+need|power)\s*(?:is|=|:)?\s*(\d+(?:\.\d+)?)\s*(kw|w)\b/i) ||
-    text.match(/\b(\d+(?:\.\d+)?)\s*(kw|w)\s+(?:load|total load)\b/i);
+    text.match(/\b(\d+(?:\.\d+)?)\s*(kw|w)\s+(?:critical\s+load|load|total load)\b/i);
   const backupHours =
     text.match(/\b(?:for|backup|last|run|running|need)\s*(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i)?.[1] ||
     text.match(/\b(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i)?.[1];
@@ -154,6 +270,14 @@ export function extractConsultationEntities(input: unknown): ConsultationEntitie
   const protection = text.match(/\b(?:breaker|mcb|mccb|fuse|spd|isolator|earthing|rcd|elcb|changeover)\b/gi);
   const panelSpecs = extractPanelSpecs(text);
   const applianceData = extractAppliances(text);
+  const location = extractLocation(text);
+  const serviceType = extractServiceType(text);
+  const urgency = extractUrgency(text);
+  const propertyType = extractPropertyType(text);
+  const roomPurpose = extractRoomPurpose(text);
+  const coverageNeeds = extractCoverageNeeds(text);
+  const projectType = extractProjectType(text);
+  const controlZones = extractControlZones(text);
 
   if (inverterVoltage) entities.inverter_voltage = `${inverterVoltage.toUpperCase()}V`;
   if (batteryVoltage) entities.battery_voltage = `${batteryVoltage.toUpperCase()}V`;
@@ -168,6 +292,17 @@ export function extractConsultationEntities(input: unknown): ConsultationEntitie
   if (budget) entities.budget = budget.replace(/\s+/g, " ").trim();
   if (protection?.length) entities.protection_components = Array.from(new Set(protection.map((item) => item.toLowerCase())));
   if (panelSpecs) entities.panel_specs = panelSpecs;
+  if (location) entities.location = location;
+  if (serviceType) entities.service_type = serviceType;
+  if (urgency) entities.urgency = urgency;
+  if (propertyType) entities.property_type = propertyType;
+  if (roomPurpose) entities.room_purpose = roomPurpose;
+  if (coverageNeeds.length) entities.coverage_needs = coverageNeeds;
+  if (projectType) entities.project_type = projectType;
+  if (controlZones) entities.control_zones = controlZones;
+  if (/\b(?:photo|photos|video|videos|picture|pictures|image|images)\b/i.test(text)) {
+    entities.has_media_hint = true;
+  }
   if (applianceData.appliances.length) {
     entities.appliances = applianceData.appliances;
     entities.appliance_details = applianceData.appliance_details;

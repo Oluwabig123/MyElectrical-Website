@@ -8,9 +8,8 @@ import AssistantChat, { type AssistantMessage } from "@/components/assistant/Ass
 import QuickActions from "@/components/assistant/QuickActions";
 import { buildWhatsAppUrl } from "@/data/contact";
 import { createConsultationWhatsAppUrl, type ConsultationSummary } from "@/lib/assistant-flow-helpers";
-import { assistantFlows, assistantFlowOrder, type AssistantFlowId } from "@/lib/assistant-flows";
+import { assistantFlows, type AssistantFlowId } from "@/lib/assistant-flows";
 import {
-  detectConversationIntent,
   getConsultationIntentLabel,
   setConsultationIntent,
   type ConsultationIntent,
@@ -115,21 +114,6 @@ const FLOW_INTENTS: Record<AssistantFlowId, ConsultationIntent> = {
   whatsapp: "whatsapp",
   materials: "materials_recommendation",
 };
-
-function resolveAssistantFlowId(text: unknown) {
-  const value = String(text || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-  if (!value) return null;
-  if (detectConversationIntent(value) === "LOAD_ESTIMATION") return null;
-
-  return (
-    assistantFlowOrder.find((flowId) =>
-      assistantFlows[flowId].aliases.some((alias) => value.includes(alias.toLowerCase())),
-    ) || null
-  );
-}
 
 export default function AssistantClient() {
   const [input, setInput] = useState("");
@@ -294,12 +278,6 @@ export default function AssistantClient() {
   }
 
   async function handleFreeformReply(raw: string, nextHistory: AssistantMessage[]) {
-    const matchedFlowId = resolveAssistantFlowId(raw);
-    if (matchedFlowId && !intentContext) {
-      void startFlow(matchedFlowId);
-      return;
-    }
-
     setIsResponding(true);
     setAssistantStatus("");
 

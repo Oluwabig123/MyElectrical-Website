@@ -1,4 +1,9 @@
-import { generateAssistantChatReply, type AssistantChatMessage } from "@/lib/assistant-rag";
+import {
+  generateAssistantChatReply,
+  type AssistantChatMessage,
+  type ConsultationDeskContext,
+} from "@/lib/assistant-rag";
+import { assistantFlows, assistantFlowOrder, type AssistantFlowId } from "@/lib/assistant-flows";
 import {
   extractConsultationEntities,
   type ApplianceEntry,
@@ -15,7 +20,6 @@ import {
   type ConsultationIntent,
   type ConsultationIntentContext,
 } from "@/lib/ai/intent-context";
-import { validateInput } from "@/lib/ai/validation";
 import { runAssistantWorkflow, type WorkflowFlowId } from "@/lib/ai/workflows";
 import { buildPlanningSizing, getProtectionChecklist } from "@/lib/engineering/consultation-priority";
 import type { SizingRecommendation } from "@/lib/engineering/types";
@@ -26,6 +30,13 @@ export type ConsultationEngineRequest = {
   state?: ConsultationState | null;
 };
 
+export type ConsultationGuide = {
+  intent?: ConsultationIntent;
+  requiredFields: string[];
+  missingFields: string[];
+  nextRecommendedQuestion: string;
+};
+
 export type ConsultationEngineResult = {
   answer: string;
   state: ConsultationState;
@@ -33,7 +44,49 @@ export type ConsultationEngineResult = {
   usedKnowledgeBase: boolean;
   recommendation?: SizingRecommendation | null;
   quoteIntentDetected?: boolean;
+  consultationGuide: ConsultationGuide;
 };
+
+const FLOW_INTENTS: Record<AssistantFlowId, ConsultationIntent> = {
+  solar: "solar_sizing",
+  battery: "battery_sizing",
+  inverter: "inverter_recommendation",
+  panels: "panel_recommendation",
+  protection: "protection_recommendation",
+  safety: "safety_check",
+  wiring: "wiring_help",
+  lighting: "lighting_recommendation",
+  cctv: "cctv",
+  quote: "quote",
+  whatsapp: "whatsapp",
+  materials: "materials_recommendation",
+};
+
+function sanitizeText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeMessages(rawMessages: unknown) {
+  return (Array.isArray(rawMessages) ? rawMessages : [])
+    .map((message) => {
+      const role = sanitizeText((message as { role?: unknown })?.role);
+      const content = sanitizeText(
+        (message as { content?: unknown; text?: unknown })?.content ||
+          (message as { text?: unknown })?.text,
+      );
+
+      if (role !== "assistant" && role !== "user") return null;
+      if (!content) return null;
+
+      return { role, content } as AssistantChatMessage;
+    })
+    .filter((message): message is AssistantChatMessage => Boolean(message))
+    .slice(-12);
+}
+
+function latestUserMessage(messages: AssistantChatMessage[]) {
+  return [...messages].reverse().find((message) => message.role === "user")?.content || "";
+}
 
 function hasValue(value: unknown) {
   if (Array.isArray(value)) return value.length > 0;
@@ -51,8 +104,8 @@ function mergeApplianceDetails(existing: ApplianceEntry[] = [], incoming: Applia
   for (const item of incoming) {
     const key = item.name.toLowerCase();
     rows.set(key, {
-      ...item,
       ...rows.get(key),
+      ...item,
       label: item.label || rows.get(key)?.label || item.name,
     });
   }
@@ -67,7 +120,9 @@ export function mergeConsultationState(
   const normalized = normalizeConsultationState(previous, intent);
   const collected: ConsultationEntities = { ...normalized.collected };
 
-  for (const [key, value] of Object.entries(extracted) as Array<[keyof ConsultationEntities, ConsultationEntities[keyof ConsultationEntities]]>) {
+  for (const [key, value] of Object.entries(extracted) as Array<
+    [keyof ConsultationEntities, ConsultationEntities[keyof ConsultationEntities]]
+  >) {
     if (!hasValue(value)) continue;
 
     if (key === "appliances") {
@@ -91,12 +146,12 @@ export function mergeConsultationState(
       continue;
     }
 
-    if (key === "protection_components") {
-      collected.protection_components = mergeUnique(collected.protection_components, value as string[]);
+    if (key === "protection_components" || key === "coverage_needs") {
+      collected[key] = mergeUnique(collected[key] as string[] | undefined, value as string[]) as never;
       continue;
     }
 
-    if (!hasValue(collected[key])) {
+    if (!hasValue(collected[key]) || key === "has_media_hint") {
       collected[key] = value as never;
     }
   }
@@ -109,10 +164,6 @@ export function mergeConsultationState(
   };
 }
 
-function latestUserMessage(messages: AssistantChatMessage[]) {
-  return [...messages].reverse().find((message) => message.role === "user")?.content || "";
-}
-
 function applianceNames(state: ConsultationState) {
   return state.collected.appliance_details?.map((item) => item.name.toLowerCase()) || [];
 }
@@ -123,6 +174,25 @@ function hasCompressorWithoutRating(state: ConsultationState) {
   return !hasValue(state.collected.load_surge_details);
 }
 
+function getRequiredFields(intent: ConsultationIntent | undefined) {
+  const fields: Partial<Record<ConsultationIntent, string[]>> = {
+    battery_sizing: ["load or appliance list", "backup hours", "inverter or battery voltage"],
+    inverter_recommendation: ["load or appliance list", "preferred battery voltage"],
+    panel_recommendation: ["inverter or charge controller model", "panel model or datasheet values"],
+    solar_sizing: ["load or appliance list", "backup hours"],
+    safety_check: ["setup or fault being checked"],
+    wiring_help: ["wiring issue or affected area"],
+    cctv: ["property type", "areas to monitor", "location"],
+    quote: ["service or work brief", "project location", "urgency or preferred timeline"],
+    protection_recommendation: ["load or inverter details", "protection component context"],
+    materials_recommendation: ["product category", "project type", "intended load or use case"],
+    lighting_recommendation: ["property type or room purpose", "fixture style or lighting goal", "control zones"],
+    whatsapp: ["handoff brief"],
+  };
+
+  return intent ? fields[intent] || [] : [];
+}
+
 function determineMissingFields(state: ConsultationState) {
   const intent = state.intent;
   const collected = state.collected;
@@ -131,7 +201,9 @@ function determineMissingFields(state: ConsultationState) {
   if (intent === "battery_sizing") {
     if (!hasValue(collected.total_load_watts) && !hasValue(collected.appliances)) missing.push("load or appliance list");
     if (!hasValue(collected.backup_hours)) missing.push("backup hours");
-    if (!hasValue(collected.inverter_voltage)) missing.push("inverter or battery voltage");
+    if (!hasValue(collected.inverter_voltage) && !hasValue(collected.battery_voltage)) {
+      missing.push("inverter or battery voltage");
+    }
     if (hasCompressorWithoutRating(state)) missing.push("freezer/AC/pump wattage or type");
   }
 
@@ -163,16 +235,37 @@ function determineMissingFields(state: ConsultationState) {
   }
 
   if (intent === "wiring_help") {
-    if (!hasValue(collected.issue)) missing.push("wiring issue or affected area");
+    if (!hasValue(collected.issue) && !hasValue(collected.service_type)) {
+      missing.push("wiring issue or affected area");
+    }
   }
 
   if (intent === "cctv") {
-    if (!hasValue(collected.issue) && !hasValue(collected.location)) missing.push("areas to monitor and property type");
+    if (!hasValue(collected.property_type)) missing.push("property type");
+    if (!hasValue(collected.coverage_needs) && !hasValue(collected.issue)) missing.push("areas to monitor");
+    if (!hasValue(collected.location)) missing.push("project location");
   }
 
   if (intent === "quote") {
-    if (!hasValue(collected.issue) && !hasValue(collected.appliances)) missing.push("service or work brief");
+    if (!hasValue(collected.service_type) && !hasValue(collected.issue) && !hasValue(collected.appliances)) {
+      missing.push("service or work brief");
+    }
     if (!hasValue(collected.location)) missing.push("project location");
+    if (!hasValue(collected.urgency)) missing.push("urgency or preferred timeline");
+  }
+
+  if (intent === "lighting_recommendation") {
+    if (!hasValue(collected.property_type) && !hasValue(collected.room_purpose)) {
+      missing.push("property type or room purpose");
+    }
+    if (!hasValue(collected.service_type)) missing.push("fixture style or lighting goal");
+    if (!hasValue(collected.control_zones)) missing.push("number of control zones or switching preference");
+  }
+
+  if (intent === "materials_recommendation") {
+    if (!hasValue(collected.service_type)) missing.push("product category or item you need");
+    if (!hasValue(collected.project_type)) missing.push("project type or whether this is new installation, replacement, or upgrade");
+    if (!hasValue(collected.issue) && !hasValue(collected.total_load_watts)) missing.push("intended load or use case");
   }
 
   return missing;
@@ -186,120 +279,88 @@ function formatCollected(state: ConsultationState) {
     .join(" ");
 
   if (inverter.trim() !== "inverter") lines.push(inverter);
+  if (collected.service_type) lines.push(`Service: ${collected.service_type}`);
+  if (collected.location) lines.push(`Location: ${collected.location}`);
+  if (collected.property_type) lines.push(`Property: ${collected.property_type}`);
+  if (collected.coverage_needs?.length) lines.push(`Coverage: ${collected.coverage_needs.join(", ")}`);
   if (collected.total_load_watts) lines.push(`${collected.total_load_watts}W total load`);
   if (collected.battery_voltage) lines.push(`${collected.battery_voltage} battery context`);
   if (collected.appliances?.length) lines.push(...collected.appliances);
   if (collected.backup_hours) lines.push(`${collected.backup_hours}-hour backup target`);
   if (collected.panel_specs?.wattage) lines.push(`${collected.panel_specs.wattage}W panel detail`);
+  if (collected.urgency) lines.push(`Urgency: ${collected.urgency}`);
   if (collected.budget) lines.push(`Budget: ${collected.budget}`);
 
   return lines;
 }
 
-function buildInvalidResponse() {
-  return [
-    "I couldn't identify useful sizing information.",
-    "",
-    "Please provide information like:",
-    "",
-    "- TV",
-    "- Freezer",
-    "- AC",
-    "- Fans",
-    "- Bulbs",
-  ].join("\n");
+function buildNextRecommendedQuestion(state: ConsultationState) {
+  const missing = state.missing[0];
+  if (missing) {
+    if (missing === "freezer/AC/pump wattage or type") {
+      return "What type, HP, or wattage is the freezer, AC, or pump?";
+    }
+
+    return `Please share the ${missing}.`;
+  }
+
+  if (state.intent === "quote") {
+    return "Please add a short scope description or any photos/videos so the quote handoff is clearer.";
+  }
+
+  if (state.intent === "solar_sizing") {
+    return "Please confirm the inverter, battery, and panel models if you already have them.";
+  }
+
+  if (state.intent) {
+    return `What else should I consider for this ${getConsultationIntentLabel(state.intent).toLowerCase()} request?`;
+  }
+
+  return "What would you like help with: solar, wiring, CCTV, lighting, materials, or quote preparation?";
 }
 
-function buildLoadEstimationResponse() {
-  return [
-    "Great, I'll help estimate your load.",
-    "",
-    "Please list the appliances you want to power.",
-    "",
-    "Example:",
-    "",
-    "• 1 TV",
-    "• 1 freezer",
-    "• 3 fans",
-    "• 8 bulbs",
-    "• 1 laptop",
-    "• AC (if any)",
-    "",
-    "I'll estimate:",
-    "",
-    "✓ total load",
-    "",
-    "✓ battery size",
-    "",
-    "✓ inverter size",
-    "",
-    "✓ solar panels",
-    "",
-    "✓ protection components",
-  ].join("\n");
-}
-
-function enterLoadEstimationWorkflow(state: ConsultationState | null | undefined): ConsultationState {
+function buildConsultationGuide(state: ConsultationState): ConsultationGuide {
   return {
-    ...normalizeConsultationState(state || createConsultationState("solar_sizing"), "solar_sizing"),
-    intent: "solar_sizing",
-    childState: "load_estimation",
-    missing: [],
-    confidence: 0.2,
+    intent: state.intent,
+    requiredFields: getRequiredFields(state.intent),
+    missingFields: state.missing,
+    nextRecommendedQuestion: buildNextRecommendedQuestion(state),
   };
 }
 
 function buildActivationResponse(state: ConsultationState) {
   const intent = state.intent;
+  const guide = buildConsultationGuide(state);
   const captured = formatCollected(state);
 
-  if (captured.length) return buildMissingQuestion(state);
+  if (captured.length) {
+    return [
+      "Great, I captured:",
+      "",
+      ...captured.map((item) => `- ${item}`),
+      "",
+      guide.nextRecommendedQuestion,
+    ].join("\n");
+  }
 
   if (intent === "solar_sizing") {
     return [
       "Great, I'll help size your solar system.",
-      "",
-      "I can help recommend:",
-      "",
-      "- Battery size",
-      "- Inverter compatibility",
-      "- Panel configuration",
-      "- Protection components",
-      "",
-      "Let's start with your load.",
       "",
       "Do you already know your total load in watts, or should I help estimate it from your appliances?",
     ].join("\n");
   }
 
   if (intent === "battery_sizing") {
-    return [
-      "Great, I'll help recommend a practical battery size.",
-      "",
-      "I can work from either your total load in watts or a normal appliance list.",
-      "",
-      "Tell me what you want the battery to power and the backup hours you want.",
-    ].join("\n");
+    return "Great, I'll help recommend a practical battery size.\n\nTell me what you want the battery to power and the backup hours you want.";
   }
 
   if (intent === "inverter_recommendation") {
-    return [
-      "Great, I'll help recommend an inverter that fits the load.",
-      "",
-      "We'll check load first, then battery voltage, startup loads, and protection.",
-      "",
-      "What appliances do you want to power, or what is your total load in watts?",
-    ].join("\n");
+    return "Great, I'll help recommend an inverter that fits the load.\n\nWhat appliances do you want to power, or what is your total load in watts?";
   }
 
   if (intent === "panel_recommendation") {
-    return [
-      "Great, I'll help recommend a safe solar panel direction.",
-      "",
-      "We'll confirm the inverter or charge controller first, then match panel wattage, voltage, and stringing.",
-      "",
-      "What inverter or charge controller model should the panels work with?",
-    ].join("\n");
+    return "Great, I'll help recommend a safe solar panel direction.\n\nWhat inverter or charge controller model should the panels work with?";
   }
 
   if (intent === "safety_check") {
@@ -318,75 +379,7 @@ function buildActivationResponse(state: ConsultationState) {
     return "Sure, I'll help prepare a useful quote request.\n\nWhat service do you need, and where is the project located?";
   }
 
-  return `You're currently in ${intent ? getConsultationIntentLabel(intent) : "Consultation"}.\n\nTell me what you want to achieve, and I'll guide the next step.`;
-}
-
-function buildKnownLoadPlanningResponse(state: ConsultationState) {
-  const planning = buildPlanningSizing(state);
-  if (!planning) return null;
-
-  const inverterKw = Math.max(3, Math.ceil(planning.inverterRecommendedWatts / 1000));
-  const preferredInverterKw = Math.max(inverterKw + 1, 5);
-
-  return [
-    "Great.",
-    "",
-    `Your appliances need about ${planning.energyRequiredKwh.toFixed(1)}kWh of energy.`,
-    "",
-    "After inverter losses and safe lithium battery usage:",
-    "",
-    `Recommended battery storage: about ${planning.batteryRequiredKwh.toFixed(1)}kWh.`,
-    "",
-    "Recommended direction:",
-    "",
-    `- Battery: about ${planning.batteryRangeLabel} lithium`,
-    `- Inverter: minimum ${inverterKw}kW, ${preferredInverterKw}kW recommended where budget allows`,
-    "- Solar array: estimated after we agree how fast you want to recharge the battery",
-    "- Protection components included",
-    "",
-    "Protection checklist:",
-    "",
-    ...getProtectionChecklist().map((item) => `- ${item}`),
-    "",
-    "This is a planning estimate. Final panel stringing and exact protection sizes require the inverter model, battery model, and panel specifications.",
-  ].join("\n");
-}
-
-function buildMissingQuestion(state: ConsultationState) {
-  const label = state.intent ? getConsultationIntentLabel(state.intent) : "Consultation";
-  const captured = formatCollected(state);
-  const missing = state.missing[0];
-
-  if (missing === "freezer/AC/pump wattage or type") {
-    const compressorNames = applianceNames(state).filter((name) => ["freezer", "fridge", "pump", "ac"].includes(name));
-    const targetLoad = compressorNames.length === 1 ? compressorNames[0] : "freezer, AC, or pump";
-
-    return [
-      "Great, I captured:",
-      "",
-      ...captured.map((item) => `- ${item}`),
-      "",
-      "I need one more detail:",
-      "",
-      `What type of ${targetLoad} are you using?`,
-      "",
-      "- Small freezer",
-      "- Medium freezer",
-      "- Deep freezer",
-      "- Wattage or HP if known",
-    ].join("\n");
-  }
-
-  return [
-    captured.length ? "Great, I captured:" : `You're currently in ${label}.`,
-    "",
-    ...captured.map((item) => `- ${item}`),
-    captured.length ? "" : "Tell me what you already have and what you want to power.",
-    missing ? `The next useful detail is: ${missing}.` : "",
-  ]
-    .filter((line, index, lines) => line || lines[index - 1])
-    .join("\n")
-    .trim();
+  return `You're currently in ${intent ? getConsultationIntentLabel(intent) : "Consultation"}.\n\n${guide.nextRecommendedQuestion}`;
 }
 
 function workflowFromIntent(intent: ConsultationIntent | undefined): WorkflowFlowId | null {
@@ -411,7 +404,9 @@ function workflowFromIntent(intent: ConsultationIntent | undefined): WorkflowFlo
 function answersFromState(state: ConsultationState) {
   const collected = state.collected;
   return {
-    appliances: collected.appliances?.join(", ") || "",
+    appliances:
+      collected.appliances?.join(", ") ||
+      (collected.total_load_watts ? `${collected.total_load_watts}W total load` : ""),
     backup_hours: collected.backup_hours ? String(collected.backup_hours) : "",
     existing_inverter: [collected.inverter_voltage, collected.inverter_size, collected.inverter_type]
       .filter(Boolean)
@@ -429,10 +424,111 @@ function answersFromState(state: ConsultationState) {
       .filter(Boolean)
       .join(", "),
     load_surge_details: collected.load_surge_details || "",
-    issue: collected.issue || "",
+    issue: collected.issue || collected.service_type || "",
     budget: collected.budget || "",
     location: collected.location || "",
   };
+}
+
+function resolveIntentAlias(text: string) {
+  const value = text.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!value) return undefined;
+
+  const flowId = assistantFlowOrder.find((id) =>
+    assistantFlows[id].aliases.some((alias) => value.includes(alias.toLowerCase())),
+  );
+
+  return flowId ? FLOW_INTENTS[flowId] : undefined;
+}
+
+function inferIntentFromMessage(text: string, extracted: ConsultationEntities) {
+  const value = text.toLowerCase();
+  const aliasIntent = resolveIntentAlias(value);
+  if (aliasIntent) return aliasIntent;
+  if (detectConversationIntent(value) === "LOAD_ESTIMATION") return "solar_sizing";
+  if (/\b(quote|estimate|pricing|price|budget|inspection|site visit)\b/.test(value)) return "quote";
+  if (/\b(solar|inverter|battery|panel)\b/.test(value) && /\b(size|sizing|capacity|calculate|load|backup)\b/.test(value)) {
+    return "solar_sizing";
+  }
+  if (/\b(cctv|camera|surveillance|dvr|nvr|remote viewing)\b/.test(value)) return "cctv";
+  if (/\b(wiring|rewiring|breaker|tripping|fault|socket|switch|panel|burnt)\b/.test(value)) return "wiring_help";
+  if (/\b(spark|shock|burning|smoke|unsafe|exposed)\b/.test(value)) return "safety_check";
+  if (/\b(lighting|chandelier|pop light|downlight|spotlight|fixture)\b/.test(value)) {
+    return "lighting_recommendation";
+  }
+  if (/\b(material|product|cable|wire|mcb|mccb|spd|isolator)\b/.test(value)) return "materials_recommendation";
+  if (extracted.service_type === "CCTV") return "cctv";
+  if (extracted.service_type === "lighting") return "lighting_recommendation";
+  if (extracted.service_type === "materials") return "materials_recommendation";
+  if (extracted.service_type === "electrical fault/wiring") return "wiring_help";
+  if (extracted.service_type === "solar/inverter") return "solar_sizing";
+  return undefined;
+}
+
+function resolveIntent({
+  message,
+  intentContext,
+  state,
+  extracted,
+}: {
+  message: string;
+  intentContext?: ConsultationIntentContext | null;
+  state?: ConsultationState | null;
+  extracted: ConsultationEntities;
+}) {
+  const activeIntent = intentContext?.intent || state?.intent;
+  if (activeIntent) return activeIntent;
+
+  const inferred = inferIntentFromMessage(message, extracted);
+  return inferred;
+}
+
+function buildEngineeringNotes(state: ConsultationState) {
+  const notes: string[] = [];
+
+  if ((state.intent === "solar_sizing" || state.intent === "battery_sizing") && state.collected.total_load_watts && state.collected.backup_hours) {
+    const planning = buildPlanningSizing(state);
+
+    if (planning) {
+      const inverterKw = Math.max(3, Math.ceil(planning.inverterRecommendedWatts / 1000));
+      const preferredInverterKw = Math.max(inverterKw + 1, 5);
+      notes.push(`Planning energy need: ${planning.energyRequiredKwh.toFixed(1)}kWh.`);
+      notes.push(`Recommended battery storage: about ${planning.batteryRequiredKwh.toFixed(1)}kWh (${planning.batteryRangeLabel} lithium).`);
+      notes.push(`Inverter direction: minimum ${inverterKw}kW, ${preferredInverterKw}kW recommended where budget allows.`);
+      notes.push(`Protection checklist: ${getProtectionChecklist().join(", ")}.`);
+    }
+  }
+
+  if (state.childState === "load_estimation" && !state.collected.appliances?.length) {
+    notes.push("The user wants help estimating load from appliances before exact solar sizing.");
+  }
+
+  return notes;
+}
+
+async function buildRecommendationIfReady(state: ConsultationState, sessionId?: string) {
+  const workflowId = workflowFromIntent(state.intent);
+  const technicalWorkflows: WorkflowFlowId[] = ["solar", "battery", "inverter", "panels", "protection"];
+
+  if (!workflowId || !technicalWorkflows.includes(workflowId)) return null;
+  if (state.missing.length > 0) return null;
+  if (!state.collected.appliances?.length) return null;
+
+  try {
+    const result = await runAssistantWorkflow({
+      flowId: workflowId,
+      answers: answersFromState(state),
+      sessionId,
+    });
+
+    return result.recommendation;
+  } catch {
+    return null;
+  }
+}
+
+function isQuoteIntent(message: string, state: ConsultationState) {
+  return state.intent === "quote" || /\b(quote|estimate|pricing|price|budget|inspection|site visit)\b/i.test(message);
 }
 
 export function activateConsultation({
@@ -445,154 +541,76 @@ export function activateConsultation({
   const nextState = normalizeConsultationState(state || createConsultationState(intentContext.intent), intentContext.intent);
   nextState.missing = determineMissingFields(nextState);
   nextState.confidence = formatCollected(nextState).length ? 0.35 : 0.1;
+  const consultationGuide = buildConsultationGuide(nextState);
 
   return {
     answer: buildActivationResponse(nextState),
     state: nextState,
     sources: [],
     usedKnowledgeBase: false,
+    consultationGuide,
   };
 }
 
-export async function runConsultationEngine({
-  messages,
+export async function runConsultationOrchestrator({
+  messages: rawMessages,
   intentContext,
   state,
 }: ConsultationEngineRequest): Promise<ConsultationEngineResult> {
-  const intent = intentContext?.intent || state?.intent;
-  const userMessage = latestUserMessage(messages);
-  const conversationIntent = detectConversationIntent(userMessage);
+  const messages = normalizeMessages(rawMessages);
 
-  if (conversationIntent === "LOAD_ESTIMATION") {
-    return {
-      answer: buildLoadEstimationResponse(),
-      state: enterLoadEstimationWorkflow(state),
-      sources: [],
-      usedKnowledgeBase: false,
-      quoteIntentDetected: false,
-    };
+  if (!messages.length) {
+    throw new Error("Empty chat messages.");
   }
 
-  const validation = validateInput(userMessage);
-  const merged = mergeConsultationState(state, extractConsultationEntities(userMessage), intent);
+  const userMessage = latestUserMessage(messages);
+  if (!userMessage) {
+    throw new Error("No user message found.");
+  }
+
+  const extracted = extractConsultationEntities(userMessage);
+  const intent = resolveIntent({
+    message: userMessage,
+    intentContext,
+    state,
+    extracted,
+  });
+  const baseState = state || createConsultationState(intent);
+  const merged = mergeConsultationState(baseState, extracted, intent);
+
+  if (detectConversationIntent(userMessage) === "LOAD_ESTIMATION") {
+    merged.intent = "solar_sizing";
+    merged.childState = "load_estimation";
+  }
+
   merged.missing = determineMissingFields(merged);
   merged.confidence = Math.min(0.95, formatCollected(merged).length * 0.12);
 
-  if (intent && validation.category === "GREETING") {
-    return {
-      answer: `Hi 👋 You're currently in ${getConsultationIntentLabel(intent)}.\n\nWould you like to continue?`,
-      state: merged,
-      sources: [],
-      usedKnowledgeBase: false,
-    };
-  }
-
-  if (intent && validation.category === "OFF_TOPIC") {
-    return {
-      answer: [
-        `You're currently in ${getConsultationIntentLabel(intent)}.`,
-        "",
-        "Would you like to:",
-        "",
-        "- Continue consultation",
-        "- Pause and ask a general question",
-        "- Start a new consultation",
-      ].join("\n"),
-      state: merged,
-      sources: [],
-      usedKnowledgeBase: false,
-    };
-  }
-
-  if (intent && validation.category === "INVALID") {
-    return {
-      answer: buildInvalidResponse(),
-      state: merged,
-      sources: [],
-      usedKnowledgeBase: false,
-    };
-  }
-
-  if (intent && validation.category === "QUESTION" && !Object.keys(extractConsultationEntities(userMessage)).length) {
-    if (/help me (?:calculate|estimate)|from appliances|don't know|do not know/i.test(userMessage)) {
-      return {
-        answer: [
-          "No problem. List the appliances you want to power.",
-          "",
-          "If you know the wattages, include them. If not, I can use safe planning estimates like:",
-          "",
-          "- LED bulb: 8-15W",
-          "- Fan: 60-100W",
-          "- TV: 80-150W",
-          "- Laptop: 50-100W",
-          "- Router: 10-20W",
-          "",
-          "For AC, freezer, or pump, I'll ask one extra question because startup current matters.",
-        ].join("\n"),
-        state: merged,
-        sources: [],
-        usedKnowledgeBase: false,
-      };
-    }
-
-    const result = await generateAssistantChatReply(messages);
-    return {
-      ...result,
-      state: merged,
-    };
-  }
-
-  if (intent && (merged.intent === "solar_sizing" || merged.intent === "battery_sizing") && merged.collected.total_load_watts && merged.collected.backup_hours) {
-    const answer = buildKnownLoadPlanningResponse(merged);
-    if (answer) {
-      return {
-        answer,
-        state: merged,
-        sources: [],
-        usedKnowledgeBase: false,
-      };
-    }
-  }
-
-  if (intent && merged.missing.length > 0) {
-    return {
-      answer: buildMissingQuestion(merged),
-      state: merged,
-      sources: [],
-      usedKnowledgeBase: false,
-    };
-  }
-
-  const workflowId = workflowFromIntent(intent);
-  if (workflowId) {
-    try {
-      const result = await runAssistantWorkflow({
-        flowId: workflowId,
-        answers: answersFromState(merged),
-        sessionId: intentContext?.sessionId,
-      });
-
-      return {
-        answer: result.answer,
-        state: merged,
-        sources: result.sources,
-        usedKnowledgeBase: result.usedKnowledgeBase,
-        recommendation: result.recommendation,
-        quoteIntentDetected: workflowId === "quote",
-      };
-    } catch {
-      return {
-        answer: buildMissingQuestion(merged),
-        state: merged,
-        sources: [],
-        usedKnowledgeBase: false,
-      };
-    }
-  }
-
-  const result = await generateAssistantChatReply(messages);
-  return {
-    ...result,
-    state: merged,
+  const consultationGuide = buildConsultationGuide(merged);
+  const recommendation = await buildRecommendationIfReady(merged, intentContext?.sessionId);
+  const consultationContext: ConsultationDeskContext = {
+    intent: merged.intent,
+    requiredFields: consultationGuide.requiredFields,
+    missingFields: consultationGuide.missingFields,
+    nextRecommendedQuestion: consultationGuide.nextRecommendedQuestion,
+    collected: merged.collected,
+    engineeringNotes: buildEngineeringNotes(merged),
+    recommendation,
   };
+
+  const reply = await generateAssistantChatReply(messages, {
+    consultation: consultationContext,
+  });
+
+  return {
+    ...reply,
+    state: merged,
+    recommendation: recommendation || reply.recommendation || null,
+    quoteIntentDetected: reply.quoteIntentDetected || isQuoteIntent(userMessage, merged),
+    consultationGuide,
+  };
+}
+
+export async function runConsultationEngine(request: ConsultationEngineRequest) {
+  return runConsultationOrchestrator(request);
 }
