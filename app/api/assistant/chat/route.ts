@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
-import {
-  activateConsultation,
-  runConsultationOrchestrator,
-} from "@/lib/ai/consultation-engine";
+import { runConsultationOrchestrator } from "@/lib/ai/consultation-orchestrator";
 import type { ConsultationState } from "@/lib/ai/consultation-state";
 import type { ConsultationIntentContext } from "@/lib/ai/intent-context";
-
-function sanitizeText(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
 
 function buildStatusCode(errorMessage: string) {
   if (/missing openai|missing supabase|not configured/i.test(errorMessage)) return 503;
@@ -28,22 +21,6 @@ export async function POST(request: Request) {
   const consultationState = (payload as { consultationState?: unknown }).consultationState as
     | ConsultationState
     | undefined;
-  const activationMode = sanitizeText((payload as { mode?: unknown }).mode) === "activate_consultation";
-
-  if (activationMode && intentContext) {
-    const result = activateConsultation({
-      intentContext,
-      state: consultationState,
-    });
-
-    return NextResponse.json({
-      answer: result.answer,
-      sources: result.sources,
-      usedKnowledgeBase: result.usedKnowledgeBase,
-      consultationState: result.state,
-      consultationGuide: result.consultationGuide,
-    });
-  }
 
   try {
     const result = await runConsultationOrchestrator({

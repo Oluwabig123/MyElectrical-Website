@@ -53,12 +53,10 @@ async function requestConsultationReply({
   messages,
   intentContext,
   consultationState,
-  mode,
 }: {
   messages: AssistantMessage[];
   intentContext?: ConsultationIntentContext | null;
   consultationState?: ConsultationState | null;
-  mode?: "activate_consultation";
 }) {
   const response = await fetch("/api/assistant/chat", {
     method: "POST",
@@ -72,7 +70,6 @@ async function requestConsultationReply({
       })),
       intentContext,
       consultationState,
-      mode,
     }),
   });
 
@@ -211,7 +208,6 @@ export default function AssistantClient() {
         messages,
         intentContext: nextIntentContext,
         consultationState: nextConsultationState,
-        mode: "activate_consultation",
       });
 
       if (reply.consultationState) {

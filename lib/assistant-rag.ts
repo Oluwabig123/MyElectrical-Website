@@ -89,9 +89,17 @@ export type ChatReply = {
 
 export type ConsultationDeskContext = {
   intent?: ConsultationIntent;
+  childState?: string;
   requiredFields?: string[];
   missingFields?: string[];
   nextRecommendedQuestion?: string;
+  progress?: {
+    stage: string;
+    label: string;
+    percent: number;
+  };
+  pendingClarifications?: string[];
+  conversationSummary?: string;
   collected?: ConsultationEntities;
   engineeringNotes?: string[];
   recommendation?: SizingRecommendation | null;
@@ -892,6 +900,170 @@ function formatKnownParts(parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(", ");
 }
 
+function getApplianceDetails(collected: ConsultationEntities) {
+  return collected.appliance_details || [];
+}
+
+function formatApplianceSummary(collected: ConsultationEntities) {
+  const details = getApplianceDetails(collected);
+  if (details.length) return details.map((item) => item.label || item.name).join(", ");
+  return collected.appliances?.join(", ") || "";
+}
+
+function formatMissingQuantityNames(collected: ConsultationEntities) {
+  const pluralMap: Record<string, string> = {
+    TV: "TVs",
+    freezer: "freezers",
+    fridge: "fridges",
+    laptop: "laptops",
+    fan: "fans",
+    bulb: "bulbs",
+    AC: "ACs",
+    pump: "pumps",
+    decoder: "decoders",
+    router: "routers",
+  };
+  const names = getApplianceDetails(collected)
+    .filter((item) => !item.quantity)
+    .map((item) => pluralMap[item.name] || `${item.name}s`);
+
+  if (names.length <= 1) return names[0] || "each appliance";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+function hasMissingField(consultation: ConsultationDeskContext | undefined, field: string) {
+  return Boolean(consultation?.missingFields?.includes(field));
+}
+
+function isNextStepQuestion(text: string) {
+  return /\b(next useful step|next step|what now|what should i do next|where do we go from here)\b/i.test(text);
+}
+
+function buildCapturedLine(collected: ConsultationEntities) {
+  const appliances = formatApplianceSummary(collected);
+  const knownParts = formatKnownParts([
+    appliances ? `appliances: ${appliances}` : "",
+    collected.backup_hours ? `backup: ${collected.backup_hours}h` : "",
+    collected.total_load_watts ? `load: ${formatNumber(collected.total_load_watts, 0)}W` : "",
+    collected.inverter_size || collected.inverter_voltage
+      ? `inverter: ${[collected.inverter_voltage, collected.inverter_size, collected.inverter_type].filter(Boolean).join(" ")}`
+      : "",
+  ]);
+
+  return knownParts ? `I have ${knownParts}.` : "";
+}
+
+function buildPlanningReply(consultation: ConsultationDeskContext) {
+  if (!consultation.engineeringNotes?.length) return "";
+
+  const compressorMissing = hasMissingField(consultation, "freezer/AC/pump wattage or type");
+  const nextLine = compressorMissing
+    ? "To firm this up, send the freezer/AC/pump wattage, HP, or label photo when you can."
+    : "Next, confirm any existing inverter, battery, panel models, and site route length so the final protection and cable sizes are not guessed.";
+
+  return [
+    "Here is a practical planning direction:",
+    ...consultation.engineeringNotes.map((item) => `- ${item}`),
+    nextLine,
+  ].join("\n");
+}
+
+function buildConsultationLedReply({
+  messages,
+  consultation,
+}: {
+  messages: AssistantChatMessage[];
+  consultation?: ConsultationDeskContext;
+}) {
+  // assistant-rag remains the final response layer; consultation context only
+  // tells it what is known, what is missing, and which question is useful next.
+  if (!consultation?.intent) return "";
+
+  const latestText = getRecentUserText(messages);
+  const collected = consultation.collected || {};
+  const capturedLine = buildCapturedLine(collected);
+
+  if (
+    consultation.pendingClarifications?.length ||
+    hasMissingField(consultation, "clarify ambiguous detail")
+  ) {
+    return [
+      capturedLine || "I need to place that detail correctly before sizing.",
+      consultation.nextRecommendedQuestion || "What does that value refer to?",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (isNextStepQuestion(latestText) && consultation.nextRecommendedQuestion) {
+    return [
+      capturedLine,
+      `Next useful step: ${consultation.nextRecommendedQuestion}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (
+    consultation.childState === "load_estimation" &&
+    !collected.appliance_details?.length &&
+    !collected.total_load_watts
+  ) {
+    return [
+      "I can help estimate your load.",
+      "",
+      "Send the appliances and quantities in a simple list, for example:",
+      "- 3 fans",
+      "- 8 bulbs",
+      "- 1 TV",
+      "",
+      "Also add the backup hours if you already know them.",
+    ].join("\n");
+  }
+
+  if (hasMissingField(consultation, "load or appliance list")) {
+    return [
+      "I can help size it from normal household details.",
+      "What appliances do you want to power? You can list them like: TV, freezer, laptop, 3 fans, 8 bulbs.",
+    ].join("\n");
+  }
+
+  if (hasMissingField(consultation, "quantities")) {
+    const names = formatMissingQuantityNames(collected);
+    return [
+      capturedLine || "Good, I have the appliance types.",
+      `How many ${names} do you want to power?`,
+      "Example: 3 fans, 8 bulbs.",
+    ].join("\n");
+  }
+
+  if (hasMissingField(consultation, "backup hours")) {
+    return [
+      capturedLine || "Good, I have the load direction.",
+      "How many hours do you want them to run during outage?",
+    ].join("\n");
+  }
+
+  if (
+    consultation.engineeringNotes?.length &&
+    (collected.backup_hours || collected.total_load_watts || collected.appliance_details?.length)
+  ) {
+    return buildPlanningReply(consultation);
+  }
+
+  if (consultation.missingFields?.length && consultation.nextRecommendedQuestion) {
+    return [
+      capturedLine,
+      consultation.nextRecommendedQuestion,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  return "";
+}
+
 function buildConsultationDeskReply({
   activeIntent,
   messages,
@@ -942,6 +1114,9 @@ function buildConsultationDeskReply({
       .filter(Boolean)
       .join("\n");
   }
+
+  const consultationLedReply = buildConsultationLedReply({ messages, consultation });
+  if (consultationLedReply) return consultationLedReply;
 
   if (
     consultation?.intent === "solar_sizing" &&
@@ -1450,6 +1625,10 @@ function buildSystemInstructions() {
     "Use retrieved Oduzz knowledge as the primary source for company-specific facts and guidance.",
     "If the retrieved context is partial, combine it with the baseline Oduzz business context and normal reasoning to give the most helpful answer you can.",
     "Treat recent conversation turns as part of the user's intent, especially for follow-up questions.",
+    "You are the only user-facing response generator. Consultation guide data is context, not a script.",
+    "Behave like an experienced electrical consultant speaking to a layperson: collect appliances, quantities, and backup hours before asking technical voltage, MPPT, Voc, or breaker-rating questions.",
+    "When a consultation field is missing, ask one useful follow-up question and briefly explain why it matters.",
+    "If the user gives an ambiguous value such as a bare wattage, ask what it refers to instead of assuming panel wattage, total load, or appliance rating.",
     "Do not invent exact prices, warranties, stock availability, inspection outcomes, or technical specs that are not supported by the provided business context.",
     "For cable, breaker, panel, inverter, battery, or other spec-sensitive product questions, prefer category-level guidance and state which load, distance, breaker, or site details are still needed before exact sizing.",
     "Do not guess exact cable gauges, breaker sizes, battery capacities, or equipment ratings unless they are explicitly supported by the retrieved business context.",
@@ -1504,9 +1683,16 @@ async function generateGroundedAnswer({
   const consultationContext = consultation
     ? [
         consultation.intent ? `Intent: ${consultation.intent}` : "",
+        consultation.childState ? `Child state: ${consultation.childState}` : "",
+        consultation.progress ? `Progress: ${consultation.progress.label} (${consultation.progress.percent}%)` : "",
+        consultation.conversationSummary ? `Conversation summary: ${consultation.conversationSummary}` : "",
+        consultation.pendingClarifications?.length
+          ? `Pending clarifications: ${consultation.pendingClarifications.join(", ")}`
+          : "",
         consultation.requiredFields?.length ? `Required fields: ${consultation.requiredFields.join(", ")}` : "",
         consultation.missingFields?.length ? `Missing fields: ${consultation.missingFields.join(", ")}` : "",
         consultation.nextRecommendedQuestion ? `Next recommended question: ${consultation.nextRecommendedQuestion}` : "",
+        consultation.collected ? `Captured structured state: ${JSON.stringify(consultation.collected)}` : "",
         consultation.engineeringNotes?.length ? `Engineering notes: ${consultation.engineeringNotes.join(" | ")}` : "",
       ]
         .filter(Boolean)
@@ -1572,8 +1758,6 @@ export async function generateAssistantChatReply(
     consultation?: ConsultationDeskContext;
   } = {},
 ): Promise<ChatReply> {
-  ensureServerConfig();
-
   const messages = (Array.isArray(rawMessages) ? rawMessages : [])
     .map((message) => {
       const role = sanitizeText((message as { role?: unknown })?.role);
@@ -1599,7 +1783,6 @@ export async function generateAssistantChatReply(
     throw new Error("No user message found.");
   }
 
-  const retrievalQuery = buildRetrievalQuery(messages);
   const solarAnalysis = analyzeSolarSizing(messages);
   const wiringAnalysis = analyzeWiringIssue(messages);
   const cctvAnalysis = analyzeCctvPlanning(messages);
@@ -1623,9 +1806,34 @@ export async function generateAssistantChatReply(
               ? "cctv"
               : lightingAnalysis.isLightingIntent
                 ? "lighting"
-                : productAnalysis.isProductIntent
-                  ? "product"
-                  : "general");
+              : productAnalysis.isProductIntent
+                ? "product"
+                : "general");
+  const deskAnswer = buildConsultationDeskReply({
+    activeIntent,
+    messages,
+    consultation: options.consultation,
+    analyses: {
+      solar: solarAnalysis,
+      wiring: wiringAnalysis,
+      cctv: cctvAnalysis,
+      quote: quoteAnalysis,
+      lighting: lightingAnalysis,
+      product: productAnalysis,
+    },
+  });
+
+  if (deskAnswer) {
+    return {
+      answer: deskAnswer,
+      sources: [],
+      usedKnowledgeBase: false,
+      quoteIntentDetected,
+      recommendation: options.consultation?.recommendation || null,
+    };
+  }
+
+  const retrievalQuery = buildRetrievalQuery(messages);
   const intentAwareQuery = buildIntentAwareRetrievalQuery(
     retrievalQuery || latestUserMessage.content,
     activeIntent,
@@ -1649,30 +1857,6 @@ export async function generateAssistantChatReply(
       : await findKeywordRelevantChunks(intentAwareQuery, 4),
   );
   const filteredMatches = filterMatchesForIntent(matches, activeIntent);
-
-  const deskAnswer = buildConsultationDeskReply({
-    activeIntent,
-    messages,
-    consultation: options.consultation,
-    analyses: {
-      solar: solarAnalysis,
-      wiring: wiringAnalysis,
-      cctv: cctvAnalysis,
-      quote: quoteAnalysis,
-      lighting: lightingAnalysis,
-      product: productAnalysis,
-    },
-  });
-
-  if (deskAnswer) {
-    return {
-      answer: deskAnswer,
-      sources: buildSources(filteredMatches),
-      usedKnowledgeBase: filteredMatches.length > 0,
-      quoteIntentDetected,
-      recommendation: options.consultation?.recommendation || null,
-    };
-  }
 
   if (!matches.length) {
     const answer = await generateGroundedAnswer({

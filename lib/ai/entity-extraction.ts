@@ -41,6 +41,7 @@ export type ConsultationEntities = {
   project_type?: string;
   control_zones?: string;
   has_media_hint?: boolean;
+  ambiguous_power_values?: string[];
 };
 
 const APPLIANCE_ALIASES = [
@@ -56,6 +57,21 @@ const APPLIANCE_ALIASES = [
   { name: "router", pattern: /\b(?:router|wifi)\b/i, singular: "router", plural: "routers" },
 ];
 
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+};
+
 function sanitizeText(value: unknown) {
   return String(value || "").trim();
 }
@@ -67,17 +83,34 @@ function formatQuantityLabel(quantity: number | undefined, singular: string, plu
 
 function parseNumber(value: string | undefined) {
   if (!value) return undefined;
+  const wordValue = NUMBER_WORDS[value.toLowerCase()];
+  if (wordValue) return wordValue;
   const parsed = Number(value.replace(/,/g, ""));
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function findQuantity(text: string, matchText: string) {
   const escaped = matchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const before = text.match(new RegExp(`(?:^|\\b)(\\d+)\\s+(?:${escaped})\\b`, "i"));
+  const numberPattern = `\\d+|${Object.keys(NUMBER_WORDS).join("|")}`;
+  const before = text.match(new RegExp(`(?:^|\\b)(${numberPattern})\\s+(?:${escaped})\\b`, "i"));
   if (before?.[1]) return parseNumber(before[1]);
 
   const after = text.match(new RegExp(`\\b(?:${escaped})\\s*(?:x|×)?\\s*(\\d+)\\b`, "i"));
   if (after?.[1]) return parseNumber(after[1]);
+
+  return undefined;
+}
+
+function inferSingularQuantity(matchText: string, appliance: (typeof APPLIANCE_ALIASES)[number]) {
+  const normalized = matchText.toLowerCase().replace(/\s+/g, " ");
+  const singular = appliance.singular.toLowerCase().replace(/\s+/g, " ");
+  const canonical = appliance.name.toLowerCase().replace(/\s+/g, " ");
+
+  if (normalized.endsWith("s") && normalized !== "ac") return undefined;
+  if (normalized === singular || normalized === canonical) return 1;
+  if (appliance.name === "TV" && normalized === "television") return 1;
+  if (appliance.name === "AC" && normalized === "air conditioner") return 1;
+  if (appliance.name === "router" && normalized === "wifi") return 1;
 
   return undefined;
 }
@@ -91,10 +124,14 @@ function extractAppliances(text: string) {
     const match = text.match(appliance.pattern);
     if (!match) continue;
 
-    const quantity = findQuantity(text, match[0]);
-    const wattageMatch = text.match(
-      new RegExp(`(?:${match[0]}|${appliance.name})[^.\\n,;]{0,24}?(\\d+(?:\\.\\d+)?)\\s*w\\b`, "i"),
-    );
+    const quantity = findQuantity(text, match[0]) || inferSingularQuantity(match[0], appliance);
+    const wattageMatch =
+      text.match(
+        new RegExp(`(?:${match[0]}|${appliance.name})[^.\\n,;]{0,24}?(\\d+(?:\\.\\d+)?)\\s*w\\b`, "i"),
+      ) ||
+      text.match(
+        new RegExp(`\\b(\\d+(?:\\.\\d+)?)\\s*w\\b[^.\\n,;]{0,24}?(?:${match[0]}|${appliance.name})`, "i"),
+      );
     const wattage = parseNumber(wattageMatch?.[1]);
     const label = formatQuantityLabel(quantity, appliance.singular, appliance.plural);
 
@@ -115,6 +152,25 @@ function extractAppliances(text: string) {
     appliance_quantity: quantities,
     appliance_wattage: wattages,
   };
+}
+
+function extractAmbiguousPowerValues(text: string) {
+  const values: string[] = [];
+  const contextualWords =
+    /(total|load|panel|solar|pv|fan|fans|bulb|bulbs|light|lights|tv|television|freezer|fridge|laptop|router|decoder|pump|ac|air ?conditioner|inverter|battery|output|input|rated|rating|per|each)/i;
+
+  for (const match of text.matchAll(/\b(\d+(?:\.\d+)?)\s*(w|watts?)\b/gi)) {
+    const matchIndex = match.index || 0;
+    const start = Math.max(0, matchIndex - 32);
+    const end = Math.min(text.length, matchIndex + match[0].length + 32);
+    const context = text.slice(start, end).replace(match[0], "");
+
+    if (!contextualWords.test(context)) {
+      values.push(match[0].replace(/\s+/g, "").toUpperCase());
+    }
+  }
+
+  return Array.from(new Set(values));
 }
 
 function extractPanelSpecs(text: string): PanelSpecs | undefined {
@@ -312,6 +368,16 @@ export function extractConsultationEntities(input: unknown): ConsultationEntitie
   }
   if (Object.keys(applianceData.appliance_wattage).length) {
     entities.appliance_wattage = applianceData.appliance_wattage;
+  }
+
+  const ambiguousPowerValues = extractAmbiguousPowerValues(text);
+  if (
+    ambiguousPowerValues.length &&
+    !entities.total_load_watts &&
+    !entities.panel_specs?.wattage &&
+    !Object.keys(applianceData.appliance_wattage).length
+  ) {
+    entities.ambiguous_power_values = ambiguousPowerValues;
   }
 
   const batteryModel = extractModel(text, "battery");
