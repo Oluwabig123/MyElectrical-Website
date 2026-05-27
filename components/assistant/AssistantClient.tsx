@@ -20,7 +20,6 @@ import type { SizingRecommendation } from "@/lib/engineering/types";
 import {
   buildFallbackAssistantReply,
   clampMessage,
-  INITIAL_ASSISTANT_MESSAGE,
   MAX_INPUT_CHARS,
   MAX_MESSAGES,
 } from "@/lib/assistant-core";
@@ -114,12 +113,7 @@ const FLOW_INTENTS: Record<AssistantFlowId, ConsultationIntent> = {
 
 export default function AssistantClient() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<AssistantMessage[]>([
-    {
-      role: "assistant",
-      text: INITIAL_ASSISTANT_MESSAGE,
-    },
-  ]);
+  const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [intentContext, setIntentContext] = useState<ConsultationIntentContext | null>(null);
   const [consultationState, setConsultationState] = useState<ConsultationState | null>(null);
   const [completion, setCompletion] = useState<CompletedConsultation | null>(null);
@@ -185,7 +179,7 @@ export default function AssistantClient() {
     setAssistantStatus("");
     setQuoteImageUrls([]);
     setQuoteReferenceId("");
-    setMessages([{ role: "assistant", text: INITIAL_ASSISTANT_MESSAGE }]);
+    setMessages([]);
   }
 
   async function startFlow(flowId: AssistantFlowId) {
@@ -351,14 +345,16 @@ export default function AssistantClient() {
           <header className={styles.chatHeader}>
             <div className={styles.chatBrand}>
               <div className={styles.chatLogoWrap}>
-                <Image
-                  src="/oduzz-logo-transparent.webp"
-                  alt="Oduzz Electrical Concept"
-                  width={120}
-                  height={42}
-                  className={styles.chatLogo}
-                  priority
-                />
+                <Link href="/" aria-label="Go to homepage">
+                  <Image
+                    src="/oduzz-logo-transparent.webp"
+                    alt="Oduzz Electrical Concept"
+                    width={120}
+                    height={42}
+                    className={styles.chatLogo}
+                    priority
+                  />
+                </Link>
               </div>
               <div className={styles.chatBrandCopy}>
                 <strong>Oduzz AI Electrical Consultant</strong>

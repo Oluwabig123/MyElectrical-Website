@@ -113,9 +113,6 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <Link href="/quote" className="btn primary" onClick={() => setOpen(false)}>
-              Request Quote
-            </Link>
           </Container>
         </div>
       ) : null}
