@@ -1,4 +1,5 @@
 import path from "node:path";
+import { createRequire } from "node:module";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
@@ -31,9 +32,10 @@ function extensionFromName(fileName: string) {
 }
 
 async function readPdfText(buffer: Buffer) {
-  // Use the package export directly so serverless deployments (e.g. Vercel)
-  // can resolve the module without absolute node_modules paths.
-  const { PDFParse } = (await import("pdf-parse")) as typeof import("pdf-parse");
+  // Resolve through Node's require conditions to ensure the server-safe CJS
+  // entry is used (not browser-targeted code that needs DOMMatrix).
+  const runtimeRequire = createRequire(import.meta.url);
+  const { PDFParse } = runtimeRequire("pdf-parse") as typeof import("pdf-parse");
   const parser = new PDFParse({ data: buffer });
   try {
     const result = await parser.getText();
