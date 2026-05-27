@@ -1,5 +1,4 @@
 import path from "node:path";
-import { createRequire } from "node:module";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
@@ -32,17 +31,31 @@ function extensionFromName(fileName: string) {
 }
 
 async function readPdfText(buffer: Buffer) {
-  // Resolve through Node's require conditions to ensure the server-safe CJS
-  // entry is used (not browser-targeted code that needs DOMMatrix).
-  const runtimeRequire = createRequire(import.meta.url);
-  const { PDFParse } = runtimeRequire("pdf-parse") as typeof import("pdf-parse");
-  const parser = new PDFParse({ data: buffer });
-  try {
-    const result = await parser.getText();
-    return sanitizeText(result?.text || "");
-  } finally {
-    await parser.destroy();
+  // Parse PDF directly with pdfjs-dist legacy server entry to avoid browser
+  // runtime globals (e.g. DOMMatrix) in serverless environments.
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(buffer),
+    useWorkerFetch: false,
+    isEvalSupported: false,
+  });
+  const document = await loadingTask.promise;
+
+  const chunks: string[] = [];
+  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+    const page = await document.getPage(pageNumber);
+    const textContent = await page.getTextContent();
+    const text = (textContent.items || [])
+      .map((item) => {
+        if (!item || typeof item !== "object") return "";
+        const value = (item as { str?: unknown }).str;
+        return typeof value === "string" ? value : "";
+      })
+      .join(" ");
+    if (text.trim()) chunks.push(text.trim());
   }
+
+  return sanitizeText(chunks.join("\n\n"));
 }
 
 async function readDocxText(buffer: Buffer) {
