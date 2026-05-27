@@ -102,6 +102,7 @@ export type ConsultationDeskContext = {
   conversationSummary?: string;
   collected?: ConsultationEntities;
   engineeringNotes?: string[];
+  guidedPaused?: boolean;
   recommendation?: SizingRecommendation | null;
 };
 
@@ -161,6 +162,11 @@ type ProductRecommendationAnalysis = {
 };
 
 type IntentKind = "solar" | "quote" | "wiring" | "cctv" | "lighting" | "product" | "contact" | "general";
+type TurnMode = "flow_continue" | "flow_switch" | "general_info" | "mixed";
+
+const SOFT_MODE_ENABLED = /^(1|true|yes|on)$/i.test(
+  String(process.env.CONSULTATION_SOFT_MODE || "true"),
+);
 
 function readPositiveInt(value: string | undefined, fallback: number) {
   const parsed = Number.parseInt(String(value || ""), 10);
@@ -467,6 +473,33 @@ function isQuoteIntent(text: string) {
   return /(quote|estimate|pricing|price|budget|inspection|site visit|whatsapp|contact)/i.test(text);
 }
 
+function isGeneralInfoQuestion(text: string) {
+  return /\b(about (your|the) company|about oduzz|who are you|what do you do|company profile|your services|where are you located)\b/i.test(
+    text,
+  );
+}
+
+function classifyTurnMode({
+  latestMessage,
+  consultation,
+}: {
+  latestMessage: string;
+  consultation?: ConsultationDeskContext;
+}): TurnMode {
+  const hasFlow = Boolean(consultation?.intent);
+  const generalInfo = isGeneralInfoQuestion(latestMessage);
+  const hasFlowSignals =
+    /\b(solar|inverter|battery|panel|load|backup|fan|bulb|freezer|fridge|laptop|tv|watt|kw|kva|protection)\b/i.test(
+      latestMessage,
+    );
+
+  if (!hasFlow) return generalInfo ? "general_info" : "flow_continue";
+  if (generalInfo && hasFlowSignals) return "mixed";
+  if (generalInfo) return "general_info";
+  if (!hasFlowSignals && consultation?.guidedPaused) return "flow_switch";
+  return "flow_continue";
+}
+
 const SEARCH_STOP_WORDS = new Set([
   "the",
   "a",
@@ -526,6 +559,10 @@ function getRecentUserText(messages: AssistantChatMessage[]) {
     .map((message) => sanitizeText(message.content))
     .filter(Boolean)
     .join("\n");
+}
+
+function getLastAssistantText(messages: AssistantChatMessage[]) {
+  return [...messages].reverse().find((message) => message.role === "assistant")?.content || "";
 }
 
 function getRecentUserTextLower(messages: AssistantChatMessage[]) {
@@ -1538,6 +1575,33 @@ function filterMatchesForIntent(matches: ChunkMatch[], intent: IntentKind, limit
   return dedupeMatches(source, limit);
 }
 
+function prioritizeSolarMatches(matches: ChunkMatch[], limit = 4) {
+  const solarTerms = /\b(solar|inverter|battery|panel|pv|mppt|voc|vmp|isc|imp|backup|load|earthing|breaker|dc|ac)\b/i;
+  const scored = matches
+    .map((match) => {
+      const category = sanitizeText(match.category).toLowerCase();
+      const title = sanitizeText(match.title).toLowerCase();
+      const text = sanitizeText(match.chunk_text).toLowerCase();
+      const combined = `${category} ${title} ${text}`;
+
+      let score = 0;
+      if (category.includes("solar")) score += 12;
+      if (title.includes("solar")) score += 10;
+      if (category.includes("inverter") || title.includes("inverter")) score += 8;
+      if (category.includes("battery") || title.includes("battery")) score += 8;
+      if (category.includes("protection") || title.includes("protection")) score += 5;
+      if (category.includes("cables") || title.includes("cable")) score += 4;
+      if (solarTerms.test(combined)) score += 4;
+      score += Number(match.similarity || 0);
+
+      return { match, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const preferred = scored.filter((entry) => entry.score > 0).map((entry) => entry.match);
+  return dedupeMatches(preferred.length ? preferred : matches, limit);
+}
+
 function buildSources(matches: ChunkMatch[]) {
   const seen = new Set<string>();
   const sources: ChatReply["sources"] = [];
@@ -1782,6 +1846,10 @@ export async function generateAssistantChatReply(
   if (!latestUserMessage?.content) {
     throw new Error("No user message found.");
   }
+  const turnMode = classifyTurnMode({
+    latestMessage: latestUserMessage.content,
+    consultation: options.consultation,
+  });
 
   const solarAnalysis = analyzeSolarSizing(messages);
   const wiringAnalysis = analyzeWiringIssue(messages);
@@ -1809,6 +1877,8 @@ export async function generateAssistantChatReply(
               : productAnalysis.isProductIntent
                 ? "product"
                 : "general");
+  // Soft mode architecture: consultation flow provides context/planning only.
+  // It should not directly own the response path unless we are in a hard fallback.
   const deskAnswer = buildConsultationDeskReply({
     activeIntent,
     messages,
@@ -1823,9 +1893,16 @@ export async function generateAssistantChatReply(
     },
   });
 
-  if (deskAnswer) {
+  if (!SOFT_MODE_ENABLED && deskAnswer) {
+    const previousAssistant = getLastAssistantText(messages);
+    const compactFollowup =
+      previousAssistant && previousAssistant.trim() === deskAnswer.trim()
+        ? options.consultation?.nextRecommendedQuestion
+          ? `Next useful step: ${options.consultation.nextRecommendedQuestion}`
+          : "Next useful step: share one missing detail so I can refine the recommendation."
+        : "";
     return {
-      answer: deskAnswer,
+      answer: compactFollowup || deskAnswer,
       sources: [],
       usedKnowledgeBase: false,
       quoteIntentDetected,
@@ -1833,60 +1910,91 @@ export async function generateAssistantChatReply(
     };
   }
 
-  const retrievalQuery = buildRetrievalQuery(messages);
-  const intentAwareQuery = buildIntentAwareRetrievalQuery(
-    retrievalQuery || latestUserMessage.content,
-    activeIntent,
-  );
-  const primaryMatches = await findRelevantChunks(
-    intentAwareQuery,
-    RETRIEVAL_MATCH_COUNT,
-    PRIMARY_SIMILARITY_THRESHOLD,
-  );
-  const secondaryMatches =
-    primaryMatches.length > 0
-      ? primaryMatches
-      : await findRelevantChunks(
-          intentAwareQuery,
-          RETRIEVAL_MATCH_COUNT,
-          SECONDARY_SIMILARITY_THRESHOLD,
-        );
-  const matches = dedupeMatches(
-    secondaryMatches.length > 0
-      ? secondaryMatches
-      : await findKeywordRelevantChunks(intentAwareQuery, 4),
-  );
-  const filteredMatches = filterMatchesForIntent(matches, activeIntent);
+  if (turnMode === "general_info" && options.consultation?.intent) {
+    return {
+      answer: [
+        "Oduzz Electrical Concept provides electrical engineering support including solar/inverter planning, wiring, protection, CCTV/smart home, lighting, and quote handoff.",
+        "If you want, we can continue your current consultation immediately after this.",
+      ].join("\n"),
+      sources: [],
+      usedKnowledgeBase: false,
+      quoteIntentDetected,
+      recommendation: options.consultation?.recommendation || null,
+    };
+  }
 
-  if (!matches.length) {
+  try {
+    const retrievalQuery = buildRetrievalQuery(messages);
+    const intentAwareQuery = buildIntentAwareRetrievalQuery(
+      retrievalQuery || latestUserMessage.content,
+      activeIntent,
+    );
+    const primaryMatches = await findRelevantChunks(
+      intentAwareQuery,
+      RETRIEVAL_MATCH_COUNT,
+      PRIMARY_SIMILARITY_THRESHOLD,
+    );
+    const secondaryMatches =
+      primaryMatches.length > 0
+        ? primaryMatches
+        : await findRelevantChunks(
+            intentAwareQuery,
+            RETRIEVAL_MATCH_COUNT,
+            SECONDARY_SIMILARITY_THRESHOLD,
+          );
+    const matches = dedupeMatches(
+      secondaryMatches.length > 0
+        ? secondaryMatches
+        : await findKeywordRelevantChunks(intentAwareQuery, 4),
+    );
+    const filteredMatches = filterMatchesForIntent(matches, activeIntent);
+    const prioritizedMatches =
+      activeIntent === "solar" ? prioritizeSolarMatches(filteredMatches, 4) : filteredMatches;
+
+    if (!matches.length) {
+      const answer = isGeneralInfoQuestion(latestUserMessage.content)
+        ? [
+            "Oduzz Electrical Concept provides electrical engineering support including solar/inverter planning, wiring, protection, CCTV/smart home, lighting, and quote handoff.",
+            "Share your location and project scope if you want tailored guidance right away.",
+          ].join("\n")
+        : await generateGroundedAnswer({
+            messages,
+            matches: [],
+            consultation: options.consultation,
+          });
+
+      return {
+        answer: answer || NO_KNOWLEDGE_MESSAGE,
+        sources: [],
+        usedKnowledgeBase: false,
+        quoteIntentDetected,
+        recommendation: options.consultation?.recommendation || null,
+      };
+    }
+
     const answer = await generateGroundedAnswer({
       messages,
-      matches: [],
+      matches: prioritizedMatches,
       consultation: options.consultation,
     });
 
     return {
-      answer: answer || NO_KNOWLEDGE_MESSAGE,
+      answer,
+      sources: buildSources(prioritizedMatches),
+      usedKnowledgeBase: prioritizedMatches.length > 0,
+      quoteIntentDetected,
+      recommendation: options.consultation?.recommendation || null,
+    };
+  } catch {
+    const fallbackDesk = deskAnswer;
+    return {
+      answer: fallbackDesk || NO_KNOWLEDGE_MESSAGE,
       sources: [],
       usedKnowledgeBase: false,
       quoteIntentDetected,
       recommendation: options.consultation?.recommendation || null,
     };
   }
-
-  const answer = await generateGroundedAnswer({
-    messages,
-    matches: filteredMatches,
-    consultation: options.consultation,
-  });
-
-  return {
-    answer,
-    sources: buildSources(filteredMatches),
-    usedKnowledgeBase: filteredMatches.length > 0,
-    quoteIntentDetected,
-    recommendation: options.consultation?.recommendation || null,
-  };
 }
 
 export function getNoKnowledgeMessage() {

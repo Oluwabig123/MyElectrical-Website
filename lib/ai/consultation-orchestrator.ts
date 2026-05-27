@@ -9,6 +9,7 @@ import {
   answersFromState,
   applyConsultationAnalysis,
   buildConsultationGuide,
+  isGeneralInfoQuery,
   isQuoteIntent,
   latestUserMessage,
   mergeConsultationState,
@@ -187,6 +188,40 @@ function addPlanningIndexes(state: ConsultationState) {
   });
 }
 
+function applyTopicSwitchPolicy({
+  state,
+  userMessage,
+}: {
+  state: ConsultationState;
+  userMessage: string;
+}) {
+  if (!state.intent) return state;
+
+  const generalInfoTurn = isGeneralInfoQuery(userMessage);
+  const isPowerFollowup =
+    /\b(solar|inverter|battery|panel|load|backup|fan|bulb|freezer|fridge|laptop|tv|watt|protection)\b/i.test(
+      userMessage,
+    );
+
+  if (generalInfoTurn && !isPowerFollowup) {
+    return refreshConsultationStateIndexes({
+      ...state,
+      unrelatedTurnCount: Math.min(3, (state.unrelatedTurnCount || 0) + 1),
+      guidedPaused: true,
+    });
+  }
+
+  if (isPowerFollowup) {
+    return refreshConsultationStateIndexes({
+      ...state,
+      unrelatedTurnCount: 0,
+      guidedPaused: false,
+    });
+  }
+
+  return state;
+}
+
 export async function runConsultationOrchestrator({
   messages: rawMessages,
   intentContext,
@@ -236,19 +271,24 @@ export async function runConsultationOrchestrator({
     ...applyConsultationAnalysis(merged, analysis),
     conversationSummary: summarizeConsultationState(merged),
   });
-  const consultationGuide = buildConsultationGuide(analyzedState);
-  const recommendation = await buildRecommendationIfReady(analyzedState, intentContext?.sessionId);
+  const switchedState = applyTopicSwitchPolicy({
+    state: analyzedState,
+    userMessage,
+  });
+  const consultationGuide = buildConsultationGuide(switchedState);
+  const recommendation = await buildRecommendationIfReady(switchedState, intentContext?.sessionId);
   const consultationContext: ConsultationDeskContext = {
-    intent: analyzedState.intent,
-    childState: analyzedState.childState,
+    intent: switchedState.intent,
+    childState: switchedState.childState,
     requiredFields: consultationGuide.requiredFields,
     missingFields: consultationGuide.missingFields,
     nextRecommendedQuestion: consultationGuide.nextRecommendedQuestion,
     progress: consultationGuide.progress,
-    pendingClarifications: analyzedState.pendingClarifications,
-    conversationSummary: analyzedState.conversationSummary,
-    collected: analyzedState.collected,
-    engineeringNotes: buildEngineeringNotes(analyzedState),
+    pendingClarifications: switchedState.pendingClarifications,
+    conversationSummary: switchedState.conversationSummary,
+    collected: switchedState.collected,
+    engineeringNotes: buildEngineeringNotes(switchedState),
+    guidedPaused: switchedState.guidedPaused,
     recommendation,
   };
 
@@ -258,7 +298,7 @@ export async function runConsultationOrchestrator({
 
   return {
     ...reply,
-    state: analyzedState,
+    state: switchedState,
     recommendation: recommendation || reply.recommendation || null,
     quoteIntentDetected: reply.quoteIntentDetected || isQuoteIntent(userMessage, analyzedState),
     consultationGuide,

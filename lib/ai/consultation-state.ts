@@ -10,6 +10,7 @@ export type ConsultationChildState =
 
 export type ConsultationState = {
   intent?: ConsultationIntent;
+  intentHint?: ConsultationIntent;
   childState?: ConsultationChildState;
   workflow: "consultation";
   collected: ConsultationEntities;
@@ -26,6 +27,8 @@ export type ConsultationState = {
   batteryVoltage?: number;
   panelRecommendation?: unknown;
   protectionRecommendation?: unknown;
+  unrelatedTurnCount: number;
+  guidedPaused: boolean;
   paused: boolean;
   confidence: number;
 };
@@ -78,12 +81,15 @@ export function refreshConsultationStateIndexes(state: ConsultationState): Consu
 export function createConsultationState(intent?: ConsultationIntent): ConsultationState {
   return refreshConsultationStateIndexes({
     intent,
+    intentHint: intent,
     childState: undefined,
     workflow: "consultation",
     collected: {},
     missing: [],
     missingFields: [],
     pendingClarifications: [],
+    unrelatedTurnCount: 0,
+    guidedPaused: false,
     paused: false,
     confidence: 0,
   });
@@ -95,6 +101,7 @@ export function normalizeConsultationState(
 ): ConsultationState {
   return refreshConsultationStateIndexes({
     intent: intent || state?.intent,
+    intentHint: state?.intentHint || intent || state?.intent,
     childState: state?.childState,
     workflow: "consultation",
     collected: state?.collected || {},
@@ -111,6 +118,10 @@ export function normalizeConsultationState(
     batteryVoltage: state?.batteryVoltage,
     panelRecommendation: state?.panelRecommendation,
     protectionRecommendation: state?.protectionRecommendation,
+    unrelatedTurnCount: Number.isFinite(state?.unrelatedTurnCount)
+      ? Number(state?.unrelatedTurnCount)
+      : 0,
+    guidedPaused: Boolean(state?.guidedPaused),
     paused: Boolean(state?.paused),
     confidence: Number.isFinite(state?.confidence) ? Number(state?.confidence) : 0,
   });

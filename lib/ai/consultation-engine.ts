@@ -572,10 +572,21 @@ function resolveIntentAlias(text: string) {
   if (!value) return undefined;
 
   const flowId = assistantFlowOrder.find((id) =>
-    assistantFlows[id].aliases.some((alias) => value.includes(alias.toLowerCase())),
+    assistantFlows[id].aliases.some((alias) => {
+      const normalized = alias.toLowerCase().trim();
+      return value === normalized || value.startsWith(`${normalized} `) || value.endsWith(` ${normalized}`);
+    }),
   );
 
   return flowId ? FLOW_INTENTS[flowId] : undefined;
+}
+
+export function isGeneralInfoQuery(text: string) {
+  const value = text.toLowerCase();
+  if (!value.trim()) return false;
+  return /\b(about (your|the) company|about oduzz|who are you|what do you do|company profile|your services|where are you located)\b/.test(
+    value,
+  );
 }
 
 export function inferIntentFromMessage(text: string, extracted: ConsultationEntities) {

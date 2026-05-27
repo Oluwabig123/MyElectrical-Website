@@ -1,4 +1,5 @@
 import path from "node:path";
+import { createRequire } from "node:module";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
@@ -42,7 +43,7 @@ async function readPdfText(buffer: Buffer) {
     "cjs",
     "index.cjs",
   );
-  const runtimeRequire = (0, eval)("require") as NodeRequire;
+  const runtimeRequire = createRequire(import.meta.url);
   const { PDFParse } = runtimeRequire(pdfParseRuntimePath) as typeof import("pdf-parse");
   const parser = new PDFParse({ data: buffer });
   try {
