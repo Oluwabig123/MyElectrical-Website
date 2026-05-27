@@ -1,5 +1,4 @@
 import path from "node:path";
-import { createRequire } from "node:module";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
@@ -32,19 +31,9 @@ function extensionFromName(fileName: string) {
 }
 
 async function readPdfText(buffer: Buffer) {
-  // Load the parser by absolute file path at runtime so Next/Turbopack cannot
-  // rewrite it to the browser build, which depends on DOM globals like DOMMatrix.
-  const pdfParseRuntimePath = path.join(
-    process.cwd(),
-    "node_modules",
-    "pdf-parse",
-    "dist",
-    "pdf-parse",
-    "cjs",
-    "index.cjs",
-  );
-  const runtimeRequire = createRequire(import.meta.url);
-  const { PDFParse } = runtimeRequire(pdfParseRuntimePath) as typeof import("pdf-parse");
+  // Use the package export directly so serverless deployments (e.g. Vercel)
+  // can resolve the module without absolute node_modules paths.
+  const { PDFParse } = (await import("pdf-parse")) as typeof import("pdf-parse");
   const parser = new PDFParse({ data: buffer });
   try {
     const result = await parser.getText();

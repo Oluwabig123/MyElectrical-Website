@@ -84,9 +84,6 @@ export default function Navbar() {
         </nav>
 
         <div className={styles.navCtas}>
-          <Link href="/quote" className={cn("btn", "primary", styles.navTopQuote)}>
-            Request Quote
-          </Link>
           <button
             type="button"
             className={styles.navBurger}

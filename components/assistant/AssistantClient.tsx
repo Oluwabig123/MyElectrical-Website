@@ -123,6 +123,7 @@ export default function AssistantClient() {
   const [quoteReferenceId, setQuoteReferenceId] = useState("");
   const [isUploadingQuoteImage, setIsUploadingQuoteImage] = useState(false);
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const shouldStickToBottomRef = useRef(true);
   const sessionIdRef = useRef(`assistant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
   const activeIntent = intentContext?.intent || consultationState?.intent || null;
@@ -147,6 +148,19 @@ export default function AssistantClient() {
   useEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
+    const handleScroll = () => {
+      const distanceFromBottom = body.scrollHeight - body.scrollTop - body.clientHeight;
+      shouldStickToBottomRef.current = distanceFromBottom < 96;
+    };
+    handleScroll();
+    body.addEventListener("scroll", handleScroll);
+    return () => body.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+    if (!shouldStickToBottomRef.current) return;
     body.scrollTop = body.scrollHeight;
   }, [assistantStatus, completion, isResponding, messages]);
 
