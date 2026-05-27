@@ -624,12 +624,14 @@
   }
 }
 
-@media (max-width: 920px) {
-  .navLinks {
+@media (max-width: 1100px) {
+  .navTopQuote {
     display: none;
   }
+}
 
-  .navTopQuote {
+@media (max-width: 920px) {
+  .navLinks {
     display: none;
   }
 

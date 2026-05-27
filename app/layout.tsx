@@ -26,6 +26,11 @@ export const metadata: Metadata = {
   description: BUSINESS_DESCRIPTION,
   keywords: DEFAULT_KEYWORDS,
   applicationName: SITE_NAME,
+  icons: {
+    icon: [{ url: "/oduzz-logo-transparent.webp", type: "image/webp" }],
+    shortcut: ["/oduzz-logo-transparent.webp"],
+    apple: [{ url: "/oduzz-logo-transparent.webp" }],
+  },
   alternates: {
     canonical: "/",
   },
