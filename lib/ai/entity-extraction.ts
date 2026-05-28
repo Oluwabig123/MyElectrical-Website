@@ -317,7 +317,9 @@ export function extractConsultationEntities(input: unknown): ConsultationEntitie
     text.match(/\b(\d+(?:\.\d+)?)\s*kva\b/i);
   const totalLoad =
     text.match(/\b(?:total\s+load|load|appliances?\s+need|power)\s*(?:is|=|:)?\s*(\d+(?:\.\d+)?)\s*(kw|w)\b/i) ||
-    text.match(/\b(\d+(?:\.\d+)?)\s*(kw|w)\s+(?:critical\s+load|load|total load)\b/i);
+    text.match(/\b(\d+(?:\.\d+)?)\s*(kw|w)\s+(?:critical\s+load|load|total load)\b/i) ||
+    // Recommendation-first shorthand support: "1000w for 2h" should be treated as total load basis.
+    text.match(/\b(\d+(?:\.\d+)?)\s*(kw|w)(?:\s*(?:total|load|critical))?\s*(?:for|x|×)\s*\d+(?:\.\d+)?\s*(?:hours?|hrs?|h)\b/i);
   const backupHours =
     text.match(/\b(?:for|backup|last|run|running|need)\s*(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i)?.[1] ||
     text.match(/\b(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i)?.[1];
