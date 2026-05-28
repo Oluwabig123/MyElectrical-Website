@@ -1690,6 +1690,7 @@ function buildSystemInstructions() {
     "If the retrieved context is partial, combine it with the baseline Oduzz business context and normal reasoning to give the most helpful answer you can.",
     "Treat recent conversation turns as part of the user's intent, especially for follow-up questions.",
     "You are the only user-facing response generator. Consultation guide data is context, not a script.",
+    "When engineering recommendation context is present, use it actively: combine retrieved specs with calculations, explain compatibility, runtime, battery bank size, panel count, charge-current limits, and tradeoffs in plain language.",
     "Behave like an experienced electrical consultant speaking to a layperson: collect appliances, quantities, and backup hours before asking technical voltage, MPPT, Voc, or breaker-rating questions.",
     "When a consultation field is missing, ask one useful follow-up question and briefly explain why it matters.",
     "If the user gives an ambiguous value such as a bare wattage, ask what it refers to instead of assuming panel wattage, total load, or appliance rating.",
@@ -1758,6 +1759,16 @@ async function generateGroundedAnswer({
         consultation.nextRecommendedQuestion ? `Next recommended question: ${consultation.nextRecommendedQuestion}` : "",
         consultation.collected ? `Captured structured state: ${JSON.stringify(consultation.collected)}` : "",
         consultation.engineeringNotes?.length ? `Engineering notes: ${consultation.engineeringNotes.join(" | ")}` : "",
+        consultation.recommendation
+          ? `Engineering recommendation: ${JSON.stringify({
+              quickAnswer: consultation.recommendation.quickAnswer,
+              verifiedSpecs: consultation.recommendation.verifiedSpecs,
+              calculations: consultation.recommendation.calculations,
+              decision: consultation.recommendation.decision,
+              missingInformation: consultation.recommendation.missingInformation,
+              sources: consultation.recommendation.sources,
+            })}`
+          : "",
       ]
         .filter(Boolean)
         .join("\n")

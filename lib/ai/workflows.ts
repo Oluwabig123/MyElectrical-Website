@@ -1,10 +1,17 @@
 import { buildWorkflowAnswer } from "@/lib/ai/prompts";
-import { findBestProductMatch, findSolarProducts, matchKnowledgeChunks } from "@/lib/ai/rag";
+import { findBestProductMatch, findFelicityProductsForSizing, findSolarProducts, matchKnowledgeChunks } from "@/lib/ai/rag";
 import { calculateBatteryNeed } from "@/lib/engineering/battery-sizing";
 import { estimateInverterNeed } from "@/lib/engineering/inverter-sizing";
 import { calculatePvConfigurations } from "@/lib/engineering/pv-sizing";
 import { buildProtectionRecommendations } from "@/lib/engineering/protection-sizing";
 import { buildElectricalSafetyNotice } from "@/lib/engineering/safety-rules";
+import {
+  estimateBatteryBank,
+  estimateChargeCurrent,
+  estimateInverterSize,
+  estimatePanelArray,
+  estimateRuntime,
+} from "@/lib/engineering/solar-estimates";
 import type {
   ConfidenceLevel,
   ProductSpecMatch,
@@ -61,6 +68,21 @@ function parseNumericValue(text: unknown) {
   if (!match) return null;
   const parsed = Number(match[0]);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parsePowerWatts(text: unknown) {
+  const value = sanitizeText(text).replace(/,/g, "");
+  if (!value) return null;
+
+  const match = value.match(/(\d+(?:\.\d+)?)\s*(kva|kw|va|w)\b/i);
+  if (!match) return null;
+
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+
+  const unit = match[2].toLowerCase();
+  if (unit === "kw" || unit === "kva") return amount * 1000;
+  return amount;
 }
 
 function parseHours(text: string) {
@@ -239,6 +261,26 @@ async function safeFindBestProductMatch(parameters: Parameters<typeof findBestPr
   }
 }
 
+async function safeFindFelicityProducts(parameters: Parameters<typeof findFelicityProductsForSizing>[0]) {
+  try {
+    return await findFelicityProductsForSizing(parameters);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown Felicity product lookup error";
+    console.warn("Skipping Felicity product lookup:", message);
+    return [];
+  }
+}
+
+function specNumber(match: ProductSpecMatch | null | undefined, key: string) {
+  const parsed = Number(match?.specs?.[key]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function describeProduct(match: ProductSpecMatch | null | undefined) {
+  if (!match) return "";
+  return [match.manufacturer, match.model].filter(Boolean).join(" ").trim() || match.model || match.productType;
+}
+
 async function runSolarWorkflow(request: WorkflowRequest) {
   const serviceMap: Record<WorkflowFlowId, string> = {
     solar: "Solar sizing",
@@ -260,7 +302,9 @@ async function runSolarWorkflow(request: WorkflowRequest) {
   const batteryText = sanitizeText(request.answers.existing_battery || request.answers.battery_details);
   const panelText = sanitizeText(request.answers.panel_details || request.answers.existing_panels);
   const loadEstimate = estimateApplianceLoads(appliances);
-  const inverterNeed = loadEstimate.totalWatts > 0 ? estimateInverterNeed({ loadWatts: loadEstimate.totalWatts, appliancesText: appliances }) : null;
+  const inverterTextWatts = parsePowerWatts(inverterText);
+  const planningLoadWatts = loadEstimate.totalWatts || (inverterTextWatts ? Math.round(inverterTextWatts * 0.75) : 0);
+  const inverterNeed = planningLoadWatts > 0 ? estimateInverterNeed({ loadWatts: planningLoadWatts, appliancesText: appliances }) : null;
   const inverterMatch = inverterText
     ? await safeFindBestProductMatch({ productTypes: ["inverter", "hybrid_inverter"], text: inverterText })
     : null;
@@ -279,9 +323,9 @@ async function runSolarWorkflow(request: WorkflowRequest) {
     null;
 
   const batteryNeed =
-    loadEstimate.totalWatts > 0 && backupHours
+    planningLoadWatts > 0 && backupHours
       ? calculateBatteryNeed({
-          loadWatts: loadEstimate.totalWatts,
+          loadWatts: planningLoadWatts,
           backupHours,
           inverterVoltage,
           efficiency: 0.92,
@@ -304,7 +348,73 @@ async function runSolarWorkflow(request: WorkflowRequest) {
   const panelImp = panelManual.imp || toNumber(panelMatch?.specs.imp);
 
   const targetArrayW =
-    loadEstimate.totalWatts > 0 && backupHours ? Math.ceil((loadEstimate.totalWatts * backupHours * 1.35) / 4.5) : null;
+    planningLoadWatts > 0 && backupHours ? Math.ceil((planningLoadWatts * backupHours * 1.35) / 4.5) : null;
+  const practicalBatteryEstimate =
+    planningLoadWatts > 0 && backupHours
+      ? estimateBatteryBank({
+          loadWatts: planningLoadWatts,
+          backupHours,
+          batteryVoltage: inverterVoltage || 48,
+        })
+      : null;
+  const practicalInverterEstimate =
+    planningLoadWatts > 0 ? estimateInverterSize(planningLoadWatts) : null;
+  const practicalPanelEstimate =
+    planningLoadWatts > 0 && backupHours
+      ? estimatePanelArray({
+          dailyEnergyWh: planningLoadWatts * backupHours,
+          panelWattage: panelWatts || 550,
+        })
+      : null;
+  const practicalChargeEstimate =
+    practicalPanelEstimate?.targetArrayW
+      ? estimateChargeCurrent(practicalPanelEstimate.targetArrayW, inverterVoltage || 48)
+      : null;
+  const fallbackBatteryKwhForInverter = inverterTextWatts
+    ? inverterTextWatts <= 3000
+      ? 4.8
+      : inverterTextWatts <= 5000
+        ? 9.6
+        : 14
+    : null;
+  const felicityBatteryCandidates = practicalBatteryEstimate || fallbackBatteryKwhForInverter
+    ? await safeFindFelicityProducts({
+        productTypes: ["battery"],
+        minCapacityKwh: practicalBatteryEstimate?.requiredBatteryKwh || fallbackBatteryKwhForInverter,
+        limit: 4,
+      })
+    : [];
+  const felicityInverterCandidates = practicalInverterEstimate
+    ? await safeFindFelicityProducts({
+        productTypes: ["hybrid_inverter", "inverter"],
+        minRatedPowerW: practicalInverterEstimate.continuousWatts,
+        limit: 4,
+      })
+    : [];
+  const felicityPanelCandidates = await safeFindFelicityProducts({
+    productTypes: ["solar_panel"],
+    limit: 6,
+  });
+  const suggestedFelicityBattery = felicityBatteryCandidates[0] || null;
+  const suggestedFelicityInverter = felicityInverterCandidates[0] || null;
+  const suggestedFelicityPanel = felicityPanelCandidates[0] || null;
+  const suggestedFelicityPanelWatts = specNumber(suggestedFelicityPanel, "wattage") || specNumber(suggestedFelicityPanel, "rated_power_w");
+  const suggestedFelicityRuntime =
+    suggestedFelicityBattery && planningLoadWatts > 0
+      ? estimateRuntime({
+          batteryKwh:
+            specNumber(suggestedFelicityBattery, "capacity_kwh") ||
+            (specNumber(suggestedFelicityBattery, "energy_wh") || 0) / 1000,
+          loadWatts: planningLoadWatts,
+          usableDod: /gel/i.test(String(suggestedFelicityBattery.specs.battery_type || ""))
+            ? 0.5
+            : 0.8,
+        })
+      : null;
+  const suggestedFelicityPanelCount =
+    practicalPanelEstimate?.targetArrayW && suggestedFelicityPanelWatts
+      ? Math.ceil(practicalPanelEstimate.targetArrayW / suggestedFelicityPanelWatts)
+      : null;
 
   const pvResult = calculatePvConfigurations({
     targetArrayW,
@@ -370,7 +480,9 @@ async function runSolarWorkflow(request: WorkflowRequest) {
     pvResult.recommended
       ? `${pvResult.recommended.totalPanels} panel(s) as ${pvResult.recommended.series}S${pvResult.recommended.parallel}P`
       : "PV string pending verified panel and inverter specs",
-  ].join(", ");
+    suggestedFelicityBattery ? `candidate battery: ${describeProduct(suggestedFelicityBattery)}` : "",
+    suggestedFelicityInverter ? `candidate inverter: ${describeProduct(suggestedFelicityInverter)}` : "",
+  ].filter(Boolean).join(", ");
 
   const protectionSummary = recommendedComponents.map((item) => `${item.category}: ${item.recommendation}`).join(" | ");
   const nextStep =
@@ -426,8 +538,41 @@ async function runSolarWorkflow(request: WorkflowRequest) {
         : null,
       backupHours ? { label: "Backup target", value: `${formatNumber(backupHours)} hour(s)` } : null,
       batteryNeed ? { label: "Required storage", value: `${formatNumber(batteryNeed.requiredKwh)}kWh usable` } : null,
+      practicalBatteryEstimate
+        ? {
+            label: "Practical battery bank",
+            value: `${formatNumber(practicalBatteryEstimate.requiredBatteryKwh)}kWh nominal, about ${formatNumber(practicalBatteryEstimate.requiredAh || 0, 0)}Ah @${formatNumber(practicalBatteryEstimate.batteryVoltage || 48, 0)}V`,
+          }
+        : null,
       inverterNeed
         ? { label: "Recommended inverter class", value: `${formatNumber(inverterNeed.recommendedContinuousWatts, 0)}W continuous` }
+        : null,
+      practicalPanelEstimate
+        ? {
+            label: "Panel array target",
+            value: `${formatNumber(practicalPanelEstimate.targetArrayW, 0)}Wp before final MPPT string validation`,
+          }
+        : null,
+      practicalChargeEstimate?.currentA
+        ? {
+            label: "Estimated charge current",
+            value: `${formatNumber(practicalChargeEstimate.currentA)}A around ${formatNumber(practicalChargeEstimate.batteryVoltage, 0)}V`,
+          }
+        : null,
+      suggestedFelicityBattery
+        ? {
+            label: "Felicity battery candidate",
+            value: `${describeProduct(suggestedFelicityBattery)}${suggestedFelicityRuntime?.runtimeHours ? `, about ${formatNumber(suggestedFelicityRuntime.runtimeHours)}h at this load` : ""}`,
+          }
+        : null,
+      suggestedFelicityInverter
+        ? { label: "Felicity inverter candidate", value: describeProduct(suggestedFelicityInverter) }
+        : null,
+      suggestedFelicityPanel && suggestedFelicityPanelCount
+        ? {
+            label: "Felicity panel direction",
+            value: `${suggestedFelicityPanelCount} x ${describeProduct(suggestedFelicityPanel)} before string checks`,
+          }
         : null,
       pvResult.recommended
         ? {
@@ -446,9 +591,15 @@ async function runSolarWorkflow(request: WorkflowRequest) {
       batteryNeed
         ? `Battery storage target is about ${formatNumber(batteryNeed.requiredKwh)}kWh usable after efficiency and depth-of-discharge allowances.`
         : "",
+      suggestedFelicityBattery
+        ? `${describeProduct(suggestedFelicityBattery)} is a Felicity candidate to review because its stored capacity is closest above the calculated need.`
+        : "",
       pvResult.recommended
         ? `The safest PV arrangement found is ${pvResult.recommended.series} in series and ${pvResult.recommended.parallel} string(s) in parallel.`
         : pvResult.warnings[0] || "",
+      suggestedFelicityPanel && suggestedFelicityPanelCount
+        ? `Using retrieved Felicity panel specs, start around ${suggestedFelicityPanelCount} panel(s), then validate series/parallel against inverter MPPT voltage, max PV Voc, PV current, and roof space.`
+        : "",
       batterySeriesSupport
         ? `Battery series support appears available up to ${formatNumber(batterySeriesSupport, 0)} unit(s), but the final recommendation should still follow the manual.`
         : batteryText && batteryMatch
@@ -465,6 +616,9 @@ async function runSolarWorkflow(request: WorkflowRequest) {
       sourceFromMatch(inverterMatch),
       sourceFromMatch(batteryMatch),
       sourceFromMatch(panelMatch),
+      sourceFromMatch(suggestedFelicityBattery),
+      sourceFromMatch(suggestedFelicityInverter),
+      sourceFromMatch(suggestedFelicityPanel),
       ...knowledgeEvidence.map((item) => ({
         title: item.title || "Knowledge chunk",
         manufacturer: item.manufacturer,

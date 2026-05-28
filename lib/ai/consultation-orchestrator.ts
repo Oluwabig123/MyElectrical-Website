@@ -160,8 +160,24 @@ async function buildRecommendationIfReady(state: ConsultationState, sessionId?: 
   const workflowId = workflowFromIntent(state.intent);
 
   if (!workflowId || !TECHNICAL_WORKFLOWS.includes(workflowId)) return null;
-  if (state.missing.length > 0) return null;
-  if (!state.collected.appliances?.length && !state.collected.total_load_watts) return null;
+  const hasSizingBasis =
+    Boolean(state.collected.appliances?.length) ||
+    Boolean(state.collected.total_load_watts) ||
+    Boolean(state.collected.inverter_size) ||
+    Boolean(state.collected.inverter_voltage) ||
+    Boolean(state.collected.battery_model) ||
+    Boolean(state.collected.panel_model) ||
+    Boolean(state.collected.panel_specs);
+
+  if (!hasSizingBasis) return null;
+  if (
+    state.missing.length > 0 &&
+    !state.missing.every((field) =>
+      ["backup hours", "load or appliance list", "freezer/AC/pump wattage or type"].includes(field),
+    )
+  ) {
+    return null;
+  }
 
   try {
     const result = await runAssistantWorkflow({

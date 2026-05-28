@@ -54,10 +54,18 @@ export function extractModelCandidates(text: string) {
 export async function findSolarProducts({
   productTypes,
   modelText,
+  manufacturer,
+  minCapacityKwh,
+  minRatedPowerW,
+  nominalVoltage,
   limit = 8,
 }: {
   productTypes?: ProductType[];
   modelText?: string;
+  manufacturer?: string;
+  minCapacityKwh?: number | null;
+  minRatedPowerW?: number | null;
+  nominalVoltage?: number | null;
   limit?: number;
 }) {
   const supabase = getSupabaseAdminClientOrThrow();
@@ -77,12 +85,57 @@ export async function findSolarProducts({
     query = query.ilike("model", `%${sanitizeText(modelText)}%`);
   }
 
+  if (sanitizeText(manufacturer)) {
+    query = query.ilike("manufacturer", `%${sanitizeText(manufacturer)}%`);
+  }
+
+  if (minCapacityKwh && minCapacityKwh > 0) {
+    query = query.gte("capacity_kwh", minCapacityKwh);
+  }
+
+  if (minRatedPowerW && minRatedPowerW > 0) {
+    query = query.gte("rated_power_w", minRatedPowerW);
+  }
+
+  if (nominalVoltage && nominalVoltage > 0) {
+    query = query.eq("nominal_voltage", nominalVoltage);
+  }
+
+  if (minCapacityKwh && minCapacityKwh > 0) {
+    query = query.order("capacity_kwh", { ascending: true, nullsFirst: false });
+  } else if (minRatedPowerW && minRatedPowerW > 0) {
+    query = query.order("rated_power_w", { ascending: true, nullsFirst: false });
+  }
+
   const { data, error } = await query;
   if (error) {
     throw new Error(error.message || "Could not load structured product data.");
   }
 
   return (Array.isArray(data) ? data : []).map((row) => rowToSpecMatch(row, modelText ? "partial_model" : "retrieval"));
+}
+
+export async function findFelicityProductsForSizing({
+  productTypes,
+  minCapacityKwh,
+  minRatedPowerW,
+  nominalVoltage,
+  limit = 6,
+}: {
+  productTypes: ProductType[];
+  minCapacityKwh?: number | null;
+  minRatedPowerW?: number | null;
+  nominalVoltage?: number | null;
+  limit?: number;
+}) {
+  return findSolarProducts({
+    productTypes,
+    manufacturer: "Felicity",
+    minCapacityKwh,
+    minRatedPowerW,
+    nominalVoltage,
+    limit,
+  });
 }
 
 export async function findBestProductMatch({
