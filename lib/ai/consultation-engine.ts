@@ -262,21 +262,11 @@ export function mergeConsultationState(
   });
 }
 
-function applianceNames(state: ConsultationState) {
-  return state.collected.appliance_details?.map((item) => item.name) || [];
-}
-
 function missingQuantityNames(state: ConsultationState) {
   if (state.collected.total_load_watts) return [];
   return (state.collected.appliance_details || [])
     .filter((item) => !item.quantity)
     .map((item) => item.name);
-}
-
-function hasCompressorWithoutRating(state: ConsultationState) {
-  const names = applianceNames(state).map((name) => name.toLowerCase());
-  if (!names.some((name) => ["freezer", "fridge", "pump", "ac"].includes(name))) return false;
-  return !hasValue(state.collected.load_surge_details);
 }
 
 function hasLoadBasis(state: ConsultationState) {
@@ -285,12 +275,6 @@ function hasLoadBasis(state: ConsultationState) {
     hasValue(state.collected.appliance_details) ||
     hasValue(state.collected.appliances)
   );
-}
-
-function hasEstimatedLoadBasis(state: ConsultationState) {
-  if (state.collected.total_load_watts) return true;
-  if (!state.collected.appliance_details?.length) return false;
-  return missingQuantityNames(state).length === 0;
 }
 
 export function getRequiredFields(intent: ConsultationIntent | undefined) {
@@ -328,16 +312,10 @@ export function determineMissingFields(state: ConsultationState) {
   if (state.childState === "load_estimation" || (intent && POWER_INTENTS.has(intent))) {
     if (!hasLoadBasis(state)) {
       missing.push("load or appliance list");
-    } else if (missingQuantityNames(state).length) {
-      missing.push("quantities");
     }
 
     if (intent && BACKUP_INTENTS.has(intent) && !hasValue(collected.backup_hours)) {
       missing.push("backup hours");
-    }
-
-    if (hasEstimatedLoadBasis(state) && hasCompressorWithoutRating(state)) {
-      missing.push("freezer/AC/pump wattage or type");
     }
   }
 

@@ -1,11 +1,37 @@
 import { loadEnvConfig } from "@next/env";
-import { createEmbedding } from "@/lib/ai/embeddings";
-import { buildNormalizedSolarProduct } from "@/lib/knowledge/validators";
-import { crawlFelicityProducts } from "@/lib/rag/felicity-crawler";
-import { normalizeFelicityProduct, type NormalizedFelicityProduct } from "@/lib/rag/felicity-normalizer";
-import { getSupabaseAdminClientOrThrow } from "@/lib/supabase/admin";
 
 loadEnvConfig(process.cwd());
+
+import type { createEmbedding as createEmbeddingType } from "@/lib/ai/embeddings";
+import type { buildNormalizedSolarProduct as buildNormalizedSolarProductType } from "@/lib/knowledge/validators";
+import type { crawlFelicityProducts as crawlFelicityProductsType } from "@/lib/rag/felicity-crawler";
+import type {
+  normalizeFelicityProduct as normalizeFelicityProductType,
+  NormalizedFelicityProduct,
+} from "@/lib/rag/felicity-normalizer";
+import type { getSupabaseAdminClientOrThrow as getSupabaseAdminClientOrThrowType } from "@/lib/supabase/admin";
+
+let createEmbedding: typeof createEmbeddingType;
+let buildNormalizedSolarProduct: typeof buildNormalizedSolarProductType;
+let crawlFelicityProducts: typeof crawlFelicityProductsType;
+let normalizeFelicityProduct: typeof normalizeFelicityProductType;
+let getSupabaseAdminClientOrThrow: typeof getSupabaseAdminClientOrThrowType;
+
+async function loadDependencies() {
+  const [embeddings, validators, crawler, normalizer, supabaseAdmin] = await Promise.all([
+    import("@/lib/ai/embeddings"),
+    import("@/lib/knowledge/validators"),
+    import("@/lib/rag/felicity-crawler"),
+    import("@/lib/rag/felicity-normalizer"),
+    import("@/lib/supabase/admin"),
+  ]);
+
+  createEmbedding = embeddings.createEmbedding;
+  buildNormalizedSolarProduct = validators.buildNormalizedSolarProduct;
+  crawlFelicityProducts = crawler.crawlFelicityProducts;
+  normalizeFelicityProduct = normalizer.normalizeFelicityProduct;
+  getSupabaseAdminClientOrThrow = supabaseAdmin.getSupabaseAdminClientOrThrow;
+}
 
 type IngestStats = {
   productsFound: number;
@@ -168,9 +194,27 @@ async function storeProduct(product: NormalizedFelicityProduct) {
   };
 }
 
+async function clearExistingFelicityProducts() {
+  const supabase = getSupabaseAdminClientOrThrow();
+  const { error } = await supabase
+    .from("knowledge_documents")
+    .delete()
+    .eq("manufacturer", "Felicity Solar");
+
+  if (error) {
+    throw new Error(error.message || "Could not clear existing Felicity Solar documents.");
+  }
+}
+
 async function main() {
+  await loadDependencies();
+
   const maxPages = Number(process.env.FELICITY_CRAWL_MAX_PAGES || 180);
-  const crawl = await crawlFelicityProducts({ maxPages });
+  const startUrl = sanitizeText(process.env.FELICITY_START_URL) || undefined;
+  const delayMs = Number(process.env.FELICITY_CRAWL_DELAY_MS || 600);
+  const timeoutMs = Number(process.env.FELICITY_CRAWL_TIMEOUT_MS || 15000);
+  const replaceExisting = !/^(0|false|no|off)$/i.test(String(process.env.FELICITY_REPLACE_EXISTING || "true"));
+  const crawl = await crawlFelicityProducts({ maxPages, startUrl, delayMs, timeoutMs });
   const normalized = crawl.products.map(normalizeFelicityProduct);
   const stats: IngestStats = {
     productsFound: normalized.length,
@@ -184,6 +228,11 @@ async function main() {
 
   console.log(`Felicity crawl visited ${crawl.visitedCount} page(s).`);
   console.log(`Felicity products found: ${normalized.length}.`);
+
+  if (replaceExisting) {
+    await clearExistingFelicityProducts();
+    console.log("Cleared existing Felicity Solar documents before ingest.");
+  }
 
   for (const product of normalized) {
     stats.categories.add(product.productCategory);

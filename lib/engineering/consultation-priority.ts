@@ -53,21 +53,12 @@ export function estimateLoadWatts(state: ConsultationState) {
     };
   }
 
-  const missingQuantities = rows.filter((item) => !item.quantity).map((item) => item.name);
-  if (missingQuantities.length) {
-    return {
-      watts: null,
-      assumptions: [`Missing quantities for: ${missingQuantities.join(", ")}`],
-      estimated: false,
-    };
-  }
-
   const assumptions: string[] = [];
   const watts = rows.reduce((total, item) => {
     const itemWatts = item.wattage || DEFAULT_LOADS_W[item.name] || 0;
-    const quantity = item.quantity || 0;
+    const quantity = item.quantity || 1;
     if (!itemWatts) return total;
-    assumptions.push(`${item.label}: ${itemWatts}W x ${quantity}`);
+    assumptions.push(`${item.quantity ? item.label : `${item.name} (assumed 1 unit)`}: ${itemWatts}W x ${quantity}`);
     return total + itemWatts * quantity;
   }, 0);
 

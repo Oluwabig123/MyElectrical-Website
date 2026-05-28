@@ -947,28 +947,6 @@ function formatApplianceSummary(collected: ConsultationEntities) {
   return collected.appliances?.join(", ") || "";
 }
 
-function formatMissingQuantityNames(collected: ConsultationEntities) {
-  const pluralMap: Record<string, string> = {
-    TV: "TVs",
-    freezer: "freezers",
-    fridge: "fridges",
-    laptop: "laptops",
-    fan: "fans",
-    bulb: "bulbs",
-    AC: "ACs",
-    pump: "pumps",
-    decoder: "decoders",
-    router: "routers",
-  };
-  const names = getApplianceDetails(collected)
-    .filter((item) => !item.quantity)
-    .map((item) => pluralMap[item.name] || `${item.name}s`);
-
-  if (names.length <= 1) return names[0] || "each appliance";
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
-}
-
 function hasMissingField(consultation: ConsultationDeskContext | undefined, field: string) {
   return Boolean(consultation?.missingFields?.includes(field));
 }
@@ -993,17 +971,86 @@ function buildCapturedLine(collected: ConsultationEntities) {
 
 function buildPlanningReply(consultation: ConsultationDeskContext) {
   if (!consultation.engineeringNotes?.length) return "";
-
-  const compressorMissing = hasMissingField(consultation, "freezer/AC/pump wattage or type");
-  const nextLine = compressorMissing
-    ? "To firm this up, send the freezer/AC/pump wattage, HP, or label photo when you can."
-    : "Next, confirm any existing inverter, battery, panel models, and site route length so the final protection and cable sizes are not guessed.";
+  const missingBackup = hasMissingField(consultation, "backup hours");
 
   return [
-    "Here is a practical planning direction:",
+    "Practical baseline setup:",
     ...consultation.engineeringNotes.map((item) => `- ${item}`),
-    nextLine,
+    missingBackup
+      ? "Critical follow-up: how many backup hours should this run during outage?"
+      : "Critical follow-up: do you already have inverter, battery, or panels, or should I suggest a complete Felicity setup?",
   ].join("\n");
+}
+
+function findCalculationValue(recommendation: SizingRecommendation, label: string) {
+  return recommendation.calculations.find((item) => item.label.toLowerCase() === label.toLowerCase())?.value || "";
+}
+
+function pickCriticalFollowup({
+  recommendation,
+  consultation,
+}: {
+  recommendation: SizingRecommendation;
+  consultation?: ConsultationDeskContext;
+}) {
+  if (recommendation.missingInformation.some((item) => /backup hours/i.test(item))) {
+    return "Critical follow-up: how many backup hours should this run during outage?";
+  }
+
+  if (recommendation.missingInformation.some((item) => /appliance list/i.test(item))) {
+    return "Critical follow-up: list the main appliances to power so I can tighten the recommendation.";
+  }
+
+  if (recommendation.missingInformation.some((item) => /nameplate|hp details/i.test(item))) {
+    return "Critical follow-up: share freezer/AC/pump label details when convenient so I can tighten surge margin.";
+  }
+
+  if (!consultation?.collected?.backup_hours && consultation?.intent === "solar_sizing") {
+    return "Critical follow-up: how many backup hours should this run during outage?";
+  }
+
+  return "Critical follow-up: do you already have inverter, battery, or panels, or should I suggest a complete Felicity setup?";
+}
+
+function buildRecommendationFirstReply({
+  recommendation,
+  consultation,
+}: {
+  recommendation: SizingRecommendation;
+  consultation?: ConsultationDeskContext;
+}) {
+  const estimatedLoad = findCalculationValue(recommendation, "Estimated load");
+  const inverter = findCalculationValue(recommendation, "Recommended inverter class");
+  const battery = findCalculationValue(recommendation, "Practical battery bank") || findCalculationValue(recommendation, "Required storage");
+  const panels = findCalculationValue(recommendation, "Panel array target") || findCalculationValue(recommendation, "Felicity panel direction");
+  const felicityInverter = findCalculationValue(recommendation, "Felicity inverter candidate");
+  const felicityBattery = findCalculationValue(recommendation, "Felicity battery candidate");
+  const protection = recommendation.recommendedComponents
+    .filter((item) => ["Battery DC breaker/fuse", "PV protection", "AC protection"].includes(item.category))
+    .map((item) => item.recommendation)
+    .join(" ");
+  const cableDirection = recommendation.recommendedComponents
+    .filter((item) => ["Battery cable", "PV cable", "AC cable"].includes(item.category))
+    .map((item) => item.recommendation)
+    .join(" ");
+
+  return [
+    estimatedLoad ? `Estimated running load: ${estimatedLoad}.` : "Estimated running load prepared from appliance assumptions.",
+    "Practical baseline setup:",
+    inverter ? `- Inverter: ${inverter}` : "- Inverter: practical pure-sine inverter matched to surge demand.",
+    battery ? `- Battery: ${battery}` : "- Battery: lithium storage bank sized for outage runtime.",
+    panels ? `- Solar panels: ${panels}` : "- Solar panels: panel count based on daily energy target and sun-hours assumptions.",
+    protection ? `- Protection: ${protection}` : "- Protection: battery breaker/fuse, PV DC protection and SPD, AC output breaker and SPD.",
+    cableDirection
+      ? `- Cables: ${cableDirection}`
+      : "- Cables: PV cable (4mm2/6mm2 range), battery cable (high-current), and AC output cable sized by route and current.",
+    felicityInverter ? `- Felicity inverter option: ${felicityInverter}` : "",
+    felicityBattery ? `- Felicity battery option: ${felicityBattery}` : "",
+    "Assumption note: this is a practical first recommendation and will be tightened after one critical clarification.",
+    pickCriticalFollowup({ recommendation, consultation }),
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function buildConsultationLedReply({
@@ -1066,25 +1113,9 @@ function buildConsultationLedReply({
     ].join("\n");
   }
 
-  if (hasMissingField(consultation, "quantities")) {
-    const names = formatMissingQuantityNames(collected);
-    return [
-      capturedLine || "Good, I have the appliance types.",
-      `How many ${names} do you want to power?`,
-      "Example: 3 fans, 8 bulbs.",
-    ].join("\n");
-  }
-
-  if (hasMissingField(consultation, "backup hours")) {
-    return [
-      capturedLine || "Good, I have the load direction.",
-      "How many hours do you want them to run during outage?",
-    ].join("\n");
-  }
-
   if (
     consultation.engineeringNotes?.length &&
-    (collected.backup_hours || collected.total_load_watts || collected.appliance_details?.length)
+    (collected.total_load_watts || collected.appliance_details?.length || collected.appliances?.length)
   ) {
     return buildPlanningReply(consultation);
   }
@@ -1140,16 +1171,7 @@ function buildConsultationDeskReply({
   }
 
   if (recommendation) {
-    return [
-      recommendation.quickAnswer,
-      ...recommendation.decision.slice(0, 4).map((item) => `- ${item}`),
-      recommendation.missingInformation.length
-        ? `Missing before final confirmation: ${recommendation.missingInformation.join("; ")}.`
-        : "",
-      recommendation.projectSummary.nextStep,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    return buildRecommendationFirstReply({ recommendation, consultation });
   }
 
   const consultationLedReply = buildConsultationLedReply({ messages, consultation });
@@ -1170,10 +1192,9 @@ function buildConsultationDeskReply({
 
   if (consultation?.intent === "solar_sizing" && consultation.engineeringNotes?.length) {
     return [
-      "No problem. List the appliances you want to power.",
-      "",
-      "If you know the wattages, include them. If not, I can use safe planning estimates for TVs, fans, bulbs, laptops, routers, freezers, pumps, or ACs.",
-      "For AC, freezer, or pump, add the HP, wattage, or size if you know it.",
+      "I can recommend from appliance names directly.",
+      "List the appliances and quantities in one line (example: TV, freezer, laptop, 3 fans, 8 bulbs, 6 hours).",
+      "I will estimate wattage automatically and return inverter, battery, panel, protection, and cable direction in one reply.",
     ].join("\n");
   }
 
@@ -1691,8 +1712,8 @@ function buildSystemInstructions() {
     "Treat recent conversation turns as part of the user's intent, especially for follow-up questions.",
     "You are the only user-facing response generator. Consultation guide data is context, not a script.",
     "When engineering recommendation context is present, use it actively: combine retrieved specs with calculations, explain compatibility, runtime, battery bank size, panel count, charge-current limits, and tradeoffs in plain language.",
-    "Behave like an experienced electrical consultant speaking to a layperson: collect appliances, quantities, and backup hours before asking technical voltage, MPPT, Voc, or breaker-rating questions.",
-    "When a consultation field is missing, ask one useful follow-up question and briefly explain why it matters.",
+    "Behave like an experienced electrical consultant speaking to a layperson: recommendation first, question second. Infer practical defaults from appliance names and continue with a baseline setup instead of pausing for technical inputs.",
+    "When consultation data is incomplete, still provide a practical setup range (inverter, battery, panels, protection, cables), then ask only one critical follow-up question.",
     "If the user gives an ambiguous value such as a bare wattage, ask what it refers to instead of assuming panel wattage, total load, or appliance rating.",
     "Do not invent exact prices, warranties, stock availability, inspection outcomes, or technical specs that are not supported by the provided business context.",
     "For cable, breaker, panel, inverter, battery, or other spec-sensitive product questions, prefer category-level guidance and state which load, distance, breaker, or site details are still needed before exact sizing.",

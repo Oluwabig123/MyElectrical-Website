@@ -63,21 +63,32 @@ function getAttribute(tag: string, name: string) {
   return sanitizeText(tag.match(pattern)?.[1] || "");
 }
 
-function inferCategory(text: string): FelicityProductCategory | null {
+function inferCategoryFromSignals(text: string): FelicityProductCategory | null {
   const value = text.toLowerCase();
 
-  if (/\b(lithium|lifepo4|li-?ion)\b/.test(value) && /\bbatter/i.test(value)) return "lithium_battery";
   if (/\b(gel|agm)\b/.test(value) && /\bbatter/i.test(value)) return "gel_battery";
-  if (/\bhybrid\b/.test(value) && /\binverter\b/.test(value)) return "hybrid_inverter";
+  if (/\b(lithium|lifepo4|li-?ion)\b/.test(value) && /\bbatter/i.test(value)) return "lithium_battery";
   if (/\boff[-\s]?grid\b/.test(value) && /\binverter\b/.test(value)) return "off_grid_inverter";
-  if (/\b(charge controller|solar controller|mppt controller|pwm controller|controller)\b/.test(value)) {
+  if (/\bhybrid\b/.test(value) && /\binverter\b/.test(value)) return "hybrid_inverter";
+  if (/\b(charge controller|solar controller|mppt controller|pwm controller|controller|mppt|pwm)\b/.test(value)) {
     return "charge_controller";
   }
-  if (/\b(solar panel|pv module|module|mono(?:crystalline)?|poly(?:crystalline)?)\b/.test(value)) {
+  if (/\b(solar panel|pv module|photovoltaic module|mono(?:crystalline)?|poly(?:crystalline)?|\d{2,4}\s*w(?:p)?)\b/.test(value)) {
     return "solar_panel";
   }
   if (/\binverter\b/.test(value)) return "hybrid_inverter";
   if (/\bbatter/i.test(value)) return "lithium_battery";
+
+  return null;
+}
+
+function inferCategoryFromModel(title: string, url: string): FelicityProductCategory | null {
+  const signal = `${title} ${url}`.toLowerCase();
+
+  if (/\b(?:lpbf|lpba|lfp|gel|agm|battery|lithium|lifepo4)\b/.test(signal)) return "lithium_battery";
+  if (/\b(?:iv[a-z0-9-]{1,}|hiv[a-z0-9-]{1,}|inverter)\b/.test(signal)) return "hybrid_inverter";
+  if (/\b(?:mppt|pwm|controller|scc)\b/.test(signal)) return "charge_controller";
+  if (/\b(?:panel|module|pv)\b/.test(signal)) return "solar_panel";
 
   return null;
 }
@@ -145,6 +156,33 @@ function collectSpecs(html: string) {
   return specs;
 }
 
+function collectCategorySignals(html: string, baseUrl: string) {
+  const signals: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (value: string) => {
+    const text = sanitizeText(value);
+    if (!text || seen.has(text)) return;
+    seen.add(text);
+    signals.push(text);
+  };
+
+  for (const script of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    push(stripTags(script[1]));
+  }
+
+  for (const match of html.matchAll(/<a\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const href = absoluteUrl(sanitizeText(match[1]), baseUrl);
+    const label = stripTags(match[2]);
+    if (!href) continue;
+    if (/product-category|inverter|battery|panel|controller|mppt|pwm|lifepo4|gel/i.test(`${href} ${label}`)) {
+      push(`${href} ${label}`);
+    }
+  }
+
+  return signals.join(" ");
+}
+
 function collectImages(html: string, url: string) {
   const images = new Set<string>();
 
@@ -172,10 +210,14 @@ export function parseFelicityProductPage(html: string, url: string): RawFelicity
   const description = collectDescription(cleanHtml);
   const specs = collectSpecs(cleanHtml);
   const rawText = stripTags(cleanHtml).slice(0, 5000);
-  const category = inferCategory([url, title, description, Object.keys(specs).join(" ")].join(" "));
+  const categorySignals = collectCategorySignals(cleanHtml, url);
+  const category =
+    inferCategoryFromModel(title, url) ||
+    inferCategoryFromSignals([url, title, description, Object.keys(specs).join(" "), categorySignals].join(" "));
   const hasProductSignal = category || Object.keys(specs).length >= 3 || /\/product\//i.test(url);
+  const noisyTitle = /roofing services|home\s*-|^\s*all\s*-|^\s*-\s*/i.test(title);
 
-  if (!title || !hasProductSignal) return null;
+  if (!title || noisyTitle || !hasProductSignal || !/\/(?:[a-z]{2}\/)?product\//i.test(url)) return null;
 
   return {
     title,
