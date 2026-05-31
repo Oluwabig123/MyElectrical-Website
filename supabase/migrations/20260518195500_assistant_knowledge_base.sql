@@ -19,10 +19,13 @@ create table if not exists public.document_chunks (
   chunk_text text not null,
   chunk_index integer not null,
   token_estimate integer,
+  topic text,
   embedding vector(1536) not null,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
+
+alter table public.document_chunks add column if not exists topic text;
 
 create table if not exists public.chat_leads (
   id uuid primary key default gen_random_uuid(),
@@ -37,10 +40,12 @@ create table if not exists public.chat_leads (
 create index if not exists documents_is_active_idx on public.documents (is_active);
 create index if not exists documents_category_idx on public.documents (category);
 create index if not exists document_chunks_document_id_idx on public.document_chunks (document_id);
+create index if not exists idx_document_chunks_topic on public.document_chunks (topic);
 create index if not exists document_chunks_embedding_ivfflat_idx
   on public.document_chunks
   using ivfflat (embedding vector_cosine_ops)
   with (lists = 100);
+alter index if exists document_chunks_embedding_ivfflat_idx set (lists = 100);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -61,31 +66,44 @@ execute function public.set_updated_at();
 
 create or replace function public.match_document_chunks(
   query_embedding vector(1536),
-  match_count integer default 6,
-  similarity_threshold double precision default 0.72
+  match_threshold double precision default 0.6,
+  match_count integer default 4,
+  topic_filter text default null
 )
 returns table (
+  id uuid,
+  document_id uuid,
   chunk_text text,
   title text,
   category text,
   source_url text,
+  topic text,
   similarity double precision,
   metadata jsonb
 )
-language sql
+language plpgsql
 stable
 as $$
+begin
+  set local ivfflat.probes = 10;
+
+  return query
   select
+    dc.id,
+    dc.document_id,
     dc.chunk_text,
     d.title,
     d.category,
     d.source_url,
+    dc.topic,
     1 - (dc.embedding <=> query_embedding) as similarity,
     dc.metadata
   from public.document_chunks dc
   inner join public.documents d on d.id = dc.document_id
   where d.is_active = true
-    and 1 - (dc.embedding <=> query_embedding) >= similarity_threshold
+    and 1 - (dc.embedding <=> query_embedding) > match_threshold
+    and (topic_filter is null or dc.topic = topic_filter)
   order by dc.embedding <=> query_embedding
   limit greatest(match_count, 1);
+end;
 $$;

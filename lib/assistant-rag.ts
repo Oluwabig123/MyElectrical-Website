@@ -20,11 +20,28 @@ const DEFAULT_MAX_OUTPUT_TOKENS = readPositiveInt(process.env.OPENAI_MAX_OUTPUT_
 const CHUNK_MIN_WORDS = 180;
 const CHUNK_TARGET_WORDS = 280;
 const CHUNK_MAX_WORDS = 380;
-const PRIMARY_SIMILARITY_THRESHOLD = 0.58;
-const SECONDARY_SIMILARITY_THRESHOLD = 0.32;
+const PRIMARY_SIMILARITY_THRESHOLD = 0.6;
+const SECONDARY_SIMILARITY_THRESHOLD = 0.45;
 const KEYWORD_CONTEXT_SLICE_CHARS = 1400;
-const RETRIEVAL_MATCH_COUNT = 8;
+const RETRIEVAL_STANDARD_MATCH_COUNT = 4;
+const RETRIEVAL_COMPLEX_MATCH_COUNT = 6;
 const RETRIEVAL_USER_MESSAGE_WINDOW = 3;
+const LAGOS_OPERATIONAL_CONTEXT =
+  "Lagos-specific context: NEPA/PHCN voltage fluctuations (160–180V) are a leading cause of breaker trips and equipment damage. All generator connections require a changeover/transfer switch. Ikorodu and mainland areas experience 8–12 hour daily outages — always recommend inverter/battery backup for CCTV and critical loads. Ambient temperature in Lagos averages 32–35°C which requires cable derating.";
+const INTENT_TO_TOPIC: Record<string, string> = {
+  solar: "solar",
+  inverter: "inverter",
+  battery: "inverter",
+  cctv: "cctv",
+  security: "cctv",
+  wiring: "wiring",
+  cable: "wiring",
+  lighting: "lighting",
+  generator: "generator",
+  smart_home: "smart_home",
+  quote: "pricing",
+  price: "pricing",
+};
 
 const NO_KNOWLEDGE_MESSAGE =
   "I don’t have that exact information in the Oduzz knowledge base yet, but I can help you prepare the right details for the Oduzz team.";
@@ -60,11 +77,14 @@ type OpenAIResponsePayload = {
 };
 
 type ChunkMatch = {
+  id?: string | null;
+  document_id?: string | null;
   chunk_text: string;
   title: string | null;
   category: string | null;
   source_url: string | null;
   similarity: number;
+  topic?: string | null;
   metadata: Record<string, unknown> | null;
 };
 
@@ -273,6 +293,19 @@ function chunkDocumentContent(content: string) {
   return chunks.filter(Boolean);
 }
 
+function classifyChunkTopic(text: string): string {
+  const t = text.toLowerCase();
+  if (t.includes("solar") || t.includes("panel") || t.includes("photovoltaic")) return "solar";
+  if (t.includes("inverter") || t.includes("battery") || t.includes("ups")) return "inverter";
+  if (t.includes("cctv") || t.includes("camera") || t.includes("dvr") || t.includes("nvr")) return "cctv";
+  if (t.includes("wiring") || t.includes("cable") || t.includes("conduit") || t.includes("breaker")) return "wiring";
+  if (t.includes("lighting") || t.includes("bulb") || t.includes("led") || t.includes("lux")) return "lighting";
+  if (t.includes("generator") || t.includes("genset") || t.includes("changeover")) return "generator";
+  if (t.includes("smart") || t.includes("automation") || t.includes("home control")) return "smart_home";
+  if (t.includes("price") || t.includes("cost") || t.includes("quote") || t.includes("naira")) return "pricing";
+  return "general";
+}
+
 function getRequiredServerEnv() {
   const openAiApiKey = sanitizeText(process.env.OPENAI_API_KEY);
   const supabaseUrl =
@@ -405,6 +438,7 @@ export async function ingestKnowledgeDocument(input: KnowledgeDocumentInput) {
 
   for (let index = 0; index < chunks.length; index += 1) {
     const chunkText = chunks[index];
+    const topic = classifyChunkTopic(chunkText);
     const embedding = await generateEmbedding(chunkText);
 
     chunkRows.push({
@@ -413,11 +447,13 @@ export async function ingestKnowledgeDocument(input: KnowledgeDocumentInput) {
       chunk_index: index,
       token_estimate: estimateTokens(chunkText),
       embedding: toVectorLiteral(embedding),
+      topic,
       metadata: {
         title,
         category,
         source_type: sourceType,
         source_url: sourceUrl,
+        topic,
       },
     });
   }
@@ -1645,15 +1681,54 @@ function buildSources(matches: ChunkMatch[]) {
   return sources;
 }
 
-async function findRelevantChunks(userQuestion: string, matchCount = 6, similarityThreshold = 0.72) {
+function getTopicFilterForIntent(intent: IntentKind, query: string) {
+  const directTopic = INTENT_TO_TOPIC[intent];
+  if (directTopic) return directTopic;
+
+  const normalizedQuery = sanitizeText(query).toLowerCase();
+  const matchedTopics = Object.entries(INTENT_TO_TOPIC)
+    .filter(([keyword]) => normalizedQuery.includes(keyword))
+    .map(([, topic]) => topic);
+
+  const uniqueTopics = Array.from(new Set(matchedTopics));
+  return uniqueTopics.length === 1 ? uniqueTopics[0] : null;
+}
+
+function isComplexMultiTopicQuery(query: string) {
+  const normalizedQuery = sanitizeText(query).toLowerCase();
+  const topics = new Set<string>();
+
+  for (const [keyword, topic] of Object.entries(INTENT_TO_TOPIC)) {
+    if (normalizedQuery.includes(keyword)) topics.add(topic);
+  }
+
+  return topics.size > 1;
+}
+
+function getRetrievalMatchCount(query: string) {
+  return isComplexMultiTopicQuery(query) ? RETRIEVAL_COMPLEX_MATCH_COUNT : RETRIEVAL_STANDARD_MATCH_COUNT;
+}
+
+async function findRelevantChunks({
+  userQuestion,
+  matchCount = RETRIEVAL_STANDARD_MATCH_COUNT,
+  similarityThreshold = PRIMARY_SIMILARITY_THRESHOLD,
+  topicFilter = null,
+}: {
+  userQuestion: string;
+  matchCount?: number;
+  similarityThreshold?: number;
+  topicFilter?: string | null;
+}) {
   ensureServerConfig();
 
   const queryEmbedding = await generateEmbedding(userQuestion);
 
   const { data, error } = await supabaseAdmin!.rpc("match_document_chunks", {
     query_embedding: toVectorLiteral(queryEmbedding),
+    match_threshold: similarityThreshold,
     match_count: matchCount,
-    similarity_threshold: similarityThreshold,
+    topic_filter: topicFilter,
   });
 
   if (error) {
@@ -1722,7 +1797,15 @@ function buildSystemInstructions() {
     "For quote-ready users, end with one clear next step, usually sharing the required details here or on WhatsApp for faster handoff.",
     "If the business context is still insufficient for a specific claim, say what is missing and ask one useful follow-up question.",
     "Use this fallback sentence only when neither retrieved context nor baseline business context can answer the request well: \"I don’t have that exact information in the Oduzz knowledge base yet, but I can help you prepare the right details for the Oduzz team.\"",
+    "Always provide a useful ballpark estimate or starting recommendation before asking for more details. Never respond with only clarifying questions. Lead with actionable guidance, then refine with follow-up questions.",
+    "Always end every response with a WhatsApp call-to-action referencing Oduzz directly. Example: 'Want us to handle this for you? Chat with Oduzz on WhatsApp: 07032258039 — we respond in under 10 minutes.' Vary the wording naturally but always include the number.",
   ].join("\n");
+}
+
+function buildBaselineOduzzContext() {
+  return ASSISTANT_KNOWLEDGE_CONTEXT.includes("Lagos-specific context:")
+    ? ASSISTANT_KNOWLEDGE_CONTEXT
+    : [ASSISTANT_KNOWLEDGE_CONTEXT, "", LAGOS_OPERATIONAL_CONTEXT].join("\n");
 }
 
 function buildTranscript(messages: AssistantChatMessage[]) {
@@ -1766,6 +1849,10 @@ async function generateGroundedAnswer({
 
   const transcript = buildTranscript(messages);
   const context = buildKnowledgeContext(matches);
+  const recommendationSources =
+    matches.length > 0
+      ? []
+      : consultation?.recommendation?.sources;
   const consultationContext = consultation
     ? [
         consultation.intent ? `Intent: ${consultation.intent}` : "",
@@ -1787,7 +1874,7 @@ async function generateGroundedAnswer({
               calculations: consultation.recommendation.calculations,
               decision: consultation.recommendation.decision,
               missingInformation: consultation.recommendation.missingInformation,
-              sources: consultation.recommendation.sources,
+              sources: recommendationSources,
             })}`
           : "",
       ]
@@ -1815,7 +1902,7 @@ async function generateGroundedAnswer({
                 "Use the retrieved context first, then the baseline Oduzz business context below, then general reasoning.",
                 "",
                 "Baseline Oduzz business context:",
-                ASSISTANT_KNOWLEDGE_CONTEXT,
+                buildBaselineOduzzContext(),
                 "",
                 "Retrieved Oduzz knowledge context:",
                 context || "No specific retrieved knowledge context.",
@@ -1957,23 +2044,30 @@ export async function generateAssistantChatReply(
 
   try {
     const retrievalQuery = buildRetrievalQuery(messages);
+    const baseRetrievalQuery = retrievalQuery || latestUserMessage.content;
     const intentAwareQuery = buildIntentAwareRetrievalQuery(
-      retrievalQuery || latestUserMessage.content,
+      baseRetrievalQuery,
       activeIntent,
     );
-    const primaryMatches = await findRelevantChunks(
-      intentAwareQuery,
-      RETRIEVAL_MATCH_COUNT,
-      PRIMARY_SIMILARITY_THRESHOLD,
-    );
+    const retrievalMatchCount = getRetrievalMatchCount(baseRetrievalQuery);
+    const topicFilter = isComplexMultiTopicQuery(baseRetrievalQuery)
+      ? null
+      : getTopicFilterForIntent(activeIntent, baseRetrievalQuery);
+    const primaryMatches = await findRelevantChunks({
+      userQuestion: intentAwareQuery,
+      matchCount: retrievalMatchCount,
+      similarityThreshold: PRIMARY_SIMILARITY_THRESHOLD,
+      topicFilter,
+    });
     const secondaryMatches =
       primaryMatches.length > 0
         ? primaryMatches
-        : await findRelevantChunks(
-            intentAwareQuery,
-            RETRIEVAL_MATCH_COUNT,
-            SECONDARY_SIMILARITY_THRESHOLD,
-          );
+        : await findRelevantChunks({
+            userQuestion: intentAwareQuery,
+            matchCount: retrievalMatchCount,
+            similarityThreshold: SECONDARY_SIMILARITY_THRESHOLD,
+            topicFilter,
+          });
     const matches = dedupeMatches(
       secondaryMatches.length > 0
         ? secondaryMatches
