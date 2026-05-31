@@ -82,7 +82,6 @@ returns table (
   metadata jsonb
 )
 language plpgsql
-stable
 as $$
 begin
   set local ivfflat.probes = 10;
