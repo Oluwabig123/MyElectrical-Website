@@ -46,8 +46,9 @@
 }
 
 .galleryImage {
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
+  padding: clamp(18px, 3vw, 34px);
 }
 
 .galleryFallback {
@@ -248,12 +249,35 @@
   cursor: pointer;
 }
 
+.quantityButton:disabled {
+  cursor: not-allowed;
+  color: rgba(185, 197, 220, 0.38);
+}
+
 .quantityValue {
   min-width: 52px;
   display: grid;
   place-items: center;
   color: var(--pj-text);
   font-weight: 700;
+}
+
+.orderFacts {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(157, 175, 203, 0.12);
+  color: rgba(214, 223, 241, 0.82);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.orderFacts strong {
+  color: rgba(255, 240, 190, 0.96);
+  font-size: 14px;
 }
 
 .buyNotes {
@@ -264,9 +288,44 @@
   line-height: 1.5;
 }
 
+.checkoutDisclosure {
+  display: grid;
+  gap: 12px;
+  border-radius: 22px;
+  border: 1px solid rgba(157, 175, 203, 0.16);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.checkoutDisclosure summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  color: rgba(255, 223, 134, 0.96);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.checkoutDisclosure summary::after {
+  content: "+";
+  color: var(--pj-text);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.checkoutDisclosure[open] summary::after {
+  content: "-";
+}
+
 .checkoutPanelWrap {
   border-radius: 22px;
   overflow: hidden;
+  padding: 0 12px 12px;
 }
 
 .contentGrid {
@@ -279,6 +338,49 @@
   display: grid;
   gap: 7px;
   max-width: 44ch;
+}
+
+.compactTitle {
+  margin: 0;
+  color: var(--pj-text);
+  font-size: 22px;
+  line-height: 1.12;
+}
+
+.specPanel {
+  display: grid;
+  gap: 16px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(157, 175, 203, 0.12);
+}
+
+.specGrid {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.specItem {
+  display: grid;
+  gap: 5px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(157, 175, 203, 0.11);
+}
+
+.specItem dt {
+  color: rgba(193, 234, 243, 0.86);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.specItem dd {
+  margin: 0;
+  color: var(--pj-muted-strong);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .featureList {
@@ -344,6 +446,10 @@
   }
 
   .visualFoot {
+    grid-template-columns: 1fr;
+  }
+
+  .specGrid {
     grid-template-columns: 1fr;
   }
 

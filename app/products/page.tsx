@@ -84,7 +84,7 @@ export default async function ProductsPage() {
     <>
       <JsonLd data={buildProductListSchema(catalog.items)} />
 
-      <section className={cn("section", journeyStyles.page, journeyStyles.catalogPage)}>
+      <section className={cn("section", journeyStyles.page, journeyStyles.catalogPage, journeyStyles.catalogHeroSection)}>
         <Container className={journeyStyles.container}>
           <div className={journeyStyles.catalogStack}>
             <section className={cn(journeyStyles.frame, journeyStyles.heroPanel)}>
@@ -133,23 +133,31 @@ export default async function ProductsPage() {
                   ) : (
                     <div className={journeyStyles.heroVisualFallback}>Oduzz Catalog</div>
                   )}
+                  <div className={journeyStyles.heroVisualOverlay}>
+                    <span className={journeyStyles.heroVisualKicker}>
+                      {heroProduct?.categoryLabel ?? "Live product"}
+                    </span>
+                    <strong className={journeyStyles.heroVisualName}>
+                      {heroProduct?.name ?? "Admin uploaded product catalog"}
+                    </strong>
+                    <div className={journeyStyles.heroVisualMetaRow}>
+                      <span className={journeyStyles.heroVisualMeta}>
+                        {heroProduct ? formatProductPrice(heroProduct) : `${catalog.items.length} products live`}
+                      </span>
+                      <Link
+                        href={heroProduct ? `/products/${heroProduct.slug}` : "#catalog-grid"}
+                        className={journeyStyles.heroVisualLink}
+                      >
+                        View product
+                      </Link>
+                    </div>
+                  </div>
                 </div>
                 <div className={journeyStyles.heroVisualCaption}>
-                  <span className={journeyStyles.heroVisualKicker}>
-                    {heroProduct?.categoryLabel ?? "Live product"}
+                  <span className={journeyStyles.heroVisualCaptionLabel}>Featured product</span>
+                  <span className={journeyStyles.heroVisualCaptionText}>
+                    The hero spotlight updates from the live catalog and always links to the current top item.
                   </span>
-                  <strong className={journeyStyles.heroVisualName}>
-                    {heroProduct?.name ?? "Admin uploaded product catalog"}
-                  </strong>
-                  <span className={journeyStyles.heroVisualMeta}>
-                    {heroProduct ? formatProductPrice(heroProduct) : `${catalog.items.length} products live`}
-                  </span>
-                  <Link
-                    href={heroProduct ? `/products/${heroProduct.slug}` : "#catalog-grid"}
-                    className={journeyStyles.heroVisualLink}
-                  >
-                    View product
-                  </Link>
                 </div>
               </div>
             </section>

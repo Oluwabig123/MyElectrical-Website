@@ -16,6 +16,12 @@ function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function sanitizeQuantity(value: unknown) {
+  const quantity = Number(value);
+  if (!Number.isFinite(quantity)) return 1;
+  return Math.max(1, Math.floor(quantity));
+}
+
 export async function POST(request: Request) {
   const isPaystackEnabled =
     (process.env.PAYSTACK_ENABLED || process.env.VITE_PAYSTACK_ENABLED || "")
@@ -36,6 +42,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const productId = sanitizeText(body.productId);
+    const quantity = sanitizeQuantity(body.quantity);
     const customerName = sanitizeText(body.customerName);
     const customerEmail = sanitizeEmail(body.customerEmail);
     const customerPhone = sanitizePhone(body.customerPhone);
@@ -79,6 +86,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (quantity > product.stockQty) {
+      return NextResponse.json(
+        { ok: false, error: `Only ${product.stockQty} unit${product.stockQty === 1 ? "" : "s"} are available right now.` },
+        { status: 409 },
+      );
+    }
+
     const referenceId = createReference("odzps");
     const siteUrl = buildSiteUrl();
     if (!siteUrl) {
@@ -94,7 +108,7 @@ export async function POST(request: Request) {
 
     const gatewayPayload = {
       email: customerEmail,
-      amount: product.priceAmount,
+      amount: product.priceAmount * quantity,
       currency: product.currency || "NGN",
       reference: referenceId,
       callback_url: callbackUrl,
@@ -104,6 +118,7 @@ export async function POST(request: Request) {
         product_id: product.id,
         product_slug: product.slug,
         product_name: product.name,
+        quantity,
         channel: "website-products",
       },
     };
@@ -145,7 +160,7 @@ export async function POST(request: Request) {
       unit_amount: product.priceAmount,
       paid_amount: 0,
       currency: product.currency || "NGN",
-      quantity: 1,
+      quantity,
       checkout_url: gatewayData.data.authorization_url,
       gateway_transaction_id: String(gatewayData.data.access_code || ""),
       metadata: {

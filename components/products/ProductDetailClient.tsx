@@ -51,6 +51,34 @@ function clampQuantity(quantity: number, stockQty: number) {
   return Math.max(1, Math.min(quantity, safeStockQty));
 }
 
+function formatStockMessage(product: Product, availability: string) {
+  if (!product.isActive) return "This product is not active for online ordering.";
+  if (product.stockQty <= 0) return "Request current availability before planning pickup or delivery.";
+  if (availability === "Low stock") {
+    return `Only ${product.stockQty} unit${product.stockQty === 1 ? "" : "s"} listed online.`;
+  }
+  return `${product.stockQty} unit${product.stockQty === 1 ? "" : "s"} listed online.`;
+}
+
+function buildSpecDetails(product: Product, availability: string) {
+  const useCases = product.bestFor
+    .split("|")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return [
+    { label: "Category", value: product.categoryLabel },
+    { label: "Brand", value: product.brand },
+    { label: "Type", value: product.type },
+    { label: "Size / spec", value: product.size },
+    { label: "Best for", value: useCases.join(", ") || product.bestFor },
+    { label: "Stock status", value: availability },
+    product.source === "starter"
+      ? { label: "Catalog source", value: "Starter placeholder" }
+      : null,
+  ].filter((item): item is { label: string; value: string } => Boolean(item?.value && item.value !== "N/A"));
+}
+
 export default function ProductDetailClient({
   product,
   relatedProducts,
@@ -71,6 +99,12 @@ export default function ProductDetailClient({
     .filter(Boolean)
     .slice(0, 3);
   const safeQuantity = clampQuantity(quantity, product.stockQty);
+  const totalPriceLabel = canAddToCart
+    ? formatProductPrice({
+        priceAmount: product.priceAmount * safeQuantity,
+        currency: product.currency,
+      })
+    : formatProductPrice(product);
   const availabilityClassName = toStateClassName(availability);
   const stateBadgeClassName =
     availabilityClassName === "in-stock"
@@ -78,6 +112,8 @@ export default function ProductDetailClient({
       : availabilityClassName === "low-stock"
         ? styles.stateLowStock
         : styles.stateUnavailable;
+  const stockMessage = formatStockMessage(product, availability);
+  const specDetails = buildSpecDetails(product, availability);
 
   useEffect(() => {
     if (!cartFeedback) return undefined;
@@ -176,7 +212,9 @@ export default function ProductDetailClient({
                         <button
                           type="button"
                           className={styles.quantityButton}
+                          disabled={safeQuantity <= 1}
                           onClick={() => setQuantity(clampQuantity(safeQuantity - 1, product.stockQty))}
+                          aria-label="Decrease quantity"
                         >
                           -
                         </button>
@@ -184,7 +222,9 @@ export default function ProductDetailClient({
                         <button
                           type="button"
                           className={styles.quantityButton}
+                          disabled={safeQuantity >= product.stockQty}
                           onClick={() => setQuantity(clampQuantity(safeQuantity + 1, product.stockQty))}
+                          aria-label="Increase quantity"
                         >
                           +
                         </button>
@@ -214,6 +254,11 @@ export default function ProductDetailClient({
                     )}
                   </div>
 
+                  <div className={styles.orderFacts} aria-label="Order summary">
+                    <span>{stockMessage}</span>
+                    {canAddToCart ? <strong>Total: {totalPriceLabel}</strong> : null}
+                  </div>
+
                   {cartFeedback ? (
                     <p className={journeyStyles.catalogFeedback}>
                       {cartFeedback} <Link href="/cart">View cart</Link>
@@ -222,21 +267,43 @@ export default function ProductDetailClient({
 
                   <div className={styles.buyNotes}>
                     <span>WhatsApp response: {CONTACT.whatsappResponseTime}</span>
-                    <span>Live stock can change during active restock cycles.</span>
+                    <span>Confirm accessories or site-specific ratings before payment.</span>
                   </div>
                 </div>
 
                 {canAddToCart ? (
-                  <div className={styles.checkoutPanelWrap}>
-                    <PaystackCheckoutPanel
-                      productId={product.id}
-                      productName={product.name}
-                      priceLabel={formatProductPrice(product)}
-                      title="Pay online"
-                      compact
-                    />
-                  </div>
+                  <details className={styles.checkoutDisclosure}>
+                    <summary>Pay online now</summary>
+                    <div className={styles.checkoutPanelWrap}>
+                      <PaystackCheckoutPanel
+                        productId={product.id}
+                        productName={product.name}
+                        priceLabel={formatProductPrice(product)}
+                        quantity={safeQuantity}
+                        totalLabel={totalPriceLabel}
+                        title="Secure card checkout"
+                        compact
+                      />
+                    </div>
+                  </details>
                 ) : null}
+
+                <section className={styles.specPanel} aria-labelledby="product-spec-heading">
+                  <div className={styles.sectionHead}>
+                    <p className={journeyStyles.eyebrow}>Technical snapshot</p>
+                    <h2 id="product-spec-heading" className={styles.compactTitle}>
+                      Product details
+                    </h2>
+                  </div>
+                  <dl className={styles.specGrid}>
+                    {specDetails.map((item) => (
+                      <div key={item.label} className={styles.specItem}>
+                        <dt>{item.label}</dt>
+                        <dd>{item.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
               </div>
             </div>
           </div>

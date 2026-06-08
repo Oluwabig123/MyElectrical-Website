@@ -6,6 +6,8 @@ type PaystackCheckoutPanelProps = {
   productId: string;
   productName: string;
   priceLabel: string;
+  quantity?: number;
+  totalLabel?: string;
   title?: string;
   compact?: boolean;
 };
@@ -19,6 +21,8 @@ export default function PaystackCheckoutPanel({
   productId,
   productName,
   priceLabel,
+  quantity = 1,
+  totalLabel,
   title = "Pay online",
   compact = false,
 }: PaystackCheckoutPanelProps) {
@@ -40,6 +44,7 @@ export default function PaystackCheckoutPanel({
       },
       body: JSON.stringify({
         productId,
+        quantity,
         customerName,
         customerEmail,
         customerPhone,
@@ -80,11 +85,12 @@ export default function PaystackCheckoutPanel({
           <p className="paystackCheckoutKicker">Card checkout</p>
           <h3 className="paystackCheckoutTitle">{title}</h3>
         </div>
-        <span className="paystackCheckoutPrice">{priceLabel}</span>
+        <span className="paystackCheckoutPrice">{totalLabel || priceLabel}</span>
       </div>
 
       <p className="paystackCheckoutText">
-        Checkout applies to <strong>{productName}</strong>.
+        Checkout applies to <strong>{productName}</strong>
+        {quantity > 1 ? ` x ${quantity}` : ""}.
       </p>
 
       <label className="field">

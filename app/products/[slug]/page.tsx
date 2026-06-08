@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import Container from "@/components/layout/Container";
 import ProductBreadcrumbs from "@/components/products/ProductBreadcrumbs";
+import ProductCard from "@/components/products/ProductCard";
 import ProductDetailClient from "@/components/products/ProductDetailClient";
 import journeyStyles from "@/components/products/ProductJourney.module.css";
 import JsonLd from "@/components/seo/JsonLd";
@@ -108,6 +109,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const supportUrl = buildWhatsAppUrl(
     encodeURIComponent(`Hello Oduzz, I am looking for this product: ${safeSlug}`),
   );
+  const suggestedProducts = products.slice(0, 3);
 
   return (
     <section className={cn("section", journeyStyles.page)}>
@@ -144,6 +146,25 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </a>
             </div>
           </div>
+
+          {suggestedProducts.length > 0 ? (
+            <section className={journeyStyles.catalogSection}>
+              <div className={journeyStyles.sectionHead}>
+                <div className={journeyStyles.sectionCopy}>
+                  <p className={journeyStyles.eyebrow}>Available alternatives</p>
+                  <h2 className={journeyStyles.catalogTitle}>Popular products you can check now</h2>
+                </div>
+                <Link href="/products" className={journeyStyles.sectionLink}>
+                  View all products
+                </Link>
+              </div>
+              <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridRelated)}>
+                {suggestedProducts.map((item, index) => (
+                  <ProductCard key={item.id} product={item} variant="related" priority={index < 2} />
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       </Container>
     </section>
