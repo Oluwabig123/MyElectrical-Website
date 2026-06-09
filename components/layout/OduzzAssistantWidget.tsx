@@ -38,16 +38,26 @@ export default function OduzzAssistantWidget() {
   return (
     <div className={styles.oduzzAssistant} role="region" aria-label="Oduzz customer assistant">
       {showPrompt ? (
-        <Link className={styles.oduzzAssistantPrompt} href="/assistant" aria-label="Open Oduzz AI">
-          Need help fast?
+        <Link
+          className={styles.oduzzAssistantPrompt}
+          href="/assistant"
+          aria-label="Open Ask Oduzz AI"
+          title="Get solar sizing, wiring help, material recommendations, and project guidance instantly."
+        >
+          Get quick project help
         </Link>
       ) : null}
 
-      <Link className={styles.oduzzAssistantToggle} href="/assistant" aria-label="Open Oduzz AI">
+      <Link
+        className={styles.oduzzAssistantToggle}
+        href="/assistant"
+        aria-label="Open Ask Oduzz AI"
+        title="Get solar sizing, wiring help, material recommendations, and project guidance instantly."
+      >
         <span className={styles.oduzzAssistantToggleBadge} aria-hidden="true">
           AI
         </span>
-        <span className={styles.oduzzAssistantToggleLabel}>Oduzz AI</span>
+        <span className={styles.oduzzAssistantToggleLabel}>Ask Oduzz AI</span>
       </Link>
     </div>
   );

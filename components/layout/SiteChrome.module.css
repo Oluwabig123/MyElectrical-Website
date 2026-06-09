@@ -383,6 +383,8 @@
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.08em;
+  box-shadow: 0 0 0 0 rgba(255, 212, 0, 0.45);
+  animation: assistantPulse 2.8s ease-in-out infinite;
 }
 
 .oduzzAssistantToggleLabel {
@@ -624,12 +626,6 @@
   }
 }
 
-@media (max-width: 1100px) {
-  .navTopQuote {
-    display: none;
-  }
-}
-
 @media (max-width: 920px) {
   .navLinks {
     display: none;
@@ -637,6 +633,15 @@
 
   .navBurger {
     display: inline-flex;
+  }
+
+  .navTopQuote {
+    display: inline-flex;
+    min-height: 40px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
   .brandLogo {
@@ -669,6 +674,12 @@
     min-height: 40px;
     padding: 7px 10px;
     border-radius: 13px;
+  }
+
+  .navTopQuote {
+    min-height: 40px;
+    padding: 7px 10px;
+    font-size: 12px;
   }
 
   .navCartCount {
@@ -768,6 +779,12 @@
     min-height: 38px;
     padding: 6px 9px;
     font-size: 14px;
+  }
+
+  .navTopQuote {
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: 11px;
   }
 
   .navCartLink {
@@ -875,5 +892,16 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes assistantPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 212, 0, 0.35);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 212, 0, 0);
   }
 }
