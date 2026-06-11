@@ -108,38 +108,6 @@ export default function Hero() {
     setTouchStartY(null);
   }
 
-  function normalizeImageSrc(src: string) {
-    if (!src.startsWith("/")) return src;
-    return src.split("?")[0].split("#")[0];
-  }
-
-  function currentSlideImagePosition() {
-    return activeSlide?.objectPosition || "center";
-  }
-
-  function currentPrimaryCtaLabel() {
-    return activeSlide?.ctaLabel || "Request Quote";
-  }
-
-  function currentPrimaryCtaHref() {
-    return activeSlide?.ctaTo || "/quote";
-  }
-
-  function currentSecondaryCtaLabel() {
-    return activeSlide?.secondaryCtaLabel || "Chat on WhatsApp";
-  }
-
-  function currentSecondaryCtaHref() {
-    return activeSlide?.secondaryCtaTo || CONTACT_LINKS.whatsapp;
-  }
-
-  const trustItems = [
-    "Professional Electrical Installations",
-    "Solar & Backup Power Specialists",
-    "CCTV & Smart Home Solutions",
-    "Serving Lagos & Ogun State",
-  ];
-
   function handleHeroTouchStart(event: React.TouchEvent<HTMLDivElement>) {
     if (!hasSlides || totalSlides <= 1) return;
     const touchPoint = event.touches?.[0];
@@ -188,14 +156,13 @@ export default function Hero() {
         <div className="heroGallery">
           <figure key={activeSlide.id} className="heroGalleryItem active">
             <Image
-              src={normalizeImageSrc(activeSlide.image)}
+              src={activeSlide.image}
               alt={activeSlide.alt}
               fill
               priority={safeActiveIndex === 0}
               loading={safeActiveIndex === 0 ? "eager" : "lazy"}
               fetchPriority={safeActiveIndex === 0 ? "high" : "auto"}
               sizes="100vw"
-              style={{ objectPosition: currentSlideImagePosition() }}
             />
           </figure>
         </div>
@@ -212,42 +179,23 @@ export default function Hero() {
               <p className="p">
                 {activeSlide.copy}
               </p>
-              {activeSlide.localNote ? <p className="heroLocalNote">{activeSlide.localNote}</p> : null}
             </Reveal>
 
             <Reveal key={`${activeSlide.id}-actions`} delay={0.08}>
               <div className="heroCtaShell">
                 <div className="heroCtas">
-                  <Link
-                    href={currentPrimaryCtaHref()}
-                    className="btn primary heroPrimaryBtn"
-                    aria-label={currentPrimaryCtaLabel()}
-                  >
-                    {currentPrimaryCtaLabel()}
+                  <Link href={activeSlide.ctaTo || "/quote"} className="btn primary heroPrimaryBtn">
+                    {activeSlide.ctaLabel || "Request Quote"}
                   </Link>
                   <a
                     className="btn outline heroWhatsappBtn"
                     target="_blank"
                     rel="noreferrer"
-                    href={currentSecondaryCtaHref()}
-                    aria-label={currentSecondaryCtaLabel()}
+                    href={CONTACT_LINKS.whatsapp}
                   >
-                    {currentSecondaryCtaLabel()}
+                    WhatsApp
                   </a>
                 </div>
-              </div>
-            </Reveal>
-
-            <Reveal key={`${activeSlide.id}-trust`} delay={0.11}>
-              <div className="heroTrustStrip" aria-label="Trust indicators">
-                {trustItems.map((item) => (
-                  <span key={`${activeSlide.id}-${item}`} className="heroTrustItem">
-                    <span className="heroTrustCheck" aria-hidden="true">
-                      ✓
-                    </span>
-                    <span>{item}</span>
-                  </span>
-                ))}
               </div>
             </Reveal>
           </div>
@@ -268,15 +216,13 @@ export default function Hero() {
               </div>
 
               <div className="heroAsideFoot">
-                <p className="heroAsideText">
-                  {activeSlide.trustStatement || "Clean execution for homes, offices, and commercial spaces."}
-                </p>
+                <p className="heroAsideText">Clean execution for homes, offices, and commercial spaces.</p>
                 <Link href="/projects" className="heroAsideLink">
                   See project work
                 </Link>
               </div>
             </aside>
-          </Reveal>
+            </Reveal>
         </Container>
 
         {totalSlides > 1 ? (
