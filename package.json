@@ -9,7 +9,6 @@
     "start": "next start",
     "lint": "eslint",
     "ingest:knowledge": "tsx scripts/ingest-knowledge.ts",
-    "ingest-knowledge": "tsx scripts/ingest-knowledge.ts",
     "ingest:felicity": "tsx scripts/ingest-felicity.ts"
   },
   "dependencies": {

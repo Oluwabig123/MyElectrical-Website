@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { pickBlogImage } from "@/data/blog-image-gallery";
-import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase-admin";
+import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/admin";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_MODEL = process.env.BLOG_OPENAI_MODEL || process.env.OPENAI_MODEL || "gpt-4.1-mini";

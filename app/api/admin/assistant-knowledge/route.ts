@@ -5,7 +5,7 @@ import {
   extractKnowledgeTextFromFile,
   getKnowledgeUploadLimits,
 } from "@/lib/knowledge-file-parser";
-import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase-admin";
+import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 

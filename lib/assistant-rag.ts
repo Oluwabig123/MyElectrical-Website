@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
   ASSISTANT_KNOWLEDGE_CONTEXT,
   ASSISTANT_SYSTEM_INSTRUCTIONS,

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { normalizeProduct } from "@/lib/product-catalog";
-import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase-admin";
+import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/admin";
 
 export const ADMIN_PRODUCTS_TABLE = "admin_products";
 export const PRODUCT_ORDERS_TABLE = "product_orders";
