@@ -1,4 +1,4 @@
-.servicesPage {
+.projectsPage {
   padding: clamp(24px, 3.5vw, 44px) 0 clamp(90px, 8vw, 120px);
   background:
     radial-gradient(900px 400px at 10% 0%, rgba(255, 212, 0, 0.08), transparent 60%),
@@ -48,8 +48,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(7, 12, 20, 0.9) 0%, rgba(7, 12, 20, 0.65) 45%, rgba(7, 12, 20, 0.25) 100%),
-    linear-gradient(180deg, rgba(7, 12, 20, 0.2) 0%, rgba(7, 12, 20, 0.75) 100%);
+    linear-gradient(90deg, rgba(7, 12, 20, 0.92) 0%, rgba(7, 12, 20, 0.68) 45%, rgba(7, 12, 20, 0.28) 100%),
+    linear-gradient(180deg, rgba(7, 12, 20, 0.2) 0%, rgba(7, 12, 20, 0.78) 100%);
 }
 
 .heroContent {
@@ -102,7 +102,7 @@
 
 .heroTitle {
   margin: 0;
-  font-size: clamp(34px, 4.4vw, 56px);
+  font-size: clamp(34px, 4.4vw, 54px);
   line-height: 1.05;
   font-weight: 800;
   letter-spacing: -0.04em;
@@ -200,7 +200,7 @@
   color: #ffd400;
 }
 
-.priorityList {
+.spotlightList {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -209,7 +209,7 @@
   gap: 12px;
 }
 
-.priorityList li a {
+.spotlightList li a {
   display: flex;
   align-items: flex-start;
   gap: 14px;
@@ -222,13 +222,13 @@
   transition: all 0.2s ease;
 }
 
-.priorityList li a:hover {
+.spotlightList li a:hover {
   background: rgba(255, 212, 0, 0.08);
   border-color: rgba(255, 212, 0, 0.3);
   transform: translateX(4px);
 }
 
-.priorityNumber {
+.spotlightTag {
   font-size: 11px;
   font-weight: 800;
   color: #ffd400;
@@ -238,14 +238,14 @@
   line-height: 1;
 }
 
-.priorityList li strong {
+.spotlightList li strong {
   display: block;
   font-size: 13.5px;
   font-weight: 700;
   margin-bottom: 3px;
 }
 
-.priorityList li p {
+.spotlightList li p {
   margin: 0;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.55);
@@ -256,7 +256,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 32px;
+  margin-bottom: 30px;
 }
 
 .sectionEyebrow {
@@ -283,76 +283,14 @@
   line-height: 1.6;
 }
 
-/* Process Timeline */
-.processTimeline {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-@media (max-width: 860px) {
-  .processTimeline {
-    grid-template-columns: 1fr;
-  }
-}
-
-.processStepCard {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: clamp(20px, 2.5vw, 30px);
-  border-radius: 22px;
-  background: rgba(20, 30, 48, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.stepHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.stepNum {
-  font-size: 32px;
-  font-weight: 900;
-  color: rgba(255, 212, 0, 0.4);
-  line-height: 1;
-}
-
-.stepPill {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.stepCardTitle {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.3;
-}
-
-.stepCardText {
-  margin: 0;
-  font-size: 13.5px;
-  color: rgba(255, 255, 255, 0.65);
-  line-height: 1.6;
-}
-
-/* Trust Factors Grid */
-.trustGrid {
+/* Quality Execution Pillars */
+.pillarsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
 }
 
-.trustCard {
+.pillarCard {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -362,7 +300,7 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.trustIconBubble {
+.pillarIconBox {
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -374,14 +312,14 @@
   justify-content: center;
 }
 
-.trustTitle {
+.pillarTitle {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
   color: #fff;
 }
 
-.trustText {
+.pillarText {
   margin: 0;
   font-size: 13.5px;
   color: rgba(255, 255, 255, 0.65);

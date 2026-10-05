@@ -1,0 +1,225 @@
+.calculatorShell {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: linear-gradient(180deg, rgba(16, 24, 40, 0.95) 0%, rgba(10, 16, 28, 0.98) 100%);
+  border: 1px solid rgba(255, 212, 0, 0.22);
+  border-radius: 28px;
+  padding: clamp(24px, 3.6vw, 40px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 212, 0, 0.05);
+  color: #fff;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  color: #ffd400;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 65ch;
+}
+
+.typeSelector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.typeBtn {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.typeBtn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 212, 0, 0.35);
+  color: #fff;
+}
+
+.activeTypeBtn {
+  background: rgba(255, 212, 0, 0.15);
+  border-color: #ffd400;
+  color: #ffd400;
+  box-shadow: 0 0 16px rgba(255, 212, 0, 0.15);
+}
+
+.previewBox {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: clamp(20px, 3vw, 30px);
+}
+
+@media (max-width: 860px) {
+  .previewBox {
+    grid-template-columns: 1fr;
+  }
+}
+
+.previewMain {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.configHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(46, 233, 255, 0.12);
+  color: #6fe9ff;
+  border: 1px solid rgba(46, 233, 255, 0.24);
+}
+
+.configTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.configDesc {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.deliverablesList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.listHeading {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.deliverablesList ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deliverablesList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.45;
+}
+
+.checkIcon {
+  color: #ffd400;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.previewSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.sideCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+.sideLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sideValue {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.4;
+}
+
+.actionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.calcAction {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+}
+
+.calcSubLink {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.calcSubLink:hover {
+  color: #ffd400;
+}
