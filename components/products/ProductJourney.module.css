@@ -86,10 +86,11 @@
 }
 
 .catalogPage .display {
-  max-width: 9.5ch;
-  font-size: clamp(28px, 4.8vw, 62px);
-  line-height: 0.93;
-  letter-spacing: -0.045em;
+  max-width: 22ch;
+  font-size: clamp(28px, 4.4vw, 56px);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  font-weight: 800;
 }
 
 .storeTitle {
@@ -111,18 +112,23 @@
 .display {
   margin: 0;
   color: var(--pj-text);
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  font-size: clamp(32px, 5.6vw, 70px);
-  line-height: 0.92;
-  letter-spacing: -0.04em;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-weight: 800;
+  font-size: clamp(32px, 5.2vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
 }
 
 .displayDetail {
+  font-family: inherit;
+  font-weight: 800;
   font-size: clamp(30px, 4.3vw, 52px);
-  line-height: 0.98;
+  line-height: 1.05;
 }
 
 .displayCollection {
+  font-family: inherit;
+  font-weight: 800;
   font-size: clamp(34px, 5vw, 62px);
 }
 
@@ -901,8 +907,8 @@
   }
 
   .heroPanel.frame {
-    border-radius: 26px;
-    padding: 18px;
+    border-radius: 20px;
+    padding: 20px 16px;
     border: 1px solid rgba(157, 175, 203, 0.16);
     background:
       linear-gradient(180deg, rgba(16, 24, 40, 0.94), rgba(10, 15, 27, 0.96)),
@@ -911,12 +917,12 @@
   }
 
   .heroPanel {
-    gap: 18px;
-    min-height: 85svh;
+    gap: 20px;
+    min-height: auto;
   }
 
   .heroVisual {
-    order: -1;
+    order: 0;
     gap: 12px;
   }
 
@@ -926,14 +932,14 @@
   }
 
   .catalogPage .display {
-    font-size: clamp(24px, 8.6vw, 38px);
-    line-height: 0.98;
+    font-size: clamp(26px, 7.5vw, 36px);
+    line-height: 1.12;
   }
 
   .lead {
-    max-width: 34ch;
-    font-size: 15px;
-    line-height: 1.58;
+    max-width: 100%;
+    font-size: 14px;
+    line-height: 1.55;
   }
 
   .heroNote {
@@ -941,9 +947,48 @@
     font-size: 12px;
   }
 
+  .catalogPage .heroCopy .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .catalogPage .heroCopy .actions .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+
+  .collectionCardMedia {
+    aspect-ratio: 16 / 9;
+    max-height: 190px;
+  }
+
+  .collectionCard {
+    border-radius: 18px;
+  }
+
+  .collectionCardBody {
+    padding: 16px;
+  }
+
+  .collectionCardBody .actions {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .collectionCardBody .actions .btn {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    flex: 1;
+    justify-content: center;
+  }
+
   .heroVisualMedia {
-    min-height: 250px;
-    border-radius: 22px;
+    min-height: 220px;
+    border-radius: 18px;
   }
 
   .heroVisualCaption {

@@ -366,22 +366,22 @@ export default async function ProductsPage() {
 
                 <article className={journeyStyles.collectionCard}>
                   <div className={journeyStyles.collectionCardBody}>
-                    <span className={journeyStyles.collectionCardCount}>After-service placeholder</span>
-                    <h3 className={journeyStyles.collectionCardTitle}>Workmanship terms will be published clearly</h3>
+                    <span className={journeyStyles.collectionCardCount}>Direct site delivery</span>
+                    <h3 className={journeyStyles.collectionCardTitle}>Reliable logistics across Lagos</h3>
                     <p className={journeyStyles.collectionCardText}>
-                      We have left this as a placeholder rather than inventing terms. The public policy
-                      block can be updated when the final after-service wording is approved.
+                      We coordinate prompt material dispatch directly to job sites across Lagos Mainland
+                      and Island, ensuring your electrical and solar installation teams never wait on materials.
                     </p>
                   </div>
                 </article>
 
                 <article className={journeyStyles.collectionCard}>
                   <div className={journeyStyles.collectionCardBody}>
-                    <span className={journeyStyles.collectionCardCount}>Registration placeholder</span>
-                    <h3 className={journeyStyles.collectionCardTitle}>CAC details can be added without guesswork</h3>
+                    <span className={journeyStyles.collectionCardCount}>Transparent BOQ pricing</span>
+                    <h3 className={journeyStyles.collectionCardTitle}>Verified material schedules in 24 hours</h3>
                     <p className={journeyStyles.collectionCardText}>
-                      This placeholder stays intentionally factual until the formal registration reference
-                      is ready to be published on the site.
+                      Send your architectural drawings, load schedule, or material list. We provide transparent
+                      per-unit pricing and verified brand commitments with zero hidden markups.
                     </p>
                     <div className={journeyStyles.actions}>
                       <Link href="/projects" className="btn outline">
