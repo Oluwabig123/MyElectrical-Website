@@ -169,13 +169,6 @@ export default function ServicesPage() {
             </section>
           </Reveal>
 
-          {/* Interactive Scope Estimator */}
-          <Reveal delay={0.08}>
-            <section className={styles.estimatorSection}>
-              <ServiceScopeCalculator />
-            </section>
-          </Reveal>
-
           {/* Main Filterable Service Catalog */}
           <section className={styles.catalogSection}>
             <div className={styles.sectionHeader}>
@@ -188,6 +181,13 @@ export default function ServicesPage() {
 
             <ServicesCatalogClient services={services} />
           </section>
+
+          {/* Interactive Scope Estimator */}
+          <Reveal delay={0.08}>
+            <section className={styles.estimatorSection}>
+              <ServiceScopeCalculator />
+            </section>
+          </Reveal>
 
           {/* Engineering Process */}
           <Reveal delay={0.12}>

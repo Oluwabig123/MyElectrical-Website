@@ -79,33 +79,81 @@ const SELECTOR_TYPES: { id: ProjectType; label: string }[] = [
 ];
 
 export default function ServiceScopeCalculator() {
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<ProjectType>("conduit");
   const config = PROJECT_CONFIGS[selectedType];
 
   return (
-    <div className={styles.calculatorShell}>
-      <div className={styles.header}>
-        <span className={styles.eyebrow}>Interactive Scope Estimator</span>
-        <h3 className={styles.title}>What type of project are you planning?</h3>
-        <p className={styles.subtitle}>
-          Select your installation category below to see immediate engineering expectations, turnaround timelines, and recommended components.
-        </p>
+    <div className={`${styles.calculatorShell} ${isOpen ? styles.calculatorShellOpen : styles.calculatorShellCollapsed}`}>
+      <div
+        className={styles.collapsedHeader}
+        onClick={() => setIsOpen((prev) => !prev)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isOpen}
+        aria-controls="scope-estimator-content"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsOpen((prev) => !prev);
+          }
+        }}
+      >
+        <div className={styles.headerTextGroup}>
+          <div className={styles.eyebrowBadge}>
+            <span className={styles.pulseDot} />
+            <span className={styles.eyebrow}>Quick Scope Planner</span>
+          </div>
+          <h3 className={styles.collapsedTitle}>
+            Need immediate deliverables, turnaround & material specs?
+          </h3>
+          <p className={styles.collapsedSubtitle}>
+            Click to open the interactive scope estimator for Conduit, Solar, CCTV, or Smart Automation.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className={styles.toggleBtn}
+          aria-label={isOpen ? "Close Scope Estimator" : "Open Scope Estimator"}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOpen((prev) => !prev);
+          }}
+        >
+          <span>{isOpen ? "Close Estimator" : "Open Scope Estimator"}</span>
+          <svg
+            className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ""}`}
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
       </div>
 
-      <div className={styles.typeSelector} role="radiogroup" aria-label="Project type selection">
-        {SELECTOR_TYPES.map((type) => (
-          <button
-            key={type.id}
-            type="button"
-            role="radio"
-            aria-checked={selectedType === type.id}
-            className={`${styles.typeBtn} ${selectedType === type.id ? styles.activeTypeBtn : ""}`}
-            onClick={() => setSelectedType(type.id)}
-          >
-            {type.label}
-          </button>
-        ))}
-      </div>
+      {isOpen && (
+        <div className={styles.expandedContent} id="scope-estimator-content">
+          <div className={styles.typeSelector} role="radiogroup" aria-label="Project type selection">
+            {SELECTOR_TYPES.map((type) => (
+              <button
+                key={type.id}
+                type="button"
+                role="radio"
+                aria-checked={selectedType === type.id}
+                className={`${styles.typeBtn} ${selectedType === type.id ? styles.activeTypeBtn : ""}`}
+                onClick={() => setSelectedType(type.id)}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
 
       <div className={styles.previewBox}>
         <div className={styles.previewMain}>
@@ -165,5 +213,7 @@ export default function ServiceScopeCalculator() {
         </div>
       </div>
     </div>
+  )}
+</div>
   );
 }
