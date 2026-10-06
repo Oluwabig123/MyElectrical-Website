@@ -24,8 +24,9 @@ type ServicesCatalogClientProps = {
 
 const CATEGORIES = [
   { id: "all", label: "All Services" },
-  { id: "flagship", label: "Flagship Installations" },
-  { id: "support", label: "Diagnostics & Controls" },
+  { id: "wiring-solar", label: "Conduit & Solar Power" },
+  { id: "security-smart", label: "CCTV & Smart Automation" },
+  { id: "lighting", label: "Architectural Lighting" },
 ] as const;
 
 export default function ServicesCatalogClient({ services }: ServicesCatalogClientProps) {
@@ -36,8 +37,11 @@ export default function ServicesCatalogClient({ services }: ServicesCatalogClien
     return services.filter((service) => {
       const matchesTab =
         activeTab === "all" ||
-        (activeTab === "flagship" && service.tier === "flagship") ||
-        (activeTab === "support" && service.tier === "support");
+        (activeTab === "wiring-solar" &&
+          (service.slug === "residential-commercial-wiring" || service.slug === "solar-inverter-installation")) ||
+        (activeTab === "security-smart" &&
+          (service.slug === "cctv-security-systems" || service.slug === "smart-home-systems")) ||
+        (activeTab === "lighting" && service.slug === "lighting-interior-finishing");
 
       const query = searchQuery.trim().toLowerCase();
       const matchesSearch =
@@ -54,7 +58,7 @@ export default function ServicesCatalogClient({ services }: ServicesCatalogClien
   return (
     <div className={styles.container}>
       <div className={styles.controlsBar}>
-        <div className={chipStyles.filters} role="tablist" aria-label="Service categories">
+        <div className={styles.filtersScroll} role="tablist" aria-label="Service categories">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -89,7 +93,7 @@ export default function ServicesCatalogClient({ services }: ServicesCatalogClien
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search solar, wiring, CCTV, lighting..."
+            placeholder="Search conduit, solar, CCTV, smart..."
             className={styles.searchInput}
             aria-label="Filter services by keyword"
           />
@@ -125,64 +129,61 @@ export default function ServicesCatalogClient({ services }: ServicesCatalogClien
         </div>
       ) : (
         <div className={styles.serviceGrid}>
-          {filteredServices.map((service, index) => {
-            const isFlagship = service.tier === "flagship";
-            return (
-              <Reveal key={service.slug} delay={index * 0.04}>
-                <article className={`${styles.card} ${isFlagship ? styles.flagshipCard : ""}`}>
-                  <div className={styles.imageBox}>
-                    <Image
-                      src={service.image}
-                      alt={service.alt}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className={styles.cardImg}
-                    />
-                    <div className={styles.imageOverlay} />
-                    <div className={styles.badgeGroup}>
-                      <span className={`${styles.badge} ${isFlagship ? styles.flagshipBadge : styles.supportBadge}`}>
-                        {isFlagship ? "Flagship Service" : "Support & Maintenance"}
-                      </span>
-                      <span className={styles.eyebrowBadge}>{service.eyebrow}</span>
-                    </div>
+          {filteredServices.map((service, index) => (
+            <Reveal key={service.slug} delay={index * 0.04}>
+              <article className={`${styles.card} ${styles.flagshipCard}`}>
+                <div className={styles.imageBox}>
+                  <Image
+                    src={service.image}
+                    alt={service.alt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className={styles.cardImg}
+                  />
+                  <div className={styles.imageOverlay} />
+                  <div className={styles.badgeGroup}>
+                    <span className={styles.flagshipBadge}>
+                      Flagship Service
+                    </span>
+                    <span className={styles.eyebrowBadge}>{service.eyebrow}</span>
                   </div>
+                </div>
 
-                  <div className={styles.cardBody}>
-                    <h3 className={styles.cardTitle}>
-                      <Link href={`/services/${service.slug}`} className={styles.titleLink}>
-                        {service.title}
-                      </Link>
-                    </h3>
-                    <p className={styles.cardDesc}>{service.desc}</p>
-                    <p className={styles.cardDetail}>{service.detail}</p>
+                <div className={styles.cardBody}>
+                  <h3 className={styles.cardTitle}>
+                    <Link href={`/services/${service.slug}`} className={styles.titleLink}>
+                      {service.title}
+                    </Link>
+                  </h3>
+                  <p className={styles.cardDesc}>{service.desc}</p>
+                  <p className={styles.cardDetail}>{service.detail}</p>
 
-                    <div className={styles.cardFooter}>
-                      <Link href={`/services/${service.slug}`} className={styles.detailsBtn}>
-                        <span>Explore details</span>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                          <polyline points="12 5 19 12 12 19" />
-                        </svg>
-                      </Link>
-                      <Link href={`/quote?service=${service.slug}`} className={styles.quickQuoteBtn}>
-                        Book
-                      </Link>
-                    </div>
+                  <div className={styles.cardFooter}>
+                    <Link href={`/services/${service.slug}`} className={styles.detailsBtn}>
+                      <span>Explore details</span>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </Link>
+                    <Link href={`/quote?service=${service.slug}`} className={styles.quickQuoteBtn}>
+                      Book
+                    </Link>
                   </div>
-                </article>
-              </Reveal>
-            );
-          })}
+                </div>
+              </article>
+            </Reveal>
+          ))}
         </div>
       )}
     </div>

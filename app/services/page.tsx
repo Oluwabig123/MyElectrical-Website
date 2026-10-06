@@ -10,41 +10,63 @@ import { buildMetadata } from "@/lib/seo";
 import styles from "./ServicesPage.module.css";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Electrical Services in Lagos Nigeria",
+  title: "Electrical, Solar, CCTV & Smart Home Services in Lagos",
   description:
-    "Explore electrical services from Oduzz Electrical Concept including conduit wiring, solar & inverter installations, CCTV, architectural lighting, and maintenance in Lagos, Nigeria.",
+    "Explore engineering services from Oduzz Electrical Concept including conduit wiring, solar & inverter installations, CCTV surveillance, and smart home automation in Lagos, Nigeria.",
   path: "/services",
   keywords: [
     "electrical services Lagos",
-    "electrical installation Lagos",
+    "conduit wiring Lagos",
     "solar installation Lagos",
-    "lighting installation Lagos",
-    "commercial wiring Nigeria",
+    "CCTV installation Lagos",
+    "smart home automation Nigeria",
+    "commercial wiring Lagos",
   ],
   image: "/hero/wiring.webp",
 });
 
-const heroMetrics = [
-  { label: "Execution Standard", val: "IEC & NEMSA Aligned" },
-  { label: "Turnaround", val: "24–48h Site Survey" },
-  { label: "Coverage", val: "Lagos & Interstate" },
+const prioritySpecializations = [
+  {
+    step: "01",
+    title: "Electrical Conduit Wiring",
+    text: "Concealed piping, channelling & pure copper wiring",
+    href: "/services/residential-commercial-wiring",
+  },
+  {
+    step: "02",
+    title: "Solar & Inverter Systems",
+    text: "Hybrid pure sine wave & Tier-1 lithium storage",
+    href: "/services/solar-inverter-installation",
+  },
+  {
+    step: "03",
+    title: "CCTV Installation & Surveillance",
+    text: "Zero-blindspot coverage & remote mobile monitoring",
+    href: "/services/cctv-security-systems",
+  },
+  {
+    step: "04",
+    title: "Smart Home & Automation",
+    text: "Glass touch switches, voice control & smart access",
+    href: "/services/smart-home-systems",
+  },
 ] as const;
 
 const processSteps = [
   {
     step: "01",
-    title: "Real Site Review & Load Audits",
-    text: "Phase balance, cable run lengths, conduit accessibility, and real appliance peak surges are mapped before any quote is final.",
+    title: "Detailed Site Mapping & Pathway Engineering",
+    text: "Conduit routing lines, solar roof irradiance, CCTV camera sightlines, and smart automation coverage points are mapped on-site before any quotation is issued.",
   },
   {
     step: "02",
-    title: "Original Material Specification",
-    text: "Zero substandard components. Heavy-duty copper cables, certified breakers (Schneider/Havells), and Tier-1 solar equipment only.",
+    title: "Original Material Specification & Verification",
+    text: "Zero substandard components. Heavy-duty certified PVC conduits, 100% pure copper cables (Coleman/Nigerchin), Tier-1 solar equipment, and enterprise CCTV & smart hardware.",
   },
   {
     step: "03",
-    title: "Precision Execution & Clean Handover",
-    text: "Laser-aligned conduits, neatly labeled distribution panels, terminal torque checks, and full multi-circuit testing under load.",
+    title: "Concealed Installation, Testing & Clean Handover",
+    text: "Laser-straight conduit embedding, flush wall terminations, solar battery commissioning, and mobile CCTV & smart app setup with a clean architectural finish.",
   },
 ] as const;
 
@@ -61,12 +83,12 @@ const trustFactors = [
   },
   {
     title: "Architectural Neatness",
-    text: "Clean flush-mounted fittings, disciplined trunking lines, and concealed cable runs that respect your building's interior beauty.",
+    text: "Clean flush-mounted fittings, disciplined conduit lines, and concealed cable runs that respect your building's interior beauty.",
     icon: "layout",
   },
   {
     title: "Direct WhatsApp Escalation",
-    text: "Immediate access to lead engineers for troubleshooting, site progress photos, and emergency circuit stabilization.",
+    text: "Immediate access to lead engineers for site consultations, layout review, and responsive technical execution.",
     icon: "chat",
   },
 ] as const;
@@ -82,7 +104,7 @@ export default function ServicesPage() {
               <div className={styles.heroMedia}>
                 <Image
                   src="/hero/wiring.webp"
-                  alt="Oduzz electrical installation work in progress with clean professional finishing."
+                  alt="Oduzz electrical conduit wiring installation in progress with clean professional finishing."
                   fill
                   priority
                   sizes="(max-width: 900px) 100vw, 65vw"
@@ -99,11 +121,11 @@ export default function ServicesPage() {
                   </div>
 
                   <h1 className={styles.heroTitle}>
-                    High-Reliability Electrical & Solar Engineering in Lagos.
+                    High-Reliability Electrical, Solar & Smart Engineering in Lagos.
                   </h1>
 
                   <p className={styles.heroSummary}>
-                    From conduit-embedded residential wiring and commercial load centers to custom hybrid solar backup and smart lighting. Engineered for long-term safety, zero fires, and clean finishing.
+                    From conduit-embedded residential wiring and hybrid solar backup to enterprise CCTV surveillance and smart home automation. Engineered for long-term safety, zero fires, and clean finishing.
                   </p>
 
                   <div className={styles.heroActions}>
@@ -127,48 +149,20 @@ export default function ServicesPage() {
 
               {/* Hero Sidebar Cards */}
               <aside className={styles.heroSidebar}>
-                <div className={styles.metricsCard}>
-                  <p className={styles.panelTitle}>Engineering Assurance</p>
-                  <div className={styles.metricsList}>
-                    {heroMetrics.map((m) => (
-                      <div key={m.label} className={styles.metricRow}>
-                        <span className={styles.metricLabel}>{m.label}</span>
-                        <span className={styles.metricVal}>{m.val}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <div className={styles.quickNavCard}>
                   <p className={styles.panelTitle}>Priority Specializations</p>
                   <ul className={styles.priorityList}>
-                    <li>
-                      <Link href="/services/residential-commercial-wiring">
-                        <span className={styles.priorityNumber}>01</span>
-                        <div>
-                          <strong>Wiring & Load Centers</strong>
-                          <p>Balanced phases, zero neutral burnouts</p>
-                        </div>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/services/solar-inverter-installation">
-                        <span className={styles.priorityNumber}>02</span>
-                        <div>
-                          <strong>Solar & Inverter Storage</strong>
-                          <p>Precision daily watt-hour sizing</p>
-                        </div>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/services/lighting-interior-finishing">
-                        <span className={styles.priorityNumber}>03</span>
-                        <div>
-                          <strong>Architectural Lighting</strong>
-                          <p>POP spotlights, chandeliers & mood zones</p>
-                        </div>
-                      </Link>
-                    </li>
+                    {prioritySpecializations.map((item) => (
+                      <li key={item.step}>
+                        <Link href={item.href}>
+                          <span className={styles.priorityNumber}>{item.step}</span>
+                          <div>
+                            <strong>{item.title}</strong>
+                            <p>{item.text}</p>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </aside>
@@ -188,7 +182,7 @@ export default function ServicesPage() {
               <span className={styles.sectionEyebrow}>Comprehensive Portfolio</span>
               <h2 className={styles.sectionTitle}>Explore All Installation & Technical Capabilities</h2>
               <p className={styles.sectionSubtitle}>
-                Filter between primary system installations or dedicated maintenance and control services.
+                Filter between primary conduit wiring, solar energy, CCTV surveillance, smart automation, and architectural lighting.
               </p>
             </div>
 
@@ -202,7 +196,7 @@ export default function ServicesPage() {
                 <span className={styles.sectionEyebrow}>Standardized Methodology</span>
                 <h2 className={styles.sectionTitle}>How We Execute Without Surprises</h2>
                 <p className={styles.sectionSubtitle}>
-                  Every contract follows a disciplined 3-stage electrical delivery pipeline to prevent costly rework.
+                  Every contract follows a disciplined 3-stage delivery pipeline to guarantee architectural neatness and lasting reliability.
                 </p>
               </div>
 
@@ -252,7 +246,7 @@ export default function ServicesPage() {
                 <span className={styles.finalEyebrow}>Take The Next Step</span>
                 <h2 className={styles.finalHeading}>Have a site drawing, BOQ, or power challenge?</h2>
                 <p className={styles.finalSub}>
-                  Send your site plan, load requirements, or photos. We provide a transparent material bill of quantities and a realistic schedule within 24 hours.
+                  Send your architectural drawings, load requirements, or photos. We provide a transparent material bill of quantities and a realistic schedule within 24 hours.
                 </p>
               </div>
 

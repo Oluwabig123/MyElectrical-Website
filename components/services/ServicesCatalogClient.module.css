@@ -6,18 +6,35 @@
 
 .controlsBar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 20px;
+  padding: 12px 18px;
   background: rgba(17, 24, 39, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   backdrop-filter: blur(12px);
 }
 
+.filtersScroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  padding-bottom: 2px;
+}
+
+.filtersScroll::-webkit-scrollbar {
+  display: none;
+}
+
 .filterChip {
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 13px;
   letter-spacing: 0.02em;
 }
@@ -26,7 +43,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  min-width: min(100%, 320px);
+  min-width: min(100%, 300px);
+  flex-shrink: 0;
 }
 
 .searchIcon {
@@ -38,8 +56,8 @@
 
 .searchInput {
   width: 100%;
-  height: 42px;
-  padding: 0 36px 0 38px;
+  height: 40px;
+  padding: 0 34px 0 38px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.06);
@@ -150,12 +168,12 @@
   background: rgba(255, 212, 0, 0.16);
   border: 1px solid rgba(255, 212, 0, 0.4);
   color: #ffd400;
-}
-
-.supportBadge {
-  background: rgba(46, 233, 255, 0.12);
-  border: 1px solid rgba(46, 233, 255, 0.3);
-  color: #72e9ff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .eyebrowBadge {
@@ -240,12 +258,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
+  padding: 8px 18px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #fff;
-  font-size: 12px;
+  background: rgba(255, 212, 0, 0.12);
+  border: 1px solid rgba(255, 212, 0, 0.35);
+  color: #ffd400;
+  font-size: 12.5px;
   font-weight: 700;
   text-decoration: none;
   transition: all 0.2s ease;
@@ -281,4 +299,68 @@
   font-size: 14px;
   margin: 0 0 20px 0;
   max-width: 400px;
+}
+
+@media (max-width: 768px) {
+  .controlsBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 18px;
+  }
+
+  .filtersScroll {
+    width: 100%;
+  }
+
+  .searchWrapper {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .searchInput {
+    height: 42px;
+    font-size: 13.5px;
+  }
+
+  .serviceGrid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .card {
+    border-radius: 20px;
+  }
+
+  .cardBody {
+    padding: 18px 16px;
+  }
+
+  .cardTitle {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .cardDesc {
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-bottom: 0;
+  }
+
+  /* Hide redundant second description on mobile to reduce vertical clutter */
+  .cardDetail {
+    display: none;
+  }
+
+  .cardFooter {
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  .quickQuoteBtn {
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
 }

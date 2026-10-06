@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import styles from "./ServiceScopeCalculator.module.css";
 
-type ProjectType = "residential" | "commercial" | "solar" | "maintenance";
+type ProjectType = "conduit" | "solar" | "cctv" | "automation";
 
 const PROJECT_CONFIGS: Record<
   ProjectType,
@@ -17,62 +17,69 @@ const PROJECT_CONFIGS: Record<
     defaultScopeService: string;
   }
 > = {
-  residential: {
-    title: "Residential Wiring & Finishing",
-    description: "New duplex, apartment wiring, load balancing, or clean rewiring upgrade.",
+  conduit: {
+    title: "Conduit & Electrical Wiring",
+    description: "New build, duplex, or commercial conduit pipe embedding, wall channelling, and 100% pure copper cable pull-through.",
     keyDeliverables: [
-      "Circuit load calculations & phase balancing",
-      "Conduit pipe embedding & neat junction boxes",
-      "Protection boards with certified RCCBs & SPDs",
-      "Wall switches, sockets & architectural lighting finishing",
+      "Precision wall channelling & flush conduit pipe embedding",
+      "Heavy-duty PVC pipes, neat bend routing & durable junction boxes",
+      "Original Coleman / Nigerchin certified pure copper cables",
+      "Flush distribution board embedding with certified RCCBs & SPDs",
     ],
-    turnaround: "Site inspection within 24–48 hours",
-    recommendedMaterials: "Original Coleman/Nigerchin cables, Havells/Schneider switchgear",
-    defaultScopeService: "residential-commercial-wiring",
-  },
-  commercial: {
-    title: "Commercial & Office Fit-Out",
-    description: "Multi-tenant offices, retail fit-outs, industrial distribution panels, and power plants.",
-    keyDeliverables: [
-      "Sub-distribution boards with lockouts & surge suppression",
-      "Dedicated server & UPS clean-line circuits",
-      "Emergency lighting pathways and exit compliance",
-      "Phased wiring execution to minimize tenant disruption",
-    ],
-    turnaround: "Initial schematics & BOQ within 48 hours",
-    recommendedMaterials: "Heavy-duty armored cables, industrial MCCBs, dedicated grounding grids",
+    turnaround: "Site inspection & conduit scope within 24–48 hours",
+    recommendedMaterials: "Certified heavy-duty PVC conduits, Coleman/Nigerchin cables, Schneider/Havells switchgear",
     defaultScopeService: "residential-commercial-wiring",
   },
   solar: {
     title: "Solar & Inverter Backup Power",
-    description: "Residential or commercial off-grid/hybrid system sized to real daily power logs.",
+    description: "Residential or commercial off-grid/hybrid system engineered for continuous clean electricity and generator reduction.",
     keyDeliverables: [
-      "Precision load logging (Daytime vs Nighttime watt-hour audits)",
-      "Pure sine wave hybrid inverter with generator tie-in",
-      "Tier-1 LiFePO4 battery storage with BMS safety checks",
-      "DC isolator switches, surge arresters, and dedicated earthing",
+      "Precision daily watt-hour appliance load calculation",
+      "Pure sine wave hybrid inverter with generator & grid auto-switching",
+      "Tier-1 LiFePO4 lithium battery storage with BMS active balance",
+      "DC isolator switches, surge arresters, and dedicated earthing rods",
     ],
     turnaround: "Engineering proposal & sizing sheet in 24 hours",
-    recommendedMaterials: "Tier-1 Monocrystalline panels, Felicity/Deye inverters & lithium banks",
+    recommendedMaterials: "Tier-1 Monocrystalline panels, Felicity/Deye inverters & LiFePO4 lithium banks",
     defaultScopeService: "solar-inverter-installation",
   },
-  maintenance: {
-    title: "Diagnostics & Safety Rectification",
-    description: "Tripping breakers, recurring voltage drops, burnt neutral repairs, and safety audits.",
+  cctv: {
+    title: "CCTV Installation & Surveillance",
+    description: "High-definition IP surveillance with concealed conduit cable pathways, night vision clarity, and remote mobile viewing.",
     keyDeliverables: [
-      "Insulation resistance testing & loop impedance checks",
-      "Thermal inspection to isolate high-resistance hot joints",
-      "Immediate stabilization of burnt terminals and overdrawn lines",
-      "Written inspection diagnosis with recommended fixes",
+      "Perimeter coverage mapping & zero-blindspot camera placement",
+      "Concealed CAT6 ethernet cabling through protective conduits",
+      "Network Video Recorder (NVR) with high-endurance 24/7 surveillance storage",
+      "Smartphone app setup for instant remote live viewing & motion alerts",
     ],
-    turnaround: "Same-day emergency or next-day scheduled dispatch",
-    recommendedMaterials: "Din-rail replacements, certified busbars, calibrated thermal breakers",
-    defaultScopeService: "fault-diagnosis-maintenance",
+    turnaround: "Security survey & camera placement quote in 24 hours",
+    recommendedMaterials: "Hikvision / Dahua IP cameras, pure copper CAT6 cabling, surge-protected PoE switches",
+    defaultScopeService: "cctv-security-systems",
+  },
+  automation: {
+    title: "Smart Home & Office Automation",
+    description: "Smart glass-touch switches, mobile app & voice-controlled scenes, biometric door locks, and commercial lighting automation.",
+    keyDeliverables: [
+      "Luxury capacitive glass-touch switches and multi-room scene controls",
+      "Dedicated neutral wire routing for zero-flicker smart switch reliability",
+      "Mobile app & voice assistant setup (Alexa, Google Assistant, Apple Home)",
+      "Automated lighting schedules, motorized curtain/gate control & smart locks",
+    ],
+    turnaround: "Automation design & device schedule in 24–48 hours",
+    recommendedMaterials: "Tuya / Sonoff / Zigbee 3.0 smart modules, luxury glass-touch switchgear, robust mesh gateways",
+    defaultScopeService: "smart-home-systems",
   },
 };
 
+const SELECTOR_TYPES: { id: ProjectType; label: string }[] = [
+  { id: "conduit", label: "Conduit & Electrical Wiring" },
+  { id: "solar", label: "Solar & Inverter Backup" },
+  { id: "cctv", label: "CCTV Surveillance" },
+  { id: "automation", label: "Smart Home & Office" },
+];
+
 export default function ServiceScopeCalculator() {
-  const [selectedType, setSelectedType] = useState<ProjectType>("residential");
+  const [selectedType, setSelectedType] = useState<ProjectType>("conduit");
   const config = PROJECT_CONFIGS[selectedType];
 
   return (
@@ -86,14 +93,7 @@ export default function ServiceScopeCalculator() {
       </div>
 
       <div className={styles.typeSelector} role="radiogroup" aria-label="Project type selection">
-        {(
-          [
-            { id: "residential", label: "Residential Home / Duplex" },
-            { id: "solar", label: "Solar & Inverter Backup" },
-            { id: "commercial", label: "Commercial / Office" },
-            { id: "maintenance", label: "Fault Diagnosis / Audit" },
-          ] as const
-        ).map((type) => (
+        {SELECTOR_TYPES.map((type) => (
           <button
             key={type.id}
             type="button"
