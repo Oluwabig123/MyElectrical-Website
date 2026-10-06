@@ -171,48 +171,10 @@ export default function Hero() {
 
         <Container className="heroContentWrap">
           <div className="heroContent">
-            {/* Interactive Service Selector Pills */}
-            <div className="heroServicePills" role="tablist" aria-label="Quick service selector">
-              {heroGallery.map((item, index) => (
-                <button
-                  key={`hero-tab-${item.id}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={index === safeActiveIndex}
-                  className={`heroServicePill${index === safeActiveIndex ? " active" : ""}`}
-                  onClick={() => goToSlide(index)}
-                >
-                  <span>{item.tabLabel}</span>
-                </button>
-              ))}
-            </div>
-
             <Reveal key={activeSlide.id}>
               <p className="heroKicker">{activeSlide.kicker}</p>
               <h1 className="h1">{activeSlide.title}</h1>
               <p className="p">{activeSlide.copy}</p>
-
-              {/* Mobile benefit badges */}
-              <div className="heroMobileBenefits" aria-label="Key guarantees">
-                {activeSlide.benefits.map((benefit) => (
-                  <span key={`${activeSlide.id}-${benefit}`} className="heroMobileBenefit">
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>{benefit}</span>
-                  </span>
-                ))}
-              </div>
             </Reveal>
 
             <Reveal key={`${activeSlide.id}-actions`} delay={0.08}>
@@ -272,7 +234,7 @@ export default function Hero() {
                 type="button"
                 className={`heroDot${index === safeActiveIndex ? " active" : ""}`}
                 onClick={() => goToSlide(index)}
-                aria-label={`Switch to ${item.tabLabel}`}
+                aria-label={`Switch to slide ${index + 1}: ${item.kicker}`}
                 aria-pressed={index === safeActiveIndex}
               />
             ))}

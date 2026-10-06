@@ -55,19 +55,14 @@ export default function Navbar() {
     <header className={styles.nav} ref={headerRef}>
       <Container className={styles.navInner}>
         <Link href="/" className={styles.brand} aria-label="Oduzz Electrical Concept home">
-          <span className={styles.brandTraceWrap} aria-hidden="true">
-            <svg className={styles.brandTrace} viewBox="0 0 100 36" preserveAspectRatio="none">
-              <rect className={styles.brandTracePath} x="1" y="1" width="98" height="34" pathLength="100" />
-            </svg>
-          </span>
           <Image
             className={styles.brandLogo}
-            src="/oduzz-logo-transparent.webp"
+            src="/oduzz-logo-white.webp"
             alt="Oduzz Electrical Concept"
-            width={186}
-            height={60}
+            width={125}
+            height={44}
             priority
-            sizes="(max-width: 920px) 150px, 186px"
+            sizes="(max-width: 920px) 105px, 125px"
           />
         </Link>
 
