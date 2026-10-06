@@ -47,10 +47,11 @@
 .title {
   margin: 0;
   color: rgba(248, 251, 255, 0.97);
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  font-size: clamp(33px, 4.4vw, 56px);
-  line-height: 0.95;
-  letter-spacing: -0.035em;
+  font-family: var(--font-manrope), sans-serif;
+  font-size: clamp(28px, 4vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-weight: 800;
   text-wrap: balance;
 }
 
@@ -186,8 +187,8 @@
   }
 
   .title {
-    font-size: clamp(27px, 9.5vw, 40px);
-    line-height: 0.98;
+    font-size: clamp(24px, 7.5vw, 36px);
+    line-height: 1.15;
   }
 
   .actions {

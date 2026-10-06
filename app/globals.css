@@ -833,13 +833,12 @@ button {
   background:
     linear-gradient(
       180deg,
-      rgba(8, 10, 18, 0.08) 0%,
-      rgba(8, 10, 18, 0.12) 24%,
-      rgba(8, 10, 18, 0.34) 70%,
-      rgba(8, 10, 18, 0.58) 100%
+      rgba(6, 10, 18, 0.45) 0%,
+      rgba(6, 10, 18, 0.68) 28%,
+      rgba(6, 10, 18, 0.9) 65%,
+      rgba(6, 10, 18, 0.98) 100%
     ),
-    radial-gradient(720px 320px at 50% 78%, rgba(255, 212, 0, 0.18), transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+    radial-gradient(820px 380px at 50% 82%, rgba(255, 212, 0, 0.15), transparent 65%);
   pointer-events: none;
 }
 
@@ -863,13 +862,63 @@ button {
   backdrop-filter: none;
 }
 
+.heroServicePills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 20px;
+  padding-bottom: 2px;
+}
+
+.heroServicePills::-webkit-scrollbar {
+  display: none;
+}
+
+.heroServicePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(12, 18, 32, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.heroServicePill:hover {
+  border-color: rgba(255, 212, 0, 0.4);
+  background: rgba(255, 212, 0, 0.1);
+  color: #fff;
+}
+
+.heroServicePill.active {
+  background: rgba(255, 212, 0, 0.18);
+  border-color: #ffd400;
+  color: #ffd400;
+  box-shadow: 0 0 16px rgba(255, 212, 0, 0.2);
+}
+
 .heroKicker {
   margin: 0;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
-  letter-spacing: 0.36em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: rgba(255, 212, 0, 0.96);
+}
+
+.heroMobileBenefits {
+  display: none;
 }
 
 .heroContent .h1 {
@@ -1623,49 +1672,101 @@ button {
   .heroStage {
     align-items: end;
     min-height: calc(100svh - var(--top-ad-height) - var(--nav-height));
-    padding-block: 48px 58px;
+    padding-block: 36px 104px;
   }
 
   .heroContent {
     width: 100%;
-    text-align: center;
+    text-align: left;
   }
 
   .heroKicker {
-    font-size: 10px;
-    letter-spacing: 0.28em;
+    font-size: 11px;
+    letter-spacing: 0.2em;
   }
 
   .heroContent .h1 {
-    max-width: 13ch;
-    margin: 12px auto 0;
-    font-size: clamp(30px, 9vw, 40px);
+    max-width: 100%;
+    margin: 10px 0 0;
+    font-size: clamp(26px, 7.8vw, 36px);
+    line-height: 1.14;
   }
 
   .heroContent .p {
-    max-width: 32ch;
-    margin: 12px auto 0;
-    font-size: 13px;
+    max-width: 100%;
+    margin: 10px 0 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+
+  .heroMobileBenefits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin-top: 14px;
+  }
+
+  .heroMobileBenefit {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .heroMobileBenefit svg {
+    color: #ffd400;
+    flex-shrink: 0;
   }
 
   .heroCtaShell,
   .heroBenefits {
-    justify-content: center;
+    justify-content: flex-start;
+  }
+
+  .heroCtaShell {
+    width: 100%;
+    margin-top: 20px;
   }
 
   .heroCtas {
-    width: min(100%, 340px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .heroCtas .btn {
+    width: 100%;
     min-height: 48px;
-    padding: 10px 12px;
-    font-size: 12px;
+    padding: 12px 18px;
+    font-size: 13.5px;
+    border-radius: 14px;
+  }
+
+  .heroWhatsappBtn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+  }
+
+  .heroControls {
+    bottom: 14px;
   }
 
   .heroBenefits {
-    max-width: 310px;
-    margin-inline: auto;
+    display: none;
   }
 
   .heroAside {

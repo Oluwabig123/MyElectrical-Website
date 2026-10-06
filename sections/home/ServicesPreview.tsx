@@ -16,9 +16,9 @@ export default function ServicesPreview() {
     <section className="section servicesPreview">
       <Container>
         <SectionHeader
-          kicker="Service hierarchy"
-          title="Core installation work first"
-          subtitle="Wiring, backup power, and lighting lead. The support systems sit around them."
+          kicker="Engineering Services"
+          title="Engineered for Long-Term Safety & Performance"
+          subtitle="Conduit wiring, hybrid solar systems, CCTV surveillance, smart automation, and architectural lighting."
         />
 
         <div className="servicesPreviewStage">
@@ -77,7 +77,7 @@ export default function ServicesPreview() {
 
         <Reveal delay={0.12}>
           <div className="servicesPreviewSupport">
-            <p className="servicesPreviewSupportLabel">Also available</p>
+            <p className="servicesPreviewSupportLabel">Security & Automation</p>
             <div className="servicesPreviewSupportTrack">
               {supportServices.map((service) => (
                 <Link key={service.slug} href={`/services/${service.slug}`} className="servicesPreviewSupportChip">

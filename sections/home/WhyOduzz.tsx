@@ -5,26 +5,32 @@ import styles from "./WhyOduzz.module.css";
 
 const principles = [
   {
-    title: "Verified Material Choices",
+    title: "100% Original Pure Copper (Anti-Fire Guarantee)",
     description:
-      "Clear guidance on brands, sizes, accessories, and protection choices.",
+      "We source certified Coleman & Nigerchin cables directly. Every single coil is verified against undersized gauge scams that cause building fires in Nigeria.",
   },
   {
-    title: "Protection-First Planning",
+    title: "Concealed Conduit & Clean Finishing",
     description:
-      "Load paths and routing are reviewed before finishing starts.",
+      "Laser-aligned wall channelling, heavy-duty PVC pipe embedding, and neatly labeled distribution panels. Zero messy surface trunking or cracked plaster.",
   },
   {
-    title: "Cleaner Final Handover",
+    title: "Real-World Solar & Backup Engineering",
     description:
-      "The final installation should look tidy, test properly, and feel easy to inspect.",
+      "Systems sized to real Nigerian power realities: pure sine wave hybrid inverters, Tier-1 lithium storage, and seamless generator auto-changeover.",
+  },
+  {
+    title: "Surge-Protected CCTV & Smart Controls",
+    description:
+      "Concealed CAT6 conduit pathways for 24/7 NVR recording, and neutral-line stabilized smart touch switches built to endure grid voltage spikes.",
   },
 ] as const;
 
 const handoverChecks = [
-  "Protection devices selected for the real load path",
-  "Routing and fittings aligned with the final finish",
-  "Clear updates before scope changes affect cost or timeline",
+  "100% verified pure-copper cables (Coleman / Nigerchin)",
+  "Concealed conduit lines with laser-straight wall embedding",
+  "Surge-protected breakers (Schneider / Havells) & Tier-1 solar",
+  "Itemized Bill of Quantities with zero mid-project price surprises",
 ] as const;
 
 export default function WhyOduzz() {
@@ -34,13 +40,13 @@ export default function WhyOduzz() {
         <div className={styles.shell}>
           <Reveal delay={0.03}>
             <div className={styles.intro}>
-              <p className={styles.kicker}>Why Oduzz</p>
-              <h2 className={styles.title}>Built for clients who care how the work ends</h2>
+              <p className={styles.kicker}>The Oduzz Standard</p>
+              <h2 className={styles.title}>Built for Clients Who Value Safety, Clean Finishing & Reliability</h2>
               <p className={styles.lead}>
-                Safer technical choices early. Cleaner finishing later. Fewer surprises in between.
+                In a Nigerian market plagued by fake cables, fire risks, and sloppy surface wiring, Oduzz engineers electrical, solar, and smart security systems that protect your building for decades.
               </p>
               <div className={styles.assurance}>
-                <span className={styles.assuranceLabel}>At handover</span>
+                <span className={styles.assuranceLabel}>Our Handover Guarantee</span>
                 <ul className={styles.assuranceList}>
                   {handoverChecks.map((item) => (
                     <li key={item}>{item}</li>
@@ -49,10 +55,10 @@ export default function WhyOduzz() {
               </div>
               <div className={styles.actions}>
                 <Link href="/quote" className="btn primary">
-                  Start your project
+                  Start Your Project
                 </Link>
                 <Link href="/projects" className="btn outline">
-                  See project outcomes
+                  See Project Outcomes
                 </Link>
               </div>
             </div>

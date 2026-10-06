@@ -243,8 +243,28 @@
 }
 
 .navMobile {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 55;
   border-bottom: 1px solid var(--line);
-  background: rgba(7, 10, 18, 0.85);
+  background: rgba(7, 10, 18, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+  animation: navMobileFade 0.2s ease-out;
+}
+
+@keyframes navMobileFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .navMobileInner {
