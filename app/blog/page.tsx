@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import BlogNewsletterCta from "@/components/blog/BlogNewsletterCta";
 import Container from "@/components/layout/Container";
+import Reveal from "@/components/ui/Reveal";
 import { servicePages } from "@/data/service-pages";
 import { BLOG_IMAGE_GALLERY } from "@/data/blog-image-gallery";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/lib/blog-editorial";
 import { formatBlogDate, getAllBlogPosts } from "@/lib/blog";
 import { buildMetadata } from "@/lib/seo";
+import styles from "./BlogPage.module.css";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -35,9 +37,9 @@ type SupplementalStory = {
 };
 
 export const metadata: Metadata = buildMetadata({
-  title: "Electrical Blog and Guides for Lagos Projects",
+  title: "Electrical Blog & Guides for Lagos Projects",
   description:
-    "Read practical electrical guides from Oduzz on wiring safety, lighting layout, solar and inverter planning, and quality material decisions for Lagos projects.",
+    "Read practical electrical engineering guides from Oduzz on wiring safety, lighting layout, solar and inverter sizing, and quality material standards for Lagos projects.",
   path: "/blog",
   keywords: [
     "electrical blog Lagos",
@@ -68,35 +70,33 @@ function buildSupplementalStories(
       return {
         id: `visual-${image.id}-${index}`,
         href,
-        title: `${category} story cues for cleaner spaces`,
+        title: `${category} Standards & Installation Insights`,
         excerpt: image.alt,
         category,
         image: {
           src: image.src,
           alt: image.alt,
         },
-        meta: "Visual archive",
+        meta: "Field Guide",
       };
     });
 }
 
-export const dynamic = "force-dynamic";
-
 export default async function BlogPage({ searchParams }: PageProps) {
-  const posts = await getAllBlogPosts();
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const requestedCategory = Array.isArray(resolvedSearchParams?.category)
-    ? resolvedSearchParams.category[0] ?? ""
-    : resolvedSearchParams?.category ?? "";
+  const resolvedParams = searchParams ? await searchParams : {};
+  const requestedCategory = Array.isArray(resolvedParams?.category)
+    ? resolvedParams.category[0]
+    : resolvedParams?.category;
 
-  const categories = getBlogCategories(posts);
-  const activeCategory = resolveBlogCategory(requestedCategory, categories);
-  const filteredPosts = filterBlogPostsByCategory(posts, activeCategory);
-  const featuredPost = filteredPosts.find((post) => post.featured) ?? filteredPosts[0] ?? null;
+  const allPosts = await getAllBlogPosts();
+  const categories = getBlogCategories(allPosts);
+  const activeCategory = resolveBlogCategory(requestedCategory || "", categories);
+  const filteredPosts = filterBlogPostsByCategory(allPosts, activeCategory);
+
+  const featuredPost = filteredPosts[0] ?? allPosts[0];
+  const archivePosts = filteredPosts.slice(1);
   const featuredVisual = featuredPost ? resolveBlogVisual(featuredPost) : null;
-  const archivePosts = featuredPost
-    ? filteredPosts.filter((post) => post.slug !== featuredPost.slug)
-    : filteredPosts;
+
   const topStoryPosts = archivePosts.slice(0, 3);
   const lowerStoryPosts = archivePosts.slice(3, 5);
 
@@ -148,220 +148,201 @@ export default async function BlogPage({ searchParams }: PageProps) {
     })),
   ];
 
-  const introLinks = [
-    { href: "/", label: "Home" },
-    { href: "/services", label: "Services" },
-    { href: "/about", label: "About" },
-    { href: "/contact", label: "Contact" },
-  ];
   const serviceTopicLinks = servicePages.slice(0, 6).map((service) => ({
     href: `/services/${service.slug}`,
     label: service.shortTitle,
   }));
 
   return (
-    <div className="pb-20 pt-8 md:pb-28 md:pt-12">
-      <Container className="max-w-[1060px]">
-        <section className="overflow-hidden rounded-[10px] bg-[var(--editorial-surface)] px-6 py-5 shadow-[0_30px_80px_rgba(11,16,32,0.12)] md:px-10 md:py-8">
-          <div className="flex items-center justify-between gap-4 border-b border-[color:var(--editorial-border)] pb-4">
-            <Link
-              href="/blog"
-              className="text-sm font-semibold tracking-[-0.03em] text-[var(--editorial-ink)]"
-            >
-              Oduzz Journal
-            </Link>
+    <section className={styles.blogPage}>
+      <Container>
+        <div className={styles.pageShell}>
+          {/* Hero Header */}
+          <Reveal delay={0.02}>
+            <header className={styles.hero}>
+              <div className={styles.heroBadges}>
+                <span className={styles.heroBrand}>Oduzz Electrical Journal • Field Stories &amp; Guides</span>
+                <span className={styles.heroStatusDot}>
+                  <span className={styles.pingDot} /> Practical Engineering Insights
+                </span>
+              </div>
 
-            <nav className="hidden items-center gap-7 text-xs font-medium text-[var(--editorial-muted)] md:flex">
-              {introLinks.map((item) => (
-                <Link key={item.href} href={item.href} className="hover:text-[var(--editorial-ink)]">
-                  {item.label}
+              <h1 className={styles.heroTitle}>Engineering Stories, Guides &amp; Insights</h1>
+
+              <p className={styles.heroDesc}>
+                Real installation notes, architectural lighting tips, solar sizing calculations, and material verification
+                guides for residential and commercial building projects across Lagos.
+              </p>
+            </header>
+          </Reveal>
+
+          {/* Category Filter Pills */}
+          <nav aria-label="Filter blog by topic" className={styles.filterBar}>
+            {categories.map((category) => {
+              const isActive = category === activeCategory;
+              const href =
+                category === ALL_BLOG_CATEGORY
+                  ? "/blog"
+                  : `/blog?category=${encodeURIComponent(category)}`;
+
+              return (
+                <Link
+                  key={category}
+                  href={href}
+                  className={`${styles.filterPill} ${isActive ? styles.filterPillActive : ""}`}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {category}
                 </Link>
-              ))}
-            </nav>
+              );
+            })}
+          </nav>
 
-            <div className="flex items-center gap-3 text-xs text-[var(--editorial-muted)]">
-              <span className="hidden md:inline">Search</span>
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 20 20"
-                className="h-4 w-4 stroke-current"
-                fill="none"
-                strokeWidth="1.6"
-              >
-                <circle cx="9" cy="9" r="5.5" />
-                <path d="M13 13l4 4" strokeLinecap="round" />
-              </svg>
-            </div>
-          </div>
-
-          <div className="mx-auto max-w-[760px] px-1 pb-10 pt-10 text-center md:pb-12">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#c8a300]">
-              Our Blog
-            </p>
-            <h1 className="mt-3 font-[family:var(--font-fraunces)] text-[2.5rem] leading-[0.98] font-semibold tracking-[-0.05em] text-[var(--editorial-ink)] md:text-[3.35rem]">
-              Stories &amp; Ideas
-            </h1>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--editorial-muted)]">
-              Clear installation stories, lighting ideas, and practical notes shaped around the
-              Oduzz brand palette and our generated image library.
-            </p>
-          </div>
-
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_280px]">
+          {/* Featured Split Section */}
+          <div className={styles.featuredSplit}>
+            {/* Featured Article Card */}
             {featuredPost ? (
-              <article>
-                <Link href={`/blog/${featuredPost.slug}`} className="group block">
-                  <div className="relative aspect-[1.45] overflow-hidden bg-[#e9edf4]">
-                    <Image
-                      src={featuredVisual?.src ?? "/blog/chandelier-installation.jpg"}
-                      alt={featuredVisual?.alt ?? featuredPost.title}
-                      fill
-                      priority
-                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                      sizes="(max-width: 1024px) 100vw, 620px"
-                    />
-                  </div>
-                  <div className="pt-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#c8a300]">
-                      {featuredPost.category}
-                    </p>
-                    <h2 className="mt-2 max-w-xl font-[family:var(--font-fraunces)] text-[2rem] leading-[1.02] font-semibold tracking-[-0.045em] text-[var(--editorial-ink)] md:text-[2.35rem]">
-                      {featuredPost.title}
-                    </h2>
-                    <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--editorial-muted)]">
-                      {featuredPost.excerpt}
-                    </p>
-                  </div>
-                </Link>
-              </article>
+              <Reveal delay={0.04}>
+                <article>
+                  <Link href={`/blog/${featuredPost.slug}`} className={styles.featuredCard}>
+                    <div className={styles.featuredMedia}>
+                      <Image
+                        src={featuredVisual?.src ?? "/blog/chandelier-installation.jpg"}
+                        alt={featuredVisual?.alt ?? featuredPost.title}
+                        fill
+                        priority
+                        className={styles.featuredImage}
+                        sizes="(max-width: 980px) 100vw, 620px"
+                      />
+                    </div>
+
+                    <div className={styles.featuredContent}>
+                      <div className={styles.metaRow}>
+                        <span>{featuredPost.category}</span>
+                        <span className={styles.dot} />
+                        <span className={styles.metaMuted}>{formatBlogDate(featuredPost.publishedAt)}</span>
+                        <span className={styles.dot} />
+                        <span className={styles.metaMuted}>{featuredPost.readingTime}</span>
+                      </div>
+
+                      <h2 className={styles.featuredTitle}>{featuredPost.title}</h2>
+                      <p className={styles.featuredExcerpt}>{featuredPost.excerpt}</p>
+
+                      <span className={styles.actionLink}>
+                        Read full guide →
+                      </span>
+                    </div>
+                  </Link>
+                </article>
+              </Reveal>
             ) : null}
 
-            <aside>
-              <div className="border-t border-[color:var(--editorial-border)] pt-4 lg:border-t-0 lg:pt-0">
-                <h2 className="font-[family:var(--font-fraunces)] text-[1.8rem] leading-none font-semibold tracking-[-0.04em] text-[var(--editorial-ink)]">
-                  Top Stories
-                </h2>
-                <div className="mt-4 space-y-4">
-                  {topStories.map((story, index) => (
-                    <Link
-                      key={story.id}
-                      href={story.href}
-                      className="group grid grid-cols-[26px_minmax(0,1fr)_72px] items-start gap-3 border-b border-[color:var(--editorial-border)] pb-4 last:border-b-0 last:pb-0"
-                    >
-                      <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-[color:var(--editorial-border)] text-[10px] font-semibold text-[var(--editorial-muted)]">
-                        {index + 1}
-                      </span>
-                      <div>
-                        <h3 className="text-sm leading-5 font-medium text-[var(--editorial-ink)] transition duration-200 group-hover:text-[#8f7300]">
-                          {story.title}
-                        </h3>
-                        <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-[var(--editorial-muted)]">
-                          {story.meta}
-                        </p>
-                      </div>
-                      <div className="relative aspect-[1.1] overflow-hidden bg-[#e9edf4]">
-                        <Image
-                          src={story.image.src}
-                          alt={story.image.alt}
-                          fill
-                          className="object-cover"
-                          sizes="72px"
-                        />
-                      </div>
-                    </Link>
-                  ))}
+            {/* Trending / Top Stories Sidebar */}
+            <Reveal delay={0.06}>
+              <aside className={styles.topStoriesCard}>
+                <div>
+                  <div className={styles.topStoriesHeader}>
+                    <h3 className={styles.topStoriesTitle}>Top Stories</h3>
+                    <span className={styles.topStoriesBadge}>Curated by Engineers</span>
+                  </div>
+
+                  <div className={styles.topStoriesList} style={{ marginTop: "18px" }}>
+                    {topStories.map((story, index) => (
+                      <Link key={story.id} href={story.href} className={styles.topStoryItem}>
+                        <span className={styles.topStoryIndex}>0{index + 1}</span>
+
+                        <div className={styles.topStoryContent}>
+                          <h4 className={styles.topStoryItemTitle}>{story.title}</h4>
+                          <span className={styles.topStoryMeta}>{story.meta}</span>
+                        </div>
+
+                        <div className={styles.topStoryThumb}>
+                          <Image
+                            src={story.image.src}
+                            alt={story.image.alt}
+                            fill
+                            className="object-cover"
+                            sizes="76px"
+                          />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </aside>
-          </div>
 
-          <div className="mt-10 grid gap-8 border-t border-[color:var(--editorial-border)] pt-8 md:grid-cols-2">
-            {lowerStories.map((story) => (
-              <article key={story.id}>
-                <Link href={story.href} className="group block">
-                  <div className="relative aspect-[1.7] overflow-hidden bg-[#e9edf4]">
-                    <Image
-                      src={story.image.src}
-                      alt={story.image.alt}
-                      fill
-                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                      sizes="(max-width: 768px) 100vw, 420px"
-                    />
-                  </div>
-                  <div className="pt-4">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--editorial-muted)]">
-                      {story.meta}
-                    </p>
-                    <h3 className="mt-2 font-[family:var(--font-fraunces)] text-[1.45rem] leading-[1.08] font-semibold tracking-[-0.04em] text-[var(--editorial-ink)] transition duration-200 group-hover:text-[#8f7300]">
-                      {story.title}
-                    </h3>
-                    <p className="mt-2 max-w-md text-sm leading-6 text-[var(--editorial-muted)]">
-                      {story.excerpt}
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {story.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#c8a300]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </Link>
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-10 border-t border-[color:var(--editorial-border)] pt-6">
-            <div className="flex flex-wrap items-center gap-2">
-              {categories.map((category) => {
-                const isActive = category === activeCategory;
-                const href =
-                  category === ALL_BLOG_CATEGORY
-                    ? "/blog"
-                    : `/blog?category=${encodeURIComponent(category)}`;
-
-                return (
-                  <Link
-                    key={category}
-                    href={href}
-                    className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition ${
-                      isActive
-                        ? "bg-[var(--editorial-ink)] text-white"
-                        : "bg-[rgba(11,16,32,0.04)] text-[var(--editorial-muted)] hover:text-[var(--editorial-ink)]"
-                    }`}
-                  >
-                    {category}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-8 border-t border-[color:var(--editorial-border)] pt-6">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c8a300]">
-              Service topics
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {serviceTopicLinks.map((item) => (
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-full border border-[color:var(--editorial-border)] bg-[#fffdf9] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5c564c] transition duration-200 hover:border-[#c9b084] hover:text-[#2a241d]"
+                  href="/assistant"
+                  className={styles.actionLink}
+                  style={{ paddingTop: "14px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}
                 >
-                  {item.label}
+                  Ask AI Engineering Assistant →
+                </Link>
+              </aside>
+            </Reveal>
+          </div>
+
+          {/* Lower Stories Grid */}
+          {lowerStories.length > 0 ? (
+            <section>
+              <div className={styles.articlesGrid}>
+                {lowerStories.map((story, idx) => (
+                  <Reveal key={story.id} delay={0.04 + idx * 0.03}>
+                    <article>
+                      <Link href={story.href} className={styles.articleCard}>
+                        <div className={styles.articleMedia}>
+                          <Image
+                            src={story.image.src}
+                            alt={story.image.alt}
+                            fill
+                            className={styles.articleImage}
+                            sizes="(max-width: 768px) 100vw, 480px"
+                          />
+                        </div>
+
+                        <div className={styles.articleContent}>
+                          <div className={styles.metaRow}>
+                            <span>{story.category}</span>
+                            <span className={styles.dot} />
+                            <span className={styles.metaMuted}>{story.meta}</span>
+                          </div>
+
+                          <h3 className={styles.articleTitle}>{story.title}</h3>
+                          <p className={styles.articleExcerpt}>{story.excerpt}</p>
+
+                          <div className={styles.tagRow}>
+                            {story.tags.map((tag) => (
+                              <span key={tag} className={styles.tagPill}>
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </Link>
+                    </article>
+                  </Reveal>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {/* Service Topics Strip */}
+          <div className={styles.serviceTopicsWrapper}>
+            <span className={styles.serviceTopicsTitle}>Explore Engineering Services</span>
+            <div className={styles.serviceTopicsList}>
+              {serviceTopicLinks.map((item) => (
+                <Link key={item.href} href={item.href} className={styles.serviceTopicPill}>
+                  {item.label} →
                 </Link>
               ))}
             </div>
           </div>
-        </section>
 
-        <div className="mx-auto mt-8 max-w-[1060px]">
-          <BlogNewsletterCta />
+          {/* Newsletter Dispatch CTA */}
+          <Reveal delay={0.08}>
+            <BlogNewsletterCta />
+          </Reveal>
         </div>
       </Container>
-    </div>
+    </section>
   );
 }

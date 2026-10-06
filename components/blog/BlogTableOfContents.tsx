@@ -10,16 +10,16 @@ export default function BlogTableOfContents({
   if (headings.length === 0) return null;
 
   return (
-    <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.58)] p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7a5c2e]">
-        Table of contents
+    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_12px_32px_rgba(0,0,0,0.3)]">
+      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#ffd400]">
+        Table of Contents
       </p>
       <div className="mt-4 space-y-1">
         {headings.map((heading) => (
           <a
             key={heading.id}
             href={`#${heading.id}`}
-            className={`block rounded-2xl px-3 py-2 text-sm text-[#4f493f] transition duration-200 hover:bg-[#f1e8da] hover:text-[#161512] ${
+            className={`block rounded-xl px-3 py-2 text-xs font-semibold text-white/70 transition duration-200 hover:bg-white/10 hover:text-[#ffd400] ${
               heading.level === 3 ? "ml-4" : ""
             }`}
           >

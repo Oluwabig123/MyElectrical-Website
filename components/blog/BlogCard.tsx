@@ -18,65 +18,65 @@ export default function BlogCard({
   const isCompact = variant === "compact";
 
   return (
-    <article className={isCompact ? "border-b border-[color:var(--editorial-border)] pb-5 last:border-b-0 last:pb-0" : ""}>
+    <article className={isCompact ? "border-b border-white/10 pb-5 last:border-b-0 last:pb-0" : ""}>
       <Link
         href={`/blog/${post.slug}`}
         className={
           isCompact
-            ? "group grid grid-cols-[112px_minmax(0,1fr)] gap-4"
-            : "group flex h-full flex-col overflow-hidden rounded-[26px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.72)] shadow-[0_12px_32px_rgba(17,17,17,0.04)]"
+            ? "group grid grid-cols-[100px_minmax(0,1fr)] gap-4 items-center"
+            : "group flex h-full flex-col overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] shadow-[0_12px_32px_rgba(0,0,0,0.3)] transition duration-300 hover:-translate-y-1 hover:border-[#ffd400]/40 hover:shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
         }
       >
         <div
           className={
             isCompact
-              ? "relative aspect-[6/5] overflow-hidden rounded-[18px] border border-[color:var(--editorial-border)]"
-              : "relative aspect-[16/10] overflow-hidden border-b border-[color:var(--editorial-border)] bg-[#e8dfd1]"
+              ? "relative aspect-square overflow-hidden rounded-[14px] border border-white/10 bg-[#0d1624]"
+              : "relative aspect-[16/10] overflow-hidden border-b border-white/10 bg-[#0d1624]"
           }
         >
           <Image
             src={visual.src}
             alt={visual.alt}
-            className="object-cover transition duration-500 group-hover:scale-[1.03]"
+            className="object-cover transition duration-500 group-hover:scale-[1.04]"
             fill
             priority={priority}
             sizes={
               isCompact
-                ? "(max-width: 768px) 34vw, 112px"
+                ? "(max-width: 768px) 30vw, 100px"
                 : "(max-width: 720px) 100vw, (max-width: 1200px) 50vw, 33vw"
             }
           />
         </div>
 
-        <div className={isCompact ? "flex min-w-0 flex-col justify-between py-1" : "flex flex-1 flex-col gap-5 p-6 md:p-7"}>
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#6d6558]">
+        <div className={isCompact ? "flex min-w-0 flex-col justify-center gap-1.5" : "flex flex-1 flex-col justify-between p-6"}>
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#ffd400]">
               <span>{post.category}</span>
-              <span className="h-1 w-1 rounded-full bg-[#b9aa91]" aria-hidden="true" />
-              <span>{post.readingTime}</span>
+              <span className="h-1 w-1 rounded-full bg-white/40" aria-hidden="true" />
+              <span className="text-white/60">{post.readingTime}</span>
             </div>
 
             <h3
               className={
                 isCompact
-                  ? "text-lg font-semibold tracking-[-0.03em] text-[#181614] transition duration-200 group-hover:text-[#7a5c2e]"
-                  : "font-[family:var(--font-fraunces)] text-[1.7rem] leading-[1.08] font-semibold tracking-[-0.04em] text-[#181614] transition duration-200 group-hover:text-[#7a5c2e] md:text-[1.95rem]"
+                  ? "text-base font-bold leading-snug tracking-[-0.01em] text-white transition duration-200 group-hover:text-[#ffd400]"
+                  : "text-xl font-bold leading-tight tracking-[-0.02em] text-white transition duration-200 group-hover:text-[#ffd400] md:text-[22px]"
               }
             >
               {post.title}
             </h3>
 
             {!isCompact ? (
-              <p className="text-sm leading-7 text-[#5c564c] md:text-[15px]">{post.excerpt}</p>
+              <p className="text-sm leading-relaxed text-white/70 line-clamp-3">{post.excerpt}</p>
             ) : null}
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-3 text-sm text-[#5c564c]">
+          <div className="mt-4 flex items-center justify-between gap-3 text-xs text-white/50 border-t border-white/5 pt-3">
             <span>{formatBlogDate(post.publishedAt)}</span>
             {!isCompact ? (
-              <span className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#7a5c2e]">
+              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[#ffd400]">
                 Read article
-                <span aria-hidden="true">↗</span>
+                <span aria-hidden="true">→</span>
               </span>
             ) : null}
           </div>

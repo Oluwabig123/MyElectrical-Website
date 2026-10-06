@@ -175,66 +175,66 @@ export default async function BlogArticlePage({ params }: PageProps) {
 
       <section>
         <Container>
-          <div className="overflow-hidden rounded-[40px] border border-[color:var(--editorial-border)] bg-[rgba(255,251,245,0.78)] px-5 py-8 shadow-[0_18px_50px_rgba(17,17,17,0.05)] md:px-8 md:py-10 xl:px-10">
+          <div className="overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-b from-[#10192a]/85 to-[#080e18]/95 px-6 py-8 shadow-[0_24px_70px_rgba(0,0,0,0.45)] text-white md:px-10 md:py-10">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#5c564c] transition duration-200 hover:text-[#161512]"
+              className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-white/60 transition duration-200 hover:text-[#ffd400]"
             >
               <span aria-hidden="true">←</span>
-              Back to journal
+              Back to Journal
             </Link>
 
             <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_260px] xl:items-end">
               <div className="max-w-4xl">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#6d6558]">
-                  <span className="rounded-full bg-[#efe4d2] px-3 py-1 text-[#7a5c2e]">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#ffd400]">
+                  <span className="rounded-full border border-[#ffd400]/30 bg-[#ffd400]/15 px-3 py-1 text-[#ffd400]">
                     {post.category}
                   </span>
-                  <span>{formatBlogDate(post.publishedAt)}</span>
-                  <span className="h-1 w-1 rounded-full bg-[#b9aa91]" aria-hidden="true" />
-                  <span>{post.readingTime}</span>
+                  <span className="text-white/60">{formatBlogDate(post.publishedAt)}</span>
+                  <span className="h-1 w-1 rounded-full bg-white/40" aria-hidden="true" />
+                  <span className="text-white/60">{post.readingTime}</span>
                 </div>
 
-                <h1 className="mt-5 font-[family:var(--font-fraunces)] text-5xl leading-[0.95] font-semibold tracking-[-0.06em] text-[#161512] md:text-[5rem]">
+                <h1 className="mt-5 text-3xl font-extrabold leading-[1.08] tracking-[-0.03em] text-white md:text-5xl lg:text-[3.5rem]">
                   {post.title}
                 </h1>
-                <p className="mt-5 max-w-3xl text-base leading-8 text-[#5c564c] md:text-lg">
+                <p className="mt-4 max-w-3xl text-base leading-8 text-white/75 md:text-lg">
                   {post.excerpt}
                 </p>
-                <p className="mt-6 text-sm font-medium uppercase tracking-[0.18em] text-[#8f877b]">
+                <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-[#ffd400]">
                   By {post.author}
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.6)] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8f877b]">
+                <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#ffd400]">
                     Published
                   </p>
-                  <p className="mt-2 text-lg font-semibold tracking-[-0.03em] text-[#161512]">
+                  <p className="mt-1 text-base font-bold tracking-[-0.02em] text-white">
                     {formatBlogDate(post.publishedAt)}
                   </p>
                 </div>
-                <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.6)] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8f877b]">
-                    Read time
+                <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#ffd400]">
+                    Read Time
                   </p>
-                  <p className="mt-2 text-lg font-semibold tracking-[-0.03em] text-[#161512]">
+                  <p className="mt-1 text-base font-bold tracking-[-0.02em] text-white">
                     {post.readingTime}
                   </p>
                 </div>
-                <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.6)] p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8f877b]">
+                <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#ffd400]">
                     Tags
                   </p>
-                  <p className="mt-2 text-lg font-semibold tracking-[-0.03em] text-[#161512]">
-                    {post.tags.length}
+                  <p className="mt-1 text-base font-bold tracking-[-0.02em] text-white">
+                    {post.tags.length} Topics
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="relative mt-8 aspect-[16/8.5] overflow-hidden rounded-[34px] border border-[color:var(--editorial-border)] bg-[#e8dfd1]">
+            <div className="relative mt-8 aspect-[16/8.5] overflow-hidden rounded-[26px] border border-white/10 bg-[#0d1624]">
               <Image
                 src={visual.src}
                 alt={visual.alt}
@@ -255,35 +255,35 @@ export default async function BlogArticlePage({ params }: PageProps) {
               <BlogTableOfContents headings={headings} />
             </aside>
 
-            <div className="rounded-[34px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.66)] px-6 py-8 shadow-[0_18px_44px_rgba(17,17,17,0.04)] md:px-10 md:py-10">
-              <p className="border-l-2 border-[#c9b084] pl-5 font-[family:var(--font-fraunces)] text-[1.65rem] leading-[1.2] tracking-[-0.03em] text-[#2a241d] md:text-[2rem]">
+            <div className="rounded-[34px] border border-white/10 bg-gradient-to-b from-[#10192a]/85 to-[#080e18]/95 px-6 py-8 shadow-[0_20px_50px_rgba(0,0,0,0.35)] text-white md:px-10 md:py-10">
+              <p className="border-l-2 border-[#ffd400] pl-5 text-xl font-bold leading-relaxed tracking-[-0.02em] text-white md:text-2xl">
                 {leadParagraph}
               </p>
 
-              <div className="mt-8 h-px w-full bg-[color:var(--editorial-border)]" />
+              <div className="mt-8 h-px w-full bg-white/10" />
 
-              <div className="mt-8 [&_a]:text-[#7a5c2e] [&_a]:underline-offset-4 [&_a:hover]:underline [&_blockquote]:rounded-[24px] [&_blockquote]:border [&_blockquote]:border-[color:var(--editorial-border)] [&_blockquote]:bg-[#f6efe3] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:text-[#2a241d] [&_h2]:mt-12 [&_h2]:font-[family:var(--font-fraunces)] [&_h2]:text-[2.3rem] [&_h2]:leading-[1.02] [&_h2]:font-semibold [&_h2]:tracking-[-0.045em] [&_h3]:mt-8 [&_h3]:text-[1.45rem] [&_h3]:font-semibold [&_h3]:tracking-[-0.03em] [&_img]:rounded-[24px] [&_img]:border [&_img]:border-[color:var(--editorial-border)] [&_img]:shadow-[0_10px_28px_rgba(17,17,17,0.04)] [&_li]:text-[15px] [&_li]:leading-8 [&_ol]:my-6 [&_ol]:space-y-3 [&_p]:my-5 [&_p]:text-[15px] [&_p]:leading-8 [&_p]:text-[#4f493f] [&_strong]:text-[#161512] [&_ul]:my-6 [&_ul]:space-y-3">
+              <div className="mt-8 [&_a]:text-[#ffd400] [&_a]:underline-offset-4 [&_a:hover]:underline [&_blockquote]:rounded-[20px] [&_blockquote]:border [&_blockquote]:border-white/10 [&_blockquote]:bg-white/[0.04] [&_blockquote]:px-5 [&_blockquote]:py-4 [&_blockquote]:text-white/85 [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-extrabold [&_h2]:tracking-[-0.02em] [&_h2]:text-white [&_h3]:mt-7 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-white [&_img]:rounded-[20px] [&_img]:border [&_img]:border-white/10 [&_li]:text-[15px] [&_li]:leading-7 [&_li]:text-white/75 [&_ol]:my-5 [&_ol]:space-y-2 [&_p]:my-4 [&_p]:text-[15px] [&_p]:leading-7 [&_p]:text-white/75 [&_strong]:text-white [&_ul]:my-5 [&_ul]:space-y-2">
                 <MarkdownContent content={post.content} />
               </div>
             </div>
 
             <aside className="self-start space-y-6 xl:sticky xl:top-28">
-              <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[#f6efe3] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7a5c2e]">
-                  Editorial note
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 text-white">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffd400]">
+                  Engineering Takeaway
                 </p>
-                <p className="mt-4 text-sm leading-7 text-[#4f493f]">{articleTip}</p>
+                <p className="mt-3 text-sm leading-6 text-white/75">{articleTip}</p>
               </div>
 
-              <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.58)] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7a5c2e]">
-                  Tags
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 text-white">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffd400]">
+                  Article Tags
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-[color:var(--editorial-border)] bg-[#fffdf9] px-3 py-2 text-xs font-medium uppercase tracking-[0.16em] text-[#5c564c]"
+                      className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/70"
                     >
                       {tag}
                     </span>
@@ -292,27 +292,27 @@ export default async function BlogArticlePage({ params }: PageProps) {
               </div>
 
               {relatedRoutes.serviceLinks.length > 0 || relatedRoutes.collectionLinks.length > 0 ? (
-                <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.58)] p-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7a5c2e]">
-                    Related services and products
+                <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 text-white">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffd400]">
+                    Related Services &amp; Products
                   </p>
-                  <div className="mt-4 space-y-2">
+                  <div className="mt-3 space-y-2">
                     {relatedRoutes.serviceLinks.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="block rounded-2xl border border-[color:var(--editorial-border)] bg-[#fffdf9] px-3 py-2 text-sm font-medium text-[#2a241d] transition duration-200 hover:border-[#c9b084]"
+                        className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 transition duration-200 hover:border-[#ffd400]/40 hover:text-[#ffd400]"
                       >
-                        Service: {item.label}
+                        Service: {item.label} →
                       </Link>
                     ))}
                     {relatedRoutes.collectionLinks.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="block rounded-2xl border border-[color:var(--editorial-border)] bg-[#fffdf9] px-3 py-2 text-sm font-medium text-[#2a241d] transition duration-200 hover:border-[#c9b084]"
+                        className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 transition duration-200 hover:border-[#ffd400]/40 hover:text-[#ffd400]"
                       >
-                        Products: {item.label}
+                        Catalog: {item.label} →
                       </Link>
                     ))}
                   </div>
@@ -320,11 +320,11 @@ export default async function BlogArticlePage({ params }: PageProps) {
               ) : null}
 
               {relatedPosts.length > 0 ? (
-                <div className="rounded-[24px] border border-[color:var(--editorial-border)] bg-[rgba(255,255,255,0.58)] p-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7a5c2e]">
-                    Related articles
+                <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 text-white">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffd400]">
+                    Related Articles
                   </p>
-                  <div className="mt-4 space-y-5">
+                  <div className="mt-4 space-y-4">
                     {relatedPosts.map((item) => (
                       <BlogCard key={item.slug} post={item} variant="compact" />
                     ))}

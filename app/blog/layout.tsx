@@ -1,10 +1,3 @@
-import { Fraunces } from "next/font/google";
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-});
-
 export default function BlogLayout({
   children,
 }: Readonly<{
@@ -12,7 +5,13 @@ export default function BlogLayout({
 }>) {
   return (
     <div
-      className={`${fraunces.variable} [--editorial-bg:#cdb7a3] [--editorial-surface:#fffdfa] [--editorial-ink:#0b1020] [--editorial-muted:#5d5f68] [--editorial-border:rgba(11,16,32,0.1)] [--editorial-accent:#ffd400] bg-[radial-gradient(circle_at_top_left,rgba(255,212,0,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(11,16,32,0.12),transparent_28%),var(--editorial-bg)] text-[var(--editorial-ink)]`}
+      className="min-h-screen bg-[#060c14] text-white [--editorial-surface:rgba(16,25,42,0.75)] [--editorial-ink:#ffffff] [--editorial-muted:rgba(255,255,255,0.75)] [--editorial-border:rgba(255,255,255,0.08)] [--editorial-accent:#ffd400]"
+      style={{
+        backgroundImage: `
+          radial-gradient(900px 400px at 10% 0%, rgba(255, 212, 0, 0.08), transparent 60%),
+          radial-gradient(800px 400px at 90% 100%, rgba(46, 233, 255, 0.06), transparent 60%)
+        `,
+      }}
     >
       {children}
     </div>
