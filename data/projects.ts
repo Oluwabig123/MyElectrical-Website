@@ -66,7 +66,7 @@ export const projects = [
     quote: "Neat routing built to last.",
     location: "Igbogbo, Ikorodu, Lagos",
     mapUrl: "https://maps.google.com/?q=Igbogbo,+Ikorodu,+Lagos",
-    image: "/hero/wiringg.webp",
+    image: "/hero/wiring.webp",
     clientProblem:
       "Client requested a safer conduit path for underground feed and wanted to avoid repeated future rewiring.",
     siteCondition:
@@ -106,7 +106,7 @@ export const projects = [
         phase: "After",
         title: "Completed routing path",
         note: "Final routing delivered with cleaner continuity to panel feed zone.",
-        image: "/hero/wiringg.webp",
+        image: "/hero/wiring.webp",
       },
     ],
     relatedCategoryKeys: ["wiring-cables", "conduits-trunking", "installation-materials"],

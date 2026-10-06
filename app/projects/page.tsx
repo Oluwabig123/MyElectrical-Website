@@ -46,8 +46,8 @@ const executionPillars = [
     text: "Every stage—from raw trenching and conduit bends to final breaker terminations—is photographed before walls or ceilings are closed.",
   },
   {
-    title: "Strict Phase Load Balancing",
-    text: "Circuits are calculated and balanced across phases to prevent neutral burnouts, recurring breaker trips, and voltage sags.",
+    title: "Dedicated Circuit Segregation",
+    text: "Heavy appliance lines are isolated from sensitive electronics and backup circuits to prevent overloads and breaker trips.",
   },
   {
     title: "Original Material Guarantee",

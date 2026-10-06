@@ -383,3 +383,104 @@
   gap: 12px;
   flex-shrink: 0;
 }
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .projectsPage {
+    padding: 16px 0 80px;
+  }
+
+  /* De-nest the outer shell on mobile to eliminate double-borders */
+  .pageShell {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    gap: 36px;
+  }
+
+  .heroMedia {
+    min-height: 500px;
+    border-radius: 20px;
+  }
+
+  .heroOverlay {
+    background:
+      linear-gradient(180deg, rgba(6, 12, 20, 0.35) 0%, rgba(6, 12, 20, 0.85) 55%, rgba(6, 12, 20, 0.98) 100%);
+  }
+
+  .heroContent {
+    left: 16px;
+    right: 16px;
+    bottom: 20px;
+    gap: 14px;
+  }
+
+  .heroTitle {
+    font-size: clamp(26px, 7vw, 34px);
+    line-height: 1.14;
+  }
+
+  .heroSummary {
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+
+  .heroActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .heroActions .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+
+  .heroWhatsAppBtn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+
+  /* Hide static assurance metrics on mobile to reduce clutter and bring case studies up */
+  .metricsCard {
+    display: none;
+  }
+
+  .quickNavCard {
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+
+  .spotlightList {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .finalCta {
+    padding: 24px 18px;
+    border-radius: 20px;
+    gap: 20px;
+  }
+
+  .ctaButtons {
+    width: 100%;
+  }
+
+  .ctaButtons .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+}
+
+@media (min-width: 520px) and (max-width: 980px) {
+  .spotlightList {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
