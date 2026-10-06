@@ -11,7 +11,7 @@ import WhyOduzz from "@/sections/home/WhyOduzz";
 import DeferredSection from "@/components/ui/DeferredSection";
 import FaqAccordion from "@/components/ui/FaqAccordion";
 import JsonLd from "@/components/seo/JsonLd";
-import { homeFaqs, serviceAreas } from "@/data/service-areas";
+import { homeFaqs } from "@/data/service-areas";
 import { buildMetadata } from "@/lib/seo";
 import { absoluteUrl } from "@/lib/seo";
 import { buildFaqSchema } from "@/lib/structured-data";
@@ -102,14 +102,12 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="seoChipRow homeApproachAreas" aria-label="Service areas">
-              {serviceAreas.slice(0, 3).map((area) => (
-                <Link key={area.slug} href={`/locations/${area.slug}`} className="btn outline">
-                  {area.name}
-                </Link>
-              ))}
-              <Link href="/locations" className="btn outline">
-                View all areas
+            <div className="seoChipRow homeApproachAreas" aria-label="Explore more">
+              <Link href="/services" className="btn outline">
+                View All Services
+              </Link>
+              <Link href="/quote" className="btn primary">
+                Request Project Quote
               </Link>
             </div>
           </div>

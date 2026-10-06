@@ -4,7 +4,6 @@ import { buildCollectionPath, buildProductCatalog, buildProductPath } from "@/li
 import { fetchOnlineProductsCached } from "@/lib/product-directory-server";
 import { getAllProjectSlugs } from "@/lib/projects";
 import { absoluteUrl } from "@/lib/seo";
-import { serviceAreas } from "@/data/service-areas";
 import { servicePages } from "@/data/service-pages";
 import { productCategoryLandingPages } from "@/data/product-category-landing-pages";
 
@@ -27,7 +26,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/projects",
     "/quote",
     "/assistant",
-    "/locations",
   ];
   const rootChangeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] = "weekly";
   const defaultChangeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] = "monthly";
@@ -62,12 +60,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.6,
-    })),
-    ...serviceAreas.map((area) => ({
-      url: absoluteUrl(`/locations/${area.slug}`),
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
     })),
     ...servicePages.map((service) => ({
       url: absoluteUrl(`/services/${service.slug}`),

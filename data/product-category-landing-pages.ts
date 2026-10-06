@@ -73,7 +73,7 @@ export const productCategoryLandingPages: ProductCategoryLandingPage[] = [
     ],
     relatedServices: [
       { label: "Electrician in Lagos", href: "/services" },
-      { label: "Electrician in Ikorodu", href: "/locations/ikorodu" },
+      { label: "Electrical Engineering Consultation", href: "/contact" },
       { label: "Conduit house wiring in Lagos", href: "/services/residential-commercial-wiring" },
       { label: "Electrical maintenance", href: "/services/fault-diagnosis-maintenance" },
     ],

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Container from "@/components/layout/Container";
-import SectionHeader from "@/components/ui/SectionHeader";
+import Reveal from "@/components/ui/Reveal";
 import { CONTACT, CONTACT_LINKS, buildWhatsAppUrl } from "@/data/contact";
 import {
   BUDGET_OPTIONS,
@@ -37,10 +37,6 @@ type QuoteStatus = {
   type: "success" | "info" | "error";
   text: string;
 } | null;
-
-function cn(...classNames: Array<string | false | null | undefined>) {
-  return classNames.filter(Boolean).join(" ");
-}
 
 export default function QuoteClient({
   initialForm,
@@ -95,7 +91,7 @@ export default function QuoteClient({
     if (!canUploadQuoteImages()) {
       setStatus({
         type: "error",
-        text: "Image uploads need Supabase configuration. You can still send photos manually on WhatsApp.",
+        text: "Direct image storage is currently offline. You can still submit the form and send site photos directly on WhatsApp.",
       });
       return;
     }
@@ -106,7 +102,7 @@ export default function QuoteClient({
     if (remainingSlots <= 0) {
       setStatus({
         type: "error",
-        text: `You already added the maximum of ${MAX_QUOTE_IMAGE_COUNT} images.`,
+        text: `You have reached the maximum limit of ${MAX_QUOTE_IMAGE_COUNT} images.`,
       });
       return;
     }
@@ -129,7 +125,7 @@ export default function QuoteClient({
     }));
     setStatus({
       type: "success",
-      text: `${imageUrls.length} image(s) uploaded. They will be attached to the lead summary.`,
+      text: `${imageUrls.length} image(s) uploaded successfully. Attached to your lead reference.`,
     });
   }
 
@@ -141,7 +137,7 @@ export default function QuoteClient({
     if (Object.keys(nextErrors).length > 0) {
       setStatus({
         type: "error",
-        text: "Please fix the highlighted fields before submitting.",
+        text: "Please complete the highlighted fields before submitting.",
       });
       return;
     }
@@ -162,209 +158,317 @@ export default function QuoteClient({
     setStatus({
       type: "success",
       text: saved
-        ? `WhatsApp opened and the lead was saved. We usually reply in ${CONTACT.whatsappResponseTime}.`
-        : `WhatsApp opened. Lead storage is unavailable, but we usually reply in ${CONTACT.whatsappResponseTime}.`,
+        ? `WhatsApp launched and lead #${form.referenceId} logged. Our lead engineer responds in ${CONTACT.whatsappResponseTime}.`
+        : `WhatsApp launched with your project details. We usually respond in ${CONTACT.whatsappResponseTime}.`,
     });
   }
 
   return (
-    <section className={cn("section", styles.quotePage)}>
-      <Container className={styles.container}>
-        <SectionHeader
-          kicker="Request Quote"
-          title="Request a quote"
-          subtitle="Share your scope clearly and Oduzz can respond with a faster, more practical next step."
-        />
-
-        <div className={styles.layout}>
-          <aside className={cn("card", styles.info)} aria-label="Quote preparation tips">
-            <div className={styles.infoTitle}>Before you submit</div>
-            <p className={styles.infoLead}>
-              The better the first brief, the faster the team can move from enquiry to useful
-              guidance.
-            </p>
-            <ul className={styles.checklist}>
-              <li>Service type and job location.</li>
-              <li>Short description of your current setup or the job scope.</li>
-              <li>Urgency level, budget direction, and photos if available.</li>
-            </ul>
-
-            <div className={styles.timeline}>
-              <p className={styles.timelineTitle}>What happens next</p>
-              <ol className={styles.timelineList}>
-                <li>Oduzz reviews the brief, photos, and location details.</li>
-                <li>You get a practical response path: clarification, rough quote, or site visit.</li>
-                <li>Scope and material direction are aligned before execution begins.</li>
-              </ol>
-            </div>
-
-            <div className={styles.infoPanel}>
-              <p className={styles.infoPanelTitle}>Need immediate assistance?</p>
-              <p className={styles.infoPanelText}>
-                For urgent faults or timing-sensitive jobs, call directly or send a quick WhatsApp
-                message with photos.
-              </p>
-              <div className={styles.infoActions}>
-                <a className="btn outline" href={CONTACT_LINKS.phone}>
-                  Call
-                </a>
-                <a
-                  className="btn outline"
-                  target="_blank"
-                  rel="noreferrer"
-                  href={CONTACT_LINKS.whatsapp}
-                >
-                  WhatsApp
-                </a>
-                <Link href="/contact" className="btn outline">
-                  Contact page
-                </Link>
+    <section className={styles.quotePage}>
+      <Container>
+        <div className={styles.pageShell}>
+          {/* Hero Header */}
+          <Reveal delay={0.02}>
+            <header className={styles.hero}>
+              <div className={styles.heroBadges}>
+                <span className={styles.heroBrand}>Oduzz Electrical Concept • Fast-Track BOQ</span>
+                <span className={styles.heroStatusDot}>
+                  <span className={styles.pingDot} /> Live Estimating Active (&lt; 10 mins response)
+                </span>
               </div>
-            </div>
-          </aside>
 
-          <form className={cn("form", styles.form)} onSubmit={onSubmit} noValidate>
-            <p className="formNote">
-              Typical response {CONTACT.whatsappResponseTime} on WhatsApp | {CONTACT.businessHours}
-            </p>
-            <p className="formNote">Reference: {form.referenceId}</p>
+              <h1 className={styles.heroTitle}>Request an Itemized Engineering Quote</h1>
 
-            <label className="field">
-              <span>Name</span>
-              <input
-                name="name"
-                value={form.name}
-                onChange={onChange}
-                placeholder="Your name"
-                autoComplete="name"
-                aria-invalid={Boolean(errors.name)}
-              />
-              {errors.name ? <small className="fieldError">{errors.name}</small> : null}
-            </label>
-
-            <label className="field">
-              <span>Phone</span>
-              <input
-                type="tel"
-                name="phone"
-                value={form.phone}
-                onChange={onChange}
-                placeholder="+234..."
-                autoComplete="tel"
-                inputMode="tel"
-                aria-invalid={Boolean(errors.phone)}
-              />
-              {errors.phone ? <small className="fieldError">{errors.phone}</small> : null}
-            </label>
-
-            <label className="field">
-              <span>Service</span>
-              <select
-                name="service"
-                value={form.service}
-                onChange={onChange}
-                aria-invalid={Boolean(errors.service)}
-              >
-                <option value="">Select a service...</option>
-                {SERVICE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              {errors.service ? <small className="fieldError">{errors.service}</small> : null}
-            </label>
-
-            <label className="field">
-              <span>Location</span>
-              <input
-                name="location"
-                value={form.location}
-                onChange={onChange}
-                placeholder="Ikorodu, Lagos..."
-                autoComplete="address-level2"
-                aria-invalid={Boolean(errors.location)}
-              />
-              {errors.location ? <small className="fieldError">{errors.location}</small> : null}
-            </label>
-
-            <label className="field">
-              <span>Brief (optional)</span>
-              <textarea
-                name="details"
-                value={form.details}
-                onChange={onChange}
-                placeholder="Job details, urgency, and preferred schedule..."
-                rows={5}
-              />
-            </label>
-
-            <label className="field">
-              <span>Urgency (optional)</span>
-              <select name="urgency" value={form.urgency} onChange={onChange}>
-                <option value="">Select urgency...</option>
-                {URGENCY_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="field">
-              <span>Budget direction (optional)</span>
-              <select name="budget" value={form.budget} onChange={onChange}>
-                <option value="">Select budget range...</option>
-                {BUDGET_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="field">
-              <span>Project photos (optional)</span>
-              <label className={cn("assistantUploadButton", styles.uploadButton)}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={onImageChange}
-                  disabled={isUploadingImage}
-                />
-                {isUploadingImage ? "Uploading..." : "Upload images"}
-              </label>
-              <small className="fieldHint">
-                Up to {MAX_QUOTE_IMAGE_COUNT} images,{" "}
-                {Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB each. Stored for human review
-                only.
-              </small>
-              {form.imageUrls?.length ? (
-                <small className="fieldHint">
-                  {form.imageUrls.length} image(s) attached to this quote.
-                </small>
-              ) : null}
-            </div>
-
-            <div className="formActions">
-              <a className="btn outline" href={CONTACT_LINKS.phone}>
-                Call
-              </a>
-              <button type="submit" className="btn primary">
-                Request Quote on WhatsApp
-              </button>
-              <button type="button" className="btn outline" onClick={onClear}>
-                Clear
-              </button>
-            </div>
-
-            {status ? (
-              <p className={`formStatus ${status.type}`} role="status" aria-live="polite">
-                {status.text}
+              <p className={styles.heroDesc}>
+                Share your scope, location, and building stage in Lagos. Our engineering desk provides transparent
+                material pricing with 100% verified pure copper cables (Coleman/Nigerchin) and disciplined installation timelines.
               </p>
-            ) : null}
-          </form>
+            </header>
+          </Reveal>
+
+          {/* Form and Sidebar Split */}
+          <div className={styles.layout}>
+            {/* Sidebar Column */}
+            <aside className={styles.infoColumn}>
+              <Reveal delay={0.04}>
+                <div className={styles.infoCard}>
+                  <div className={styles.refTag}>
+                    <span>Ref: #{form.referenceId}</span>
+                  </div>
+
+                  <h2 className={styles.infoTitle}>What You Receive</h2>
+                  <p className={styles.infoLead}>
+                    A professional, itemized Bill of Quantities (BOQ) with zero hidden markups and genuine materials.
+                  </p>
+
+                  <ul className={styles.checklist}>
+                    <li className={styles.checklistItem}>
+                      <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span><strong>100% Pure Copper Guarantee:</strong> Certified Coleman & Nigerchin only (no copper-clad aluminium).</span>
+                    </li>
+                    <li className={styles.checklistItem}>
+                      <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span><strong>Transparent Sizing:</strong> Dedicated radial lines for air conditioners, pumps, and inverters.</span>
+                    </li>
+                    <li className={styles.checklistItem}>
+                      <svg className={styles.checkIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span><strong>Speed:</strong> Lead engineer photo review within {CONTACT.whatsappResponseTime} during working hours.</span>
+                    </li>
+                  </ul>
+
+                  <div className={styles.timelineBox}>
+                    <h3 className={styles.timelineTitle}>Next Steps</h3>
+                    <ol className={styles.timelineList}>
+                      <li>Lead engineer audits your submitted brief and photos.</li>
+                      <li>We confirm project feasibility and send itemized material & labor schedule.</li>
+                      <li>Scheduled on-site mobilization across Lagos Mainland or Island.</li>
+                    </ol>
+                  </div>
+                </div>
+              </Reveal>
+
+              <Reveal delay={0.08}>
+                <div className={styles.urgentBox}>
+                  <h3 className={styles.urgentTitle}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    Need Urgent Site Dispatch?
+                  </h3>
+                  <p className={styles.urgentText}>
+                    For ongoing site emergencies, breaker tripping faults, or immediate same-day inspections in Lagos:
+                  </p>
+                  <div className={styles.urgentActions}>
+                    <a href={CONTACT_LINKS.phone} className={`${styles.urgentBtn} ${styles.urgentBtnPhone}`}>
+                      Call {CONTACT.phoneDisplay}
+                    </a>
+                    <a
+                      href={CONTACT_LINKS.whatsapp}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${styles.urgentBtn} ${styles.urgentBtnWa}`}
+                    >
+                      Chat on WhatsApp
+                    </a>
+                  </div>
+                </div>
+              </Reveal>
+            </aside>
+
+            {/* Interactive Form Column */}
+            <Reveal delay={0.06}>
+              <form className={styles.formCard} onSubmit={onSubmit} noValidate>
+                {/* Section 1: Contact Details */}
+                <div className={styles.formSectionHeader}>
+                  <h2 className={styles.formSectionTitle}>1. Client Contact Information</h2>
+                  <p className={styles.formSectionHint}>Where should we deliver your estimate and project updates?</p>
+                </div>
+
+                <div className={styles.formGrid}>
+                  <div className={styles.field}>
+                    <label htmlFor="quote-name" className={styles.label}>Full Name *</label>
+                    <input
+                      id="quote-name"
+                      name="name"
+                      className={styles.input}
+                      value={form.name}
+                      onChange={onChange}
+                      placeholder="e.g. Babatunde Adeleke"
+                      autoComplete="name"
+                      aria-invalid={Boolean(errors.name)}
+                    />
+                    {errors.name ? <span className={styles.fieldError}>{errors.name}</span> : null}
+                  </div>
+
+                  <div className={styles.field}>
+                    <label htmlFor="quote-phone" className={styles.label}>Phone Number (WhatsApp) *</label>
+                    <input
+                      id="quote-phone"
+                      type="tel"
+                      name="phone"
+                      className={styles.input}
+                      value={form.phone}
+                      onChange={onChange}
+                      placeholder="e.g. 08012345678"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      aria-invalid={Boolean(errors.phone)}
+                    />
+                    {errors.phone ? <span className={styles.fieldError}>{errors.phone}</span> : null}
+                  </div>
+                </div>
+
+                {/* Section 2: Project Specifications */}
+                <div className={styles.formSectionHeader}>
+                  <h2 className={styles.formSectionTitle}>2. Project Scope & Location</h2>
+                  <p className={styles.formSectionHint}>Specify the primary service and your area in Lagos.</p>
+                </div>
+
+                <div className={styles.formGrid}>
+                  <div className={styles.field}>
+                    <label htmlFor="quote-service" className={styles.label}>Service Type *</label>
+                    <select
+                      id="quote-service"
+                      name="service"
+                      className={styles.select}
+                      value={form.service}
+                      onChange={onChange}
+                      aria-invalid={Boolean(errors.service)}
+                    >
+                      <option value="">Select a service category...</option>
+                      {SERVICE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.service ? <span className={styles.fieldError}>{errors.service}</span> : null}
+                  </div>
+
+                  <div className={styles.field}>
+                    <label htmlFor="quote-location" className={styles.label}>Project Location in Lagos *</label>
+                    <input
+                      id="quote-location"
+                      name="location"
+                      className={styles.input}
+                      value={form.location}
+                      onChange={onChange}
+                      placeholder="e.g. Lekki Phase 1, Ikorodu, Ikeja GRA..."
+                      autoComplete="address-level2"
+                      aria-invalid={Boolean(errors.location)}
+                    />
+                    {errors.location ? <span className={styles.fieldError}>{errors.location}</span> : null}
+                  </div>
+
+                  <div className={`${styles.field} ${styles.fieldFull}`}>
+                    <label htmlFor="quote-details" className={styles.label}>Project Details & Scope Notes (Optional)</label>
+                    <textarea
+                      id="quote-details"
+                      name="details"
+                      className={styles.textarea}
+                      value={form.details}
+                      onChange={onChange}
+                      placeholder="Describe your building type (e.g. 4-bedroom duplex at decking stage), key appliances (inverter ACs, pumps), or materials required..."
+                      rows={4}
+                    />
+                  </div>
+                </div>
+
+                {/* Section 3: Timeline & Budget */}
+                <div className={styles.formSectionHeader}>
+                  <h2 className={styles.formSectionTitle}>3. Project Timeline & Budget</h2>
+                  <p className={styles.formSectionHint}>Helps our engineering desk prioritize mobilization scheduling.</p>
+                </div>
+
+                <div className={styles.formGrid}>
+                  <div className={styles.field}>
+                    <label htmlFor="quote-urgency" className={styles.label}>Urgency Level (Optional)</label>
+                    <select
+                      id="quote-urgency"
+                      name="urgency"
+                      className={styles.select}
+                      value={form.urgency}
+                      onChange={onChange}
+                    >
+                      <option value="">Select urgency level...</option>
+                      {URGENCY_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className={styles.field}>
+                    <label htmlFor="quote-budget" className={styles.label}>Budget Range (Optional)</label>
+                    <select
+                      id="quote-budget"
+                      name="budget"
+                      className={styles.select}
+                      value={form.budget}
+                      onChange={onChange}
+                    >
+                      <option value="">Select approximate budget...</option>
+                      {BUDGET_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className={`${styles.field} ${styles.fieldFull}`}>
+                    <label className={styles.label}>Project Photos or Architectural Drawings (Optional)</label>
+                    <div className={styles.uploadWrapper}>
+                      <label className={styles.uploadButton}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <polyline points="21 15 16 10 5 21" />
+                        </svg>
+                        <span>{isUploadingImage ? "Uploading Photos..." : "Attach Site Photos / Drawings"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={onImageChange}
+                          disabled={isUploadingImage}
+                        />
+                      </label>
+                      <span className={styles.fieldHint}>
+                        Up to {MAX_QUOTE_IMAGE_COUNT} images ({Math.round(MAX_QUOTE_IMAGE_SIZE_BYTES / 1048576)}MB max each). You can also send photos directly on WhatsApp.
+                      </span>
+                      {form.imageUrls?.length ? (
+                        <span className={styles.fieldHint} style={{ color: "#4ade80", fontWeight: 700 }}>
+                          ✓ {form.imageUrls.length} image(s) attached to this quote request.
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form Actions */}
+                <div className={styles.formActions}>
+                  <button type="submit" className={styles.btnSubmit}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.97.531 1.77.82 2.796.82 3.18 0 5.767-2.586 5.767-5.766.001-3.182-2.585-5.806-5.767-5.806zm7.251 5.766c-.001 4.017-3.267 7.284-7.282 7.284-1.255 0-2.454-.325-3.513-.935l-3.907 1.025 1.047-3.824c-.7-1.12-1.071-2.42-1.07-3.75 0-4.018 3.267-7.285 7.285-7.285 4.018 0 7.44 3.463 7.44 7.485z" />
+                    </svg>
+                    Submit Scope to WhatsApp
+                  </button>
+
+                  <a href={CONTACT_LINKS.phone} className={styles.btnCall}>
+                    Call Directly
+                  </a>
+
+                  <button type="button" className={styles.btnClear} onClick={onClear}>
+                    Reset Form
+                  </button>
+                </div>
+
+                {status ? (
+                  <div
+                    className={`${styles.statusBanner} ${
+                      status.type === "success"
+                        ? styles.statusSuccess
+                        : status.type === "error"
+                        ? styles.statusError
+                        : styles.statusInfo
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {status.text}
+                  </div>
+                ) : null}
+              </form>
+            </Reveal>
+          </div>
         </div>
       </Container>
     </section>

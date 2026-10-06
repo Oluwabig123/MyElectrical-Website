@@ -14,7 +14,6 @@ const primaryLinks = [
 const companyLinks = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
-  { href: "/locations", label: "Service Areas" },
 ] as const;
 
 const resourceLinks = [

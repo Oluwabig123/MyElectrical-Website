@@ -2,7 +2,6 @@ import Link from "next/link";
 import Container from "@/components/layout/Container";
 import Reveal from "@/components/ui/Reveal";
 import { CONTACT } from "@/data/contact";
-import { serviceAreas } from "@/data/service-areas";
 import { getAllProjects } from "@/lib/projects";
 import styles from "./HomeTrustBand.module.css";
 
@@ -17,9 +16,9 @@ const proofItems = [
     detail: `During ${CONTACT.businessHours}`,
   },
   {
-    value: String(serviceAreas.length),
-    label: "Lagos focus areas",
-    detail: "Plus wider support by project scope",
+    value: "All Lagos",
+    label: "Coverage zones",
+    detail: "Mainland, Island & Ikorodu base",
   },
   {
     value: String(projectCategories.length),
