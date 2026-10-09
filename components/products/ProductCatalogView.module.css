@@ -3,6 +3,8 @@
   flex-direction: column;
   gap: 16px;
   margin-bottom: 24px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .searchAndSortBar {
@@ -11,12 +13,14 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .searchBox {
   position: relative;
   flex: 1;
-  min-width: 260px;
+  min-width: min(100%, 240px);
 }
 
 .searchInput {
@@ -95,6 +99,10 @@
   overflow-x: auto;
   padding-bottom: 6px;
   scrollbar-width: thin;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .categoryPill {
@@ -180,4 +188,27 @@
   font-size: 14px;
   color: #94a3b8;
   margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .searchAndSortBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .searchBox {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sortBox {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .sortSelect {
+    flex: 1;
+    max-width: none;
+  }
 }

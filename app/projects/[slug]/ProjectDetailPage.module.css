@@ -1,5 +1,6 @@
 .page {
   position: relative;
+  overflow-x: clip;
   padding: clamp(24px, 3.5vw, 40px) 0 clamp(80px, 7vw, 110px);
   background:
     radial-gradient(900px 380px at 10% 0%, rgba(255, 212, 0, 0.08), transparent 62%),
@@ -12,9 +13,12 @@
 .breadcrumb {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 13px;
   margin-bottom: 24px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .breadcrumb a {
@@ -34,17 +38,18 @@
 .crumbCurrent {
   color: #ffd400;
   font-weight: 600;
+  word-break: break-word;
 }
 
 /* Hero Grid */
 .heroGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.95fr);
   gap: 20px;
   margin-bottom: 48px;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
   .heroGrid {
     grid-template-columns: 1fr;
   }
@@ -608,4 +613,54 @@
   flex-wrap: wrap;
   gap: 12px;
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .mediaCard {
+    min-height: 340px;
+    border-radius: 20px;
+  }
+
+  .mediaContent {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    gap: 10px;
+  }
+
+  .heroTitle {
+    font-size: clamp(24px, 6.5vw, 32px);
+  }
+
+  .quickSpecsCard {
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+
+  .challengeCard,
+  .executionCard,
+  .evidenceCard {
+    padding: 18px 16px;
+    border-radius: 18px;
+  }
+
+  .conversionBanner {
+    padding: 24px 18px;
+    border-radius: 20px;
+  }
+
+  .bannerActions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .bannerActions a {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .outcomeCard a {
+    width: 100%;
+    justify-content: center;
+  }
 }

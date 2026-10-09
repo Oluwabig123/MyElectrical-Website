@@ -44,6 +44,7 @@
 html {
   background: var(--bg);
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -51,6 +52,7 @@ body {
   background: linear-gradient(180deg, #07101a 0%, #060f19 100%);
   color: var(--ink);
   font-family: var(--font-manrope), sans-serif;
+  overflow-x: clip;
 }
 
 /* Global background flattening: reduce decorative overlay intensity app-wide */

@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .controlsBar {
@@ -15,13 +17,18 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   backdrop-filter: blur(12px);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .filtersScroller {
   overflow-x: auto;
-  margin-inline: -2px;
-  padding-inline: 2px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  padding-bottom: 2px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .filtersScroller::-webkit-scrollbar {
@@ -274,7 +281,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   margin-top: auto;
@@ -354,8 +362,11 @@
   }
 
   .filtersScroller {
-    margin-inline: -14px;
-    padding-inline: 14px;
+    margin-inline: 0;
+    padding-inline: 0;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -421,5 +432,22 @@
   .quickQuoteBtn {
     padding: 8px 14px;
     font-size: 11.5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .detailsBtn {
+    justify-content: center;
+  }
+
+  .quickQuoteBtn {
+    width: 100%;
+    text-align: center;
   }
 }
