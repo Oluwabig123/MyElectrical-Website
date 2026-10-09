@@ -21,7 +21,11 @@ type CartContextValue = {
   totalItems: number;
   subtotalAmount: number;
   hasItems: boolean;
-  addItem: (product: Partial<CartItem>, quantity?: number) => void;
+  isDrawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  toggleDrawer: () => void;
+  addItem: (product: Partial<CartItem>, quantity?: number, options?: { openDrawer?: boolean }) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
@@ -98,6 +102,11 @@ export function CartProvider({
 }>) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const openDrawer = useCallback(() => setIsDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
+  const toggleDrawer = useCallback(() => setIsDrawerOpen((prev) => !prev), []);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -113,26 +122,33 @@ export function CartProvider({
     persistCart(items);
   }, [hasLoadedFromStorage, items]);
 
-  const addItem = useCallback((product: Partial<CartItem>, quantity = 1) => {
-    const nextQuantity = clampQuantityToStock(quantity, product?.stockQty);
-    const normalized = normalizeCartItem({ ...product, quantity: nextQuantity });
+  const addItem = useCallback(
+    (product: Partial<CartItem>, quantity = 1, options?: { openDrawer?: boolean }) => {
+      const nextQuantity = clampQuantityToStock(quantity, product?.stockQty);
+      const normalized = normalizeCartItem({ ...product, quantity: nextQuantity });
 
-    setItems((current) => {
-      const existingIndex = current.findIndex((item) => item.id === normalized.id);
-      if (existingIndex === -1) {
-        return [...current, normalized];
+      setItems((current) => {
+        const existingIndex = current.findIndex((item) => item.id === normalized.id);
+        if (existingIndex === -1) {
+          return [...current, normalized];
+        }
+
+        const updated = [...current];
+        const existing = updated[existingIndex];
+        updated[existingIndex] = {
+          ...existing,
+          ...normalized,
+          quantity: clampQuantityToStock(existing.quantity + nextQuantity, normalized.stockQty),
+        };
+        return updated;
+      });
+
+      if (options?.openDrawer !== false) {
+        setIsDrawerOpen(true);
       }
-
-      const updated = [...current];
-      const existing = updated[existingIndex];
-      updated[existingIndex] = {
-        ...existing,
-        ...normalized,
-        quantity: clampQuantityToStock(existing.quantity + nextQuantity, normalized.stockQty),
-      };
-      return updated;
-    });
-  }, []);
+    },
+    [],
+  );
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
     setItems((current) =>
@@ -167,12 +183,28 @@ export function CartProvider({
       totalItems,
       subtotalAmount,
       hasItems: items.length > 0,
+      isDrawerOpen,
+      openDrawer,
+      closeDrawer,
+      toggleDrawer,
       addItem,
       updateQuantity,
       removeItem,
       clearCart,
     }),
-    [addItem, clearCart, items, removeItem, subtotalAmount, totalItems, updateQuantity],
+    [
+      addItem,
+      clearCart,
+      closeDrawer,
+      isDrawerOpen,
+      items,
+      openDrawer,
+      removeItem,
+      subtotalAmount,
+      toggleDrawer,
+      totalItems,
+      updateQuantity,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

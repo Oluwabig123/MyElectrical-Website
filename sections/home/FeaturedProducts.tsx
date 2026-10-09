@@ -101,9 +101,12 @@ export default async function FeaturedProducts() {
             ))}
           </div>
 
-          <div className="featuredProductsHomeFoot">
+          <div className="featuredProductsHomeFoot" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/products" className="btn primary featuredProductsHomeCta">
-              Browse All Products
+              Browse Verified Materials Catalog
+            </Link>
+            <Link href="/quote" className="btn outline">
+              Request Project BOQ Schedule
             </Link>
           </div>
         </div>

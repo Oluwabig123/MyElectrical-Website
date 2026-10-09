@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import Container from "@/components/layout/Container";
 import ProductCard from "@/components/products/ProductCard";
+import ProductCatalogView from "@/components/products/ProductCatalogView";
 import SmartImage from "@/components/ui/SmartImage";
 import journeyStyles from "@/components/products/ProductJourney.module.css";
 import JsonLd from "@/components/seo/JsonLd";
@@ -263,45 +264,23 @@ export default async function ProductsPage() {
             ) : null}
 
             <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)} id="catalog-grid">
-                <div className={journeyStyles.sectionHead}>
-                  <div className={journeyStyles.sectionCopy}>
-                    <p className={journeyStyles.eyebrow}>Full catalog</p>
-                    <h2 className={journeyStyles.catalogTitle}>All live products</h2>
-                    <p className={journeyStyles.catalogFeedback}>
-                      Browse every product currently live in the catalog.
-                    </p>
-                  </div>
-                  <Link href="/quote" className={journeyStyles.sectionLink}>
-                    Bundle quote
-                  </Link>
-                </div>
-
-              {catalog.items.length === 0 ? (
-                <div className={journeyStyles.emptyState}>
-                  <h2 className={journeyStyles.emptyTitle}>Catalog update in progress</h2>
-                  <p className={journeyStyles.emptyBody}>
-                    Products are currently syncing. You can still request a quote with your required
-                    items and project location.
+              <div className={journeyStyles.sectionHead}>
+                <div className={journeyStyles.sectionCopy}>
+                  <p className={journeyStyles.eyebrow}>Materials Directory</p>
+                  <h2 className={journeyStyles.catalogTitle}>Search & Filter Materials</h2>
+                  <p className={journeyStyles.catalogFeedback}>
+                    Search by brand, cable gauge, or rating. Add to cart, order on WhatsApp, or request an installation bundle.
                   </p>
-                  <div className={journeyStyles.actions}>
-                    <Link href="/quote" className="btn primary">
-                      Request quote
-                    </Link>
-                  </div>
                 </div>
-              ) : (
-                <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridListing)}>
-                  {catalog.items.map((item, index) => (
-                    <ProductCard
-                      key={item.id}
-                      product={item}
-                      variant="listing"
-                      showCategory
-                      priority={index < 4}
-                    />
-                  ))}
-                </div>
-              )}
+                <Link href="/quote" className={journeyStyles.sectionLink}>
+                  Request BOQ Quote →
+                </Link>
+              </div>
+
+              <ProductCatalogView
+                products={catalog.items}
+                categories={categorySummaries}
+              />
             </section>
 
             <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)}>

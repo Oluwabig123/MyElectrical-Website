@@ -180,11 +180,30 @@ export default function ProductsAdminManager() {
   const [catalogError, setCatalogError] = useState("");
   const [formStatus, setFormStatus] = useState({ type: "", message: "" });
   const [authStatus, setAuthStatus] = useState({ type: "", message: "" });
+  const [adminListSearch, setAdminListSearch] = useState("");
+  const [adminListStatusFilter, setAdminListStatusFilter] = useState<"all" | "live" | "hidden">("all");
 
   const adminCatalog = useMemo(
     () => buildProductCatalog(cloudProducts, { includeInactive: true }),
     [cloudProducts],
   );
+
+  const displayedAdminProducts = useMemo(() => {
+    return adminCatalog.items.filter((item) => {
+      if (adminListStatusFilter === "live" && !item.isActive) return false;
+      if (adminListStatusFilter === "hidden" && item.isActive) return false;
+      if (adminListSearch.trim()) {
+        const q = adminListSearch.toLowerCase().trim();
+        return (
+          item.name.toLowerCase().includes(q) ||
+          item.brand.toLowerCase().includes(q) ||
+          item.categoryLabel.toLowerCase().includes(q) ||
+          item.size.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [adminCatalog.items, adminListSearch, adminListStatusFilter]);
   const inferredCategoryLabel = useMemo(() => {
     const draftCategory = inferAdminFormCategory(adminForm);
     return getCategoryLabel(draftCategory);
@@ -970,23 +989,63 @@ export default function ProductsAdminManager() {
           ) : null}
 
           <div className="productsAdminListWrap">
-            <h3 className="productsAdminListTitle">
-              Cloud products ({adminCatalog.items.length})
-            </h3>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+              <h3 className="productsAdminListTitle" style={{ margin: 0 }}>
+                Cloud products ({displayedAdminProducts.length} / {adminCatalog.items.length})
+              </h3>
+
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <input
+                  type="text"
+                  placeholder="Filter products..."
+                  value={adminListSearch}
+                  onChange={(e) => setAdminListSearch(e.target.value)}
+                  style={{
+                    height: 36,
+                    padding: "0 12px",
+                    borderRadius: 8,
+                    background: "rgba(15, 23, 42, 0.7)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    color: "#f8fafc",
+                    fontSize: 13,
+                  }}
+                />
+                <select
+                  value={adminListStatusFilter}
+                  onChange={(e) => setAdminListStatusFilter(e.target.value as any)}
+                  style={{
+                    height: 36,
+                    padding: "0 10px",
+                    borderRadius: 8,
+                    background: "rgba(15, 23, 42, 0.7)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    color: "#f8fafc",
+                    fontSize: 13,
+                  }}
+                >
+                  <option value="all">All Status</option>
+                  <option value="live">Live Only</option>
+                  <option value="hidden">Hidden Only</option>
+                </select>
+              </div>
+            </div>
+
             {isCatalogLoading ? (
               <p className="productsAdminEmpty">Loading cloud products...</p>
             ) : null}
             {!isCatalogLoading && catalogError ? (
               <p className="formStatus error">{catalogError}</p>
             ) : null}
-            {!isCatalogLoading && !catalogError && adminCatalog.items.length === 0 ? (
+            {!isCatalogLoading && !catalogError && displayedAdminProducts.length === 0 ? (
               <p className="productsAdminEmpty">
-                No online products yet. Add stock from the manager to publish it here.
+                {adminCatalog.items.length === 0
+                  ? "No online products yet. Add stock from the manager to publish it here."
+                  : "No products match your filter search."}
               </p>
             ) : null}
-            {!isCatalogLoading && !catalogError && adminCatalog.items.length > 0 ? (
+            {!isCatalogLoading && !catalogError && displayedAdminProducts.length > 0 ? (
               <ul className="productsAdminList">
-                {adminCatalog.items.map((item) => (
+                {displayedAdminProducts.map((item) => (
                   <li key={item.id} className="productsAdminItem">
                     {item.imageUrl ? (
                       <Image

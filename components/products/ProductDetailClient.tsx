@@ -85,6 +85,7 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const { addItem } = useCart();
   const [cartFeedback, setCartFeedback] = useState("");
+  const [showCardCheckout, setShowCardCheckout] = useState(false);
   const [quantity, setQuantity] = useState(() => clampQuantity(1, product.stockQty));
   const availability = getProductAvailability(product);
   const canAddToCart = product.isActive && product.stockQty > 0 && product.priceAmount > 0;
@@ -238,8 +239,15 @@ export default function ProductDetailClient({
                         <button type="button" className="btn primary" onClick={handleAddToCart}>
                           Add to cart
                         </button>
+                        <button
+                          type="button"
+                          className="btn outline"
+                          onClick={() => setShowCardCheckout((prev) => !prev)}
+                        >
+                          {showCardCheckout ? "Hide Card Checkout" : "Pay with Card / Transfer"}
+                        </button>
                         <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn outline">
-                          Ask on WhatsApp
+                          Order on WhatsApp
                         </a>
                       </>
                     ) : (
@@ -271,22 +279,41 @@ export default function ProductDetailClient({
                   </div>
                 </div>
 
-                {canAddToCart ? (
-                  <details className={styles.checkoutDisclosure}>
-                    <summary>Pay online now</summary>
-                    <div className={styles.checkoutPanelWrap}>
-                      <PaystackCheckoutPanel
-                        productId={product.id}
-                        productName={product.name}
-                        priceLabel={formatProductPrice(product)}
-                        quantity={safeQuantity}
-                        totalLabel={totalPriceLabel}
-                        title="Secure card checkout"
-                        compact
-                      />
-                    </div>
-                  </details>
+                {canAddToCart && showCardCheckout ? (
+                  <div className={styles.checkoutPanelWrap} style={{ marginTop: 12 }}>
+                    <PaystackCheckoutPanel
+                      productId={product.id}
+                      productName={product.name}
+                      priceLabel={formatProductPrice(product)}
+                      quantity={safeQuantity}
+                      totalLabel={totalPriceLabel}
+                      title="Secure Card & Transfer Checkout"
+                      compact
+                    />
+                  </div>
                 ) : null}
+
+                <div className={styles.installationCrossSell}>
+                  <div className={styles.installContent}>
+                    <div className={styles.installIcon} aria-hidden="true">
+                      ⚡
+                    </div>
+                    <div className={styles.installText}>
+                      <strong>Need this installed on your site?</strong>
+                      <p>
+                        Avoid faulty connections. Oduzz certified electricians provide guaranteed installation across Lagos.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/quote?service=${encodeURIComponent(
+                      product.categoryLabel || "Residential / commercial wiring",
+                    )}&details=${encodeURIComponent("Material specification: " + product.name + " (" + (product.size || "") + ")")}`}
+                    className={`btn outline ${styles.installBtn}`}
+                  >
+                    Request Installation Quote →
+                  </Link>
+                </div>
 
                 <section className={styles.specPanel} aria-labelledby="product-spec-heading">
                   <div className={styles.sectionHead}>

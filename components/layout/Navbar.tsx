@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Container from "@/components/layout/Container";
 import styles from "@/components/layout/SiteChrome.module.css";
+import { useCart } from "@/lib/cart-context";
 
 const navItems = [
   { href: "/services", label: "Services" },
@@ -27,6 +28,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
+  const { totalItems, openDrawer } = useCart();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -81,6 +83,18 @@ export default function Navbar() {
         <div className={styles.navCtas}>
           <button
             type="button"
+            className={styles.navCartLink}
+            onClick={openDrawer}
+            aria-label={`Open cart (${totalItems} items)`}
+          >
+            <span>Cart</span>
+            {totalItems > 0 ? (
+              <span className={styles.navCartCount}>{totalItems}</span>
+            ) : null}
+          </button>
+
+          <button
+            type="button"
             className={styles.navBurger}
             onClick={() => setOpen((value) => !value)}
             aria-label="Toggle menu"
@@ -105,6 +119,20 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
+            <button
+              type="button"
+              className={cn(styles.navMobileLink, styles.navCartLink)}
+              onClick={() => {
+                setOpen(false);
+                openDrawer();
+              }}
+              style={{ textAlign: "left", width: "100%", justifyContent: "space-between" }}
+            >
+              <span>View Cart</span>
+              {totalItems > 0 ? (
+                <span className={styles.navCartCount}>{totalItems}</span>
+              ) : null}
+            </button>
           </Container>
         </div>
       ) : null}

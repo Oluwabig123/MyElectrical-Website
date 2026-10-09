@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Container from "@/components/layout/Container";
 import PaystackCheckoutPanel from "@/components/payments/PaystackCheckoutPanel";
@@ -9,9 +9,6 @@ import Reveal from "@/components/ui/Reveal";
 import { CONTACT, buildWhatsAppUrl } from "@/data/contact";
 import { useCart } from "@/lib/cart-context";
 import { buildProductPath, formatProductPrice } from "@/lib/product-catalog";
-
-const PAYSTACK_CART_MESSAGE =
-  "Online checkout will be enabled from the cart soon. Use WhatsApp for now and we will confirm stock before payment.";
 
 function formatCartAmount(amount: number, currency = "NGN") {
   return formatProductPrice({ priceAmount: amount, currency });
@@ -22,11 +19,14 @@ function buildCartOrderMessage(
   subtotalAmount: number,
   currency: string,
 ) {
-  const lines = ["Hello Oduzz, I want to order these products from my cart:", ""];
+  const lines = [
+    "Hello Oduzz Electrical, I want to order these materials from my cart:",
+    "",
+  ];
 
   items.forEach((item, index) => {
     lines.push(
-      `${index + 1}. ${item.name}`,
+      `${index + 1}. *${item.name}*`,
       `   Qty: ${item.quantity}`,
       `   Price: ${formatProductPrice(item)}`,
       `   Subtotal: ${formatCartAmount(item.priceAmount * item.quantity, item.currency)}`,
@@ -35,16 +35,18 @@ function buildCartOrderMessage(
     );
   });
 
-  lines.push(`Cart subtotal: ${formatCartAmount(subtotalAmount, currency)}`);
-  lines.push("Please confirm availability and next steps.");
+  lines.push(`*Cart Total: ${formatCartAmount(subtotalAmount, currency)}*`);
+  lines.push("");
+  lines.push("Please confirm availability and dispatch schedule across Lagos.");
 
   return lines.join("\n");
 }
 
 export default function CartClient() {
   const { items, totalItems, subtotalAmount, updateQuantity, removeItem, clearCart } = useCart();
+  const [showPaystack, setShowPaystack] = useState(false);
   const primaryCurrency = items[0]?.currency || "NGN";
-  const checkoutItem = items.length === 1 ? items[0] : null;
+
   const whatsappUrl = useMemo(
     () =>
       buildWhatsAppUrl(
@@ -58,15 +60,14 @@ export default function CartClient() {
       <Container>
         <div className="cartTopbar">
           <div>
-            <p className="cartKicker">Cart</p>
-            <h1 className="cartTitle">Review your selected products</h1>
+            <p className="cartKicker">Review Sourcing List</p>
+            <h1 className="cartTitle">Your Selected Electrical Materials</h1>
             <p className="cartLead">
-              Keep payment at one point. Adjust quantities here, then continue through WhatsApp
-              until online checkout goes live.
+              Adjust quantities below, checkout securely online, or send your list directly on WhatsApp for job-site delivery.
             </p>
           </div>
           <Link href="/products" className="cartBackLink">
-            Continue shopping
+            ← Continue shopping
           </Link>
         </div>
 
@@ -75,14 +76,14 @@ export default function CartClient() {
             <div className="card cartEmptyState">
               <h2 className="cartEmptyTitle">Your cart is empty</h2>
               <p className="cartEmptyLead">
-                Add products from the catalog first. New online stock will appear there automatically.
+                Browse our catalog of cables, lighting, distribution boards, solar equipment, and CCTV materials.
               </p>
               <div className="cartActions">
                 <Link href="/products" className="btn primary">
                   Browse products
                 </Link>
                 <Link href="/quote" className="btn outline">
-                  Request product quote
+                  Request project quote
                 </Link>
               </div>
             </div>
@@ -170,7 +171,7 @@ export default function CartClient() {
 
             <Reveal delay={0.08}>
               <aside className="card cartSummary">
-                <p className="cartSummaryKicker">Summary</p>
+                <p className="cartSummaryKicker">Order Summary</p>
                 <h2 className="cartSummaryTitle">
                   {totalItems} item{totalItems === 1 ? "" : "s"} in cart
                 </h2>
@@ -180,39 +181,43 @@ export default function CartClient() {
                   <strong>{formatCartAmount(subtotalAmount, primaryCurrency)}</strong>
                 </div>
                 <div className="cartSummaryRow">
-                  <span>Payment</span>
-                  <strong>{checkoutItem ? "Single-item checkout ready" : "WhatsApp for mixed carts"}</strong>
+                  <span>Delivery</span>
+                  <strong>Site dispatch across Lagos</strong>
                 </div>
 
-                <p className="formStatus info cartSummaryStatus">{PAYSTACK_CART_MESSAGE}</p>
-
                 <div className="cartActions cartSummaryActions">
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={() => setShowPaystack((prev) => !prev)}
+                  >
+                    {showPaystack ? "Hide Card Checkout" : "Pay Online with Paystack"}
+                  </button>
                   <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn outline">
-                    Send cart on WhatsApp
+                    Order via WhatsApp (Site Delivery)
                   </a>
                   <Link href="/quote" className="btn outline">
-                    Request bulk quote
+                    Request Turnkey Project Quote
                   </Link>
                 </div>
 
-                {checkoutItem ? (
-                  <PaystackCheckoutPanel
-                    productId={checkoutItem.id}
-                    productName={checkoutItem.name}
-                    priceLabel={formatProductPrice(checkoutItem)}
-                    title="Pay for this item online"
-                    compact
-                  />
-                ) : (
-                  <p className="cartSummaryNote">
-                    Online checkout currently supports one product at a time. For multiple items,
-                    send the cart on WhatsApp so stock can be confirmed together.
-                  </p>
-                )}
+                {showPaystack ? (
+                  <div style={{ marginTop: 16 }}>
+                    <PaystackCheckoutPanel
+                      mode="cart"
+                      items={items}
+                      totalAmount={subtotalAmount}
+                      totalLabel={formatCartAmount(subtotalAmount, primaryCurrency)}
+                      title="Secure Card & Bank Transfer Checkout"
+                      compact
+                      onSuccess={() => clearCart()}
+                    />
+                  </div>
+                ) : null}
 
                 <div className="cartSummaryMeta">
                   <span>WhatsApp response: {CONTACT.whatsappResponseTime}</span>
-                  <span>Final stock is confirmed before payment.</span>
+                  <span>100% Verified Authentic Materials | No Counterfeits</span>
                 </div>
 
                 <button type="button" className="cartClearButton" onClick={clearCart}>
