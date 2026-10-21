@@ -77,6 +77,48 @@ export async function fetchCloudProduct(productId: string) {
   );
 }
 
+export async function fetchCloudProductsByIds(productIds: string[]) {
+  const safeIds = Array.from(
+    new Set(productIds.map((id) => sanitizeText(id)).filter(Boolean)),
+  );
+  if (safeIds.length === 0) return [];
+
+  const client = getSupabaseAdminClient();
+
+  const { data, error } = await client
+    .from(ADMIN_PRODUCTS_TABLE)
+    .select(
+      "id,name,size,type,best_for,image_url,price_amount,currency,stock_qty,slug,is_active,featured,category",
+    )
+    .in("id", safeIds);
+
+  if (error) {
+    throw new Error(error.message || "Could not load cart products.");
+  }
+
+  return (data ?? []).map((row) =>
+    normalizeProduct(
+      {
+        id: row.id,
+        name: row.name,
+        size: row.size ?? undefined,
+        type: row.type ?? undefined,
+        bestFor: row.best_for ?? undefined,
+        imageUrl: row.image_url ?? undefined,
+        priceAmount: row.price_amount ?? undefined,
+        currency: row.currency ?? undefined,
+        stockQty: row.stock_qty ?? undefined,
+        slug: row.slug ?? undefined,
+        isActive: row.is_active ?? undefined,
+        featured: row.featured ?? undefined,
+        category: row.category ?? undefined,
+        source: "cloud",
+      },
+      row.id,
+    ),
+  );
+}
+
 export async function upsertOrder(orderPayload: Record<string, unknown>) {
   const client = getSupabaseAdminClient();
 
@@ -113,7 +155,7 @@ export async function getOrderByReference(referenceId: string) {
 
   const { data, error } = await client
     .from(PRODUCT_ORDERS_TABLE)
-    .select("reference_id,gateway,status")
+    .select("reference_id,gateway,status,unit_amount,quantity,currency,paid_amount")
     .eq("reference_id", sanitizeText(referenceId))
     .maybeSingle();
 

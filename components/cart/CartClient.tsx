@@ -210,7 +210,6 @@ export default function CartClient() {
                       totalLabel={formatCartAmount(subtotalAmount, primaryCurrency)}
                       title="Secure Card & Bank Transfer Checkout"
                       compact
-                      onSuccess={() => clearCart()}
                     />
                   </div>
                 ) : null}

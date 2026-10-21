@@ -28,10 +28,17 @@ function fromBase64Url(value: string) {
 }
 
 function getAdminSessionSecret() {
-  return (
-    sanitizeText(process.env.ADMIN_SESSION_SECRET) ||
-    sanitizeText(process.env.SUPABASE_SERVICE_ROLE_KEY)
-  );
+  const explicitSecret = sanitizeText(process.env.ADMIN_SESSION_SECRET);
+  if (explicitSecret) return explicitSecret;
+
+  const fallbackServiceRoleKey = sanitizeText(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  if (!fallbackServiceRoleKey) return "";
+
+  // Derive a domain-separated signing key so the raw service-role key is never used directly.
+  return crypto
+    .createHmac("sha256", fallbackServiceRoleKey)
+    .update("oduzz-admin-cookie-signing-key-v1")
+    .digest("hex");
 }
 
 function signPayload(payload: string) {
@@ -136,6 +143,8 @@ export function getAdminSessionCookieOptions() {
 export function sanitizeNextPath(value: string) {
   const trimmedValue = sanitizeText(value);
   if (!trimmedValue.startsWith("/")) return "/admin/products";
-  if (trimmedValue.startsWith("//")) return "/admin/products";
+  if (trimmedValue.startsWith("//") || trimmedValue.startsWith("/\\")) return "/admin/products";
+  if (/[\u0000-\u001f\u007f\\]/.test(trimmedValue)) return "/admin/products";
+  if (!trimmedValue.startsWith("/admin")) return "/admin/products";
   return trimmedValue;
 }

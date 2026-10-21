@@ -18,6 +18,12 @@ function sanitizeText(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
+function sanitizeBlogSlug(slug: string) {
+  const trimmed = sanitizeText(slug).toLowerCase();
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(trimmed)) return "";
+  return trimmed;
+}
+
 function sanitizeTags(value: unknown) {
   if (!Array.isArray(value)) return [] as string[];
   return value.map((tag) => sanitizeText(tag)).filter(Boolean);
@@ -92,14 +98,20 @@ export async function getAllBlogSlugs() {
 }
 
 async function getMarkdownBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+  const safeSlug = sanitizeBlogSlug(slug);
+  if (!safeSlug) return null;
+
   try {
-    const filePath = path.join(BLOG_CONTENT_DIR, `${slug}.md`);
+    const filePath = path.resolve(BLOG_CONTENT_DIR, `${safeSlug}.md`);
+    const resolvedBase = path.resolve(BLOG_CONTENT_DIR) + path.sep;
+    if (!filePath.startsWith(resolvedBase)) return null;
+
     const source = await readFile(filePath, "utf8");
     const { data, content } = matter(source);
     const frontmatter = normalizeFrontmatter(data as Record<string, unknown>, content);
 
     return {
-      slug,
+      slug: safeSlug,
       content,
       readingTime: estimateReadingTime(content),
       source: "markdown",
@@ -258,4 +270,4 @@ export async function getAllBlogPosts() {
 }
 
 export { formatBlogDate };
-export type { BlogHeading, BlogPost, BlogPostFrontmatter, BlogPostListItem };
+export type { BlogHeading, BlogPost, BlogPostListItem, BlogPostFrontmatter };

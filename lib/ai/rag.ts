@@ -18,6 +18,10 @@ function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function escapeIlikePattern(value: unknown) {
+  return sanitizeText(value).replace(/[\\%_]/g, "\\$&");
+}
+
 function normalizeModel(text: unknown) {
   return sanitizeText(text).toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
@@ -81,12 +85,14 @@ export async function findSolarProducts({
     query = query.in("product_type", productTypes);
   }
 
-  if (sanitizeText(modelText)) {
-    query = query.ilike("model", `%${sanitizeText(modelText)}%`);
+  const safeModelPattern = escapeIlikePattern(modelText);
+  if (safeModelPattern) {
+    query = query.ilike("model", `%${safeModelPattern}%`);
   }
 
-  if (sanitizeText(manufacturer)) {
-    query = query.ilike("manufacturer", `%${sanitizeText(manufacturer)}%`);
+  const safeManufacturerPattern = escapeIlikePattern(manufacturer);
+  if (safeManufacturerPattern) {
+    query = query.ilike("manufacturer", `%${safeManufacturerPattern}%`);
   }
 
   if (minCapacityKwh && minCapacityKwh > 0) {

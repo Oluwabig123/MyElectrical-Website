@@ -7,6 +7,9 @@ import {
   hasAdminAuthConfig,
   isAuthorizedAdminEmail,
 } from "@/lib/admin-auth";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+const GENERIC_AUTH_ERROR = "Invalid admin email or password.";
 
 function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -28,6 +31,25 @@ function buildSupabaseAuthClient() {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit({
+    request,
+    routeKey: "admin-login",
+    limit: 8,
+    windowMs: 15 * 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        error: "Too many sign-in attempts. Please wait 15 minutes before trying again.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
   if (!hasAdminAuthConfig()) {
     return NextResponse.json(
       {
@@ -60,31 +82,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Enter your admin email and password." }, { status: 400 });
   }
 
-  if (!isAuthorizedAdminEmail(email)) {
-    return NextResponse.json(
-      { error: "This account is not allowed to access the admin area." },
-      { status: 403 },
-    );
-  }
-
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
-  if (error || !data.user?.email) {
-    return NextResponse.json(
-      { error: error?.message || "Admin sign-in failed." },
-      { status: 401 },
-    );
-  }
-
-  if (!isAuthorizedAdminEmail(data.user.email)) {
-    await supabase.auth.signOut();
-    return NextResponse.json(
-      { error: "This account is not allowed to access the admin area." },
-      { status: 403 },
-    );
+  if (error || !data.user?.email || !isAuthorizedAdminEmail(data.user.email)) {
+    if (data?.user) {
+      await supabase.auth.signOut().catch(() => undefined);
+    }
+    return NextResponse.json({ error: GENERIC_AUTH_ERROR }, { status: 401 });
   }
 
   const token = createAdminSessionToken(data.user.email);

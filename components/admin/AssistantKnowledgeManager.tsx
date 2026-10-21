@@ -748,7 +748,7 @@ export default function AssistantKnowledgeManager() {
                   <div className={styles.previewSource}>
                     <p className={styles.previewLabel}>Source reference</p>
                     {selectedItem.source_url ? (
-                      <a href={selectedItem.source_url} target="_blank" rel="noreferrer">
+                      <a href={/^https?:\/\//i.test(selectedItem.source_url.trim()) ? selectedItem.source_url.trim() : "#"} target="_blank" rel="noopener noreferrer">
                         {selectedItem.source_url}
                       </a>
                     ) : (

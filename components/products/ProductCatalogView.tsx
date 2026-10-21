@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ProductCard from "@/components/products/ProductCard";
 import journeyStyles from "@/components/products/ProductJourney.module.css";
+import { useCart } from "@/lib/cart-context";
 import { type Product, type ProductCategoryKey } from "@/lib/product-catalog";
 import styles from "./ProductCatalogView.module.css";
 
@@ -26,10 +27,60 @@ export default function ProductCatalogView({
   products,
   categories,
 }: ProductCatalogViewProps) {
+  const { clearCart } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryKey, setSelectedCategoryKey] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "name">("featured");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [paymentBanner, setPaymentBanner] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const reference = (params.get("reference") || params.get("trxref") || "").trim();
+    if (!reference) return;
+
+    let cancelled = false;
+    setPaymentBanner({
+      type: "info",
+      message: `Verifying payment reference ${reference}...`,
+    });
+
+    fetch(`/api/verify-paystack-payment?reference=${encodeURIComponent(reference)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.verified) {
+          clearCart();
+          setPaymentBanner({
+            type: "success",
+            message: `Payment confirmed (Ref: ${reference}). Our dispatch team will contact you shortly.`,
+          });
+        } else {
+          setPaymentBanner({
+            type: "error",
+            message:
+              data?.message ||
+              data?.error ||
+              "Payment could not be verified yet. Your cart items have been preserved.",
+          });
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPaymentBanner({
+          type: "error",
+          message: "Could not verify payment status right now. Please contact support with your reference.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clearCart]);
 
   const selectedCategory = useMemo(() => {
     if (selectedCategoryKey === "all") return null;
@@ -94,6 +145,11 @@ export default function ProductCatalogView({
 
   return (
     <div className={styles.catalogFilterWrap}>
+      {paymentBanner ? (
+        <p className={`formStatus ${paymentBanner.type}`} style={{ marginBottom: 16 }}>
+          {paymentBanner.message}
+        </p>
+      ) : null}
       {/* Search and Sort Toolbar */}
       <div className={styles.searchAndSortBar}>
         <div className={styles.searchBox}>

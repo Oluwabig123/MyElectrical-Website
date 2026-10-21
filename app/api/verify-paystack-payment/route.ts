@@ -4,6 +4,7 @@ import {
   sanitizeEmail,
   updateOrder,
 } from "@/lib/commerce-admin";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const PAYSTACK_VERIFY_URL = "https://api.paystack.co/transaction/verify";
 
@@ -16,7 +17,27 @@ function toPositiveInteger(value: unknown) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
-async function handleVerify(reference: string) {
+async function handleVerify(request: Request, reference: string) {
+  const rateLimit = checkRateLimit({
+    request,
+    routeKey: "paystack-verify",
+    limit: 30,
+    windowMs: 60_000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Too many verification requests. Please wait a moment and try again.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
   const secretKey = process.env.PAYSTACK_SECRET_KEY?.trim();
   if (!secretKey) {
     return NextResponse.json(
@@ -66,14 +87,25 @@ async function handleVerify(reference: string) {
     const payment = gatewayData.data;
     const gatewayStatus = sanitizeText(payment.status).toLowerCase();
     const paidAmount = toPositiveInteger(payment.amount);
-    const isPaid = gatewayStatus === "success";
+    const paidCurrency = sanitizeText(payment.currency || "NGN").toUpperCase();
+    const expectedCurrency = sanitizeText(existingOrder.currency || "NGN").toUpperCase();
+    const expectedUnitAmount = toPositiveInteger(existingOrder.unit_amount);
+    const expectedQuantity = Math.max(1, toPositiveInteger(existingOrder.quantity) || 1);
+    const expectedTotalKobo = expectedUnitAmount * expectedQuantity;
+
+    const currencyMatches = !expectedCurrency || paidCurrency === expectedCurrency;
+    const amountMatches = expectedTotalKobo <= 0 || paidAmount >= expectedTotalKobo;
+    const isPaid = gatewayStatus === "success" && currencyMatches && amountMatches;
+
     const localStatus = isPaid
       ? "paid"
-      : gatewayStatus === "abandoned"
-        ? "abandoned"
-        : gatewayStatus === "failed"
-          ? "failed"
-          : "pending_payment";
+      : gatewayStatus === "success" && (!currencyMatches || !amountMatches)
+        ? "amount_mismatch"
+        : gatewayStatus === "abandoned"
+          ? "abandoned"
+          : gatewayStatus === "failed"
+            ? "failed"
+            : "pending_payment";
 
     await updateOrder(reference, {
       status: localStatus,
@@ -93,11 +125,13 @@ async function handleVerify(reference: string) {
       reference,
       message: isPaid
         ? "Payment confirmed."
-        : gatewayStatus === "abandoned"
-          ? "Checkout was not completed."
-          : gatewayStatus === "failed"
-            ? "Payment failed."
-            : "Payment is still pending.",
+        : localStatus === "amount_mismatch"
+          ? "Payment amount or currency did not match the order total."
+          : gatewayStatus === "abandoned"
+            ? "Checkout was not completed."
+            : gatewayStatus === "failed"
+              ? "Payment failed."
+              : "Payment is still pending.",
     });
   } catch (error) {
     return NextResponse.json(
@@ -115,10 +149,10 @@ export async function GET(request: Request) {
   const reference =
     sanitizeText(url.searchParams.get("reference")) ||
     sanitizeText(url.searchParams.get("trxref"));
-  return handleVerify(reference);
+  return handleVerify(request, reference);
 }
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  return handleVerify(sanitizeText(body.reference));
+  return handleVerify(request, sanitizeText(body.reference));
 }

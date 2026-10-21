@@ -5,6 +5,14 @@ export const QUOTE_LEADS_TABLE = "assistant_quote_leads";
 export const QUOTE_LEAD_IMAGES_BUCKET = "quote-intake-images";
 export const MAX_QUOTE_IMAGE_COUNT = 3;
 export const MAX_QUOTE_IMAGE_SIZE_BYTES = 3 * 1024 * 1024;
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
+]);
 
 function sanitizeSegment(value: unknown) {
   return String(value || "")
@@ -39,8 +47,8 @@ export async function uploadQuoteLeadImages({
   const imageUrls: string[] = [];
 
   for (const file of selectedFiles) {
-    if (!file.type.startsWith("image/")) {
-      return { imageUrls: [] as string[], error: "Choose valid image files only." };
+    if (!ALLOWED_IMAGE_MIME_TYPES.has(file.type.toLowerCase())) {
+      return { imageUrls: [] as string[], error: "Choose valid JPEG, PNG, WebP, or HEIC images only." };
     }
 
     if (file.size > MAX_QUOTE_IMAGE_SIZE_BYTES) {
@@ -93,26 +101,25 @@ export async function saveQuoteLead({
 
   const payload = {
     reference_id: form.referenceId || null,
-    source,
-    channel,
-    customer_name: form.name || "",
-    phone: form.phone || "",
-    service: form.service || "",
-    location: form.location || "",
-    details: form.details || "",
-    urgency: form.urgency || "",
-    budget: form.budget || "",
-    image_urls: Array.isArray(form.imageUrls) ? form.imageUrls : [],
-    summary: summary || "",
+    source: String(source || "website").slice(0, 64),
+    channel: String(channel || "quote-page").slice(0, 64),
+    customer_name: String(form.name || "").slice(0, 140),
+    phone: String(form.phone || "").slice(0, 40),
+    service: String(form.service || "").slice(0, 120),
+    location: String(form.location || "").slice(0, 180),
+    details: String(form.details || "").slice(0, 2500),
+    urgency: String(form.urgency || "").slice(0, 80),
+    budget: String(form.budget || "").slice(0, 120),
+    image_urls: Array.isArray(form.imageUrls) ? form.imageUrls.slice(0, MAX_QUOTE_IMAGE_COUNT) : [],
+    summary: String(summary || "").slice(0, 2000),
     metadata: {
-      conversation,
+      conversation: Array.isArray(conversation) ? conversation.slice(-24) : [],
       image_count: Array.isArray(form.imageUrls) ? form.imageUrls.length : 0,
     },
   };
 
-  const { error } = await supabase.from(QUOTE_LEADS_TABLE).upsert([payload], {
-    onConflict: "reference_id",
-  });
+  // Use INSERT only so anonymous clients cannot overwrite existing lead records.
+  const { error } = await supabase.from(QUOTE_LEADS_TABLE).insert([payload]);
 
   return { saved: !error, error: error?.message || "" };
 }
