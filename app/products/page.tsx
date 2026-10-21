@@ -1,10 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import Container from "@/components/layout/Container";
-import ProductCard from "@/components/products/ProductCard";
 import ProductCatalogView from "@/components/products/ProductCatalogView";
 import SmartImage from "@/components/ui/SmartImage";
-import journeyStyles from "@/components/products/ProductJourney.module.css";
 import JsonLd from "@/components/seo/JsonLd";
 import { premiumCatalogCategories } from "@/data/premium-catalog-categories";
 import {
@@ -17,6 +14,7 @@ import {
 import { fetchOnlineProductsCached } from "@/lib/product-directory-server";
 import { buildMetadata } from "@/lib/seo";
 import { buildProductListSchema } from "@/lib/structured-data";
+import styles from "@/components/products/ProductsPage.module.css";
 
 export const revalidate = 120;
 export const dynamic = "force-static";
@@ -24,7 +22,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = buildMetadata({
   title: "Electrical Materials in Lagos | Product Catalog",
   description:
-    "Browse verified electrical materials in Lagos from Oduzz Electrical Concept, including wiring and cables in Ikorodu, lighting, protection devices, solar and inverter accessories, and CCTV security products.",
+    "Browse verified electrical materials in Lagos from Oduzz Electrical Concept, including copper wiring, LED lighting, designer switches, and distribution supplies.",
   path: "/products",
   keywords: [
     "electrical materials in Lagos",
@@ -32,14 +30,10 @@ export const metadata: Metadata = buildMetadata({
     "authentic electrical products",
     "wiring and cables in Ikorodu",
     "lighting installation Lagos",
-    "solar inverter installation Lagos",
+    "switches sockets Lagos",
   ],
   image: "/hero/lightings.webp",
 });
-
-function cn(...classNames: Array<string | false | null | undefined>) {
-  return classNames.filter(Boolean).join(" ");
-}
 
 function countProductsByCategoryKeys(products: Product[], categoryKeys: ProductCategoryKey[]) {
   const keySet = new Set(categoryKeys);
@@ -62,321 +56,267 @@ function pickRepresentativeProduct(products: Product[], categoryKeys: ProductCat
   );
 }
 
-function buildCategoryQuotePath(quoteFocus: string) {
-  return `/quote?serviceType=${encodeURIComponent(quoteFocus)}`;
-}
+const CATEGORY_PUNCHY_TAGLINES: Record<string, string> = {
+  "wiring-cables": "Pure copper cables & coils certified for residential and commercial circuits.",
+  "switches-sockets": "Premium flush-mount wall sockets, rocker switches, and plates.",
+  "lighting": "Energy-efficient surface & recessed LED lighting for clean modern finish.",
+  "protection-devices": "Certified circuit breakers, distribution boards, and surge protection.",
+  "solar-inverter-accessories": "Inverters, deep-cycle batteries, and backup power accessories.",
+  "cctv-security": "Surveillance cameras, DVRs, NVRs, and security accessories.",
+  "conduits-trunking-installation": "Heavy-duty conduits, trunking routes, and installation fittings.",
+};
 
 export default async function ProductsPage() {
   const { products, error, source } = await fetchOnlineProductsCached();
   const catalog = buildProductCatalog(products);
   const catalogError = source === "starter" ? "" : error?.message ?? "";
   const featuredProducts = pickFeaturedProducts(catalog.items, 4);
+
   const categorySummaries = premiumCatalogCategories.map((category) => ({
     ...category,
     count: countProductsByCategoryKeys(catalog.items, category.collectionKeys),
     collectionPath: buildCollectionPath(category.primaryCollectionKey),
     representativeProduct: pickRepresentativeProduct(catalog.items, category.collectionKeys),
+    shortTagline: CATEGORY_PUNCHY_TAGLINES[category.key] || category.description,
   }));
-  const visibleCollections = categorySummaries.filter((category) => category.count > 0);
+
+  // Only show categories that currently have live products in stock
+  const activeCollections = categorySummaries.filter((category) => category.count > 0);
+
   const heroProduct =
     featuredProducts.find((item) => item.imageUrl) ?? featuredProducts[0] ?? catalog.items[0] ?? null;
 
   return (
-    <>
+    <div className={styles.page}>
       <JsonLd data={buildProductListSchema(catalog.items)} />
 
-      <section className={cn("section", journeyStyles.page, journeyStyles.catalogPage, journeyStyles.catalogHeroSection)}>
-        <Container className={journeyStyles.container}>
-          <div className={journeyStyles.catalogStack}>
-            <section className={cn(journeyStyles.frame, journeyStyles.heroPanel)}>
-              <div className={journeyStyles.heroCopy}>
-                <p className={journeyStyles.eyebrow}>Live product catalog</p>
-                <h1 className={journeyStyles.display}>Verified electrical materials in Lagos</h1>
-                <p className={journeyStyles.lead}>
-                  Live products from our current catalog, arranged into cleaner collection paths
-                  for sourcing, comparison, and faster project quoting.
-                </p>
+      {/* 1. HERO SECTION */}
+      <section className={styles.heroSection}>
+        <div className={styles.container}>
+          <div className={styles.heroCard}>
+            <div className={styles.heroCopy}>
+              <span className={styles.eyebrowBadge}>⚡ Genuine Electrical Materials</span>
+              <h1 className={styles.heroTitle}>Verified Electrical Materials in Lagos</h1>
+              <p className={styles.heroLead}>
+                Direct pricing on certified copper cables, lighting, and switches. Sourced directly
+                from verified manufacturers with prompt site delivery across Lagos.
+              </p>
 
-                <div className={journeyStyles.heroSignals} aria-label="Catalog highlights">
-                  <div className={journeyStyles.heroSignal}>
-                    <strong>{catalog.items.length}</strong>
-                    <span>Live products</span>
-                  </div>
-                  <div className={journeyStyles.heroSignal}>
-                    <strong>{visibleCollections.length}</strong>
-                    <span>Active collections</span>
-                  </div>
-                </div>
-
-                <p className={journeyStyles.heroNote}>Only currently published products appear here.</p>
-
-                <div className={journeyStyles.actions}>
-                  <Link href="#catalog-grid" className="btn primary">
-                    Browse catalog
-                  </Link>
-                  <Link href="/quote" className={cn("btn", "outline", journeyStyles.secondaryAction)}>
-                    Get a quote
-                  </Link>
-                </div>
+              <div className={styles.heroTrustList}>
+                <span className={styles.trustChip}>
+                  <span className={styles.trustChipIcon}>✓</span> 100% Pure Copper Conductor
+                </span>
+                <span className={styles.trustChip}>
+                  <span className={styles.trustChipIcon}>✓</span> Same-Day / Next-Day Lagos Dispatch
+                </span>
+                <span className={styles.trustChip}>
+                  <span className={styles.trustChipIcon}>✓</span> Contractor BOQ Pricing
+                </span>
               </div>
 
-              <div className={journeyStyles.heroVisual}>
-                <div className={journeyStyles.heroVisualMedia}>
-                  {heroProduct?.imageUrl ? (
-                    <SmartImage
-                      src={heroProduct.imageUrl}
-                      alt={heroProduct.name}
-                      className={journeyStyles.heroVisualImage}
-                      fill
-                      priority
-                      sizes="(max-width: 860px) 100vw, 42vw"
-                    />
-                  ) : (
-                    <div className={journeyStyles.heroVisualFallback}>Oduzz Catalog</div>
-                  )}
-                  <div className={journeyStyles.heroVisualOverlay}>
-                    <span className={journeyStyles.heroVisualKicker}>
-                      {heroProduct?.categoryLabel ?? "Live product"}
-                    </span>
-                    <strong className={journeyStyles.heroVisualName}>
-                      {heroProduct?.name ?? "Admin uploaded product catalog"}
-                    </strong>
-                    <div className={journeyStyles.heroVisualMetaRow}>
-                      <span className={journeyStyles.heroVisualMeta}>
-                        {heroProduct ? formatProductPrice(heroProduct) : `${catalog.items.length} products live`}
-                      </span>
-                      <Link
-                        href={heroProduct ? `/products/${heroProduct.slug}` : "#catalog-grid"}
-                        className={journeyStyles.heroVisualLink}
-                      >
-                        View product
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className={journeyStyles.heroVisualCaption}>
-                  <span className={journeyStyles.heroVisualCaptionLabel}>Featured product</span>
-                  <span className={journeyStyles.heroVisualCaptionText}>
-                    The hero spotlight updates from the live catalog and always links to the current top item.
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            {catalogError ? <p className={journeyStyles.catalogFeedback}>{catalogError}</p> : null}
-
-            {categorySummaries.length > 0 ? (
-              <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)}>
-                <div className={journeyStyles.sectionHead}>
-                  <div className={journeyStyles.sectionCopy}>
-                    <p className={journeyStyles.eyebrow}>Catalog categories</p>
-                    <h2 className={journeyStyles.catalogTitle}>Browse by material path</h2>
-                    <p className={journeyStyles.catalogFeedback}>
-                      Start with the material group you need, then move into the matching collection,
-                      quote flow, or the full live catalog below.
-                    </p>
-                  </div>
-                  <Link href="/quote" className={journeyStyles.sectionLink}>
-                    Get sourcing help
-                  </Link>
-                </div>
-
-                <nav className={journeyStyles.filterRail} aria-label="Browse product categories">
-                  {categorySummaries.map((category) => (
-                    <Link
-                      key={category.key}
-                      href={`#${category.key}`}
-                      className={journeyStyles.filterChip}
-                    >
-                      {category.title}
-                    </Link>
-                  ))}
-                  <Link href="#catalog-grid" className={cn(journeyStyles.filterChip, journeyStyles.filterChipActive)}>
-                    All live products
-                  </Link>
-                </nav>
-
-                <div className={journeyStyles.collectionGrid}>
-                  {categorySummaries.map((category) => (
-                    <article key={category.key} id={category.key} className={journeyStyles.collectionCard}>
-                        <div className={journeyStyles.collectionCardMedia}>
-                          {category.representativeProduct?.imageUrl ? (
-                            <SmartImage
-                              src={category.representativeProduct.imageUrl}
-                              alt={category.title}
-                              className={journeyStyles.collectionCardImage}
-                              fill
-                              sizes="(max-width: 767px) 100vw, (max-width: 1180px) 50vw, 25vw"
-                            />
-                          ) : (
-                            <div className={journeyStyles.collectionFallback}>Oduzz</div>
-                          )}
-                        </div>
-                        <div className={journeyStyles.collectionCardBody}>
-                          <span className={journeyStyles.collectionCardCount}>
-                            {category.count} product{category.count === 1 ? "" : "s"}
-                          </span>
-                          <h3 className={journeyStyles.collectionCardTitle}>{category.title}</h3>
-                          <p className={journeyStyles.collectionLeadText}>{category.description}</p>
-                          <p className={journeyStyles.collectionCardText}>{category.useCaseNote}</p>
-                          <div className={journeyStyles.actions}>
-                            <Link href={category.collectionPath} className="btn outline">
-                              View collection
-                            </Link>
-                            <Link href={buildCategoryQuotePath(category.quoteFocus)} className="btn primary">
-                              Request quote
-                            </Link>
-                          </div>
-                        </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            {featuredProducts.length > 0 ? (
-              <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)}>
-                <div className={journeyStyles.sectionHead}>
-                  <div className={journeyStyles.sectionCopy}>
-                    <p className={journeyStyles.eyebrow}>Featured picks</p>
-                    <h2 className={journeyStyles.catalogTitle}>Frequently requested products</h2>
-                    <p className={journeyStyles.catalogFeedback}>
-                      A tighter shortlist of products buyers usually price first.
-                    </p>
-                  </div>
-                  <Link href="#catalog-grid" className={journeyStyles.sectionLink}>
-                    See all
-                  </Link>
-                </div>
-
-                <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridRelated)}>
-                  {featuredProducts.map((item, index) => (
-                    <ProductCard
-                      key={item.id}
-                      product={item}
-                      variant="related"
-                      showCategory
-                      priority={index < 2}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)} id="catalog-grid">
-              <div className={journeyStyles.sectionHead}>
-                <div className={journeyStyles.sectionCopy}>
-                  <p className={journeyStyles.eyebrow}>Materials Directory</p>
-                  <h2 className={journeyStyles.catalogTitle}>Search & Filter Materials</h2>
-                  <p className={journeyStyles.catalogFeedback}>
-                    Search by brand, cable gauge, or rating. Add to cart, order on WhatsApp, or request an installation bundle.
-                  </p>
-                </div>
-                <Link href="/quote" className={journeyStyles.sectionLink}>
+              <div className={styles.heroActions}>
+                <Link href="#catalog-grid" className={styles.browseBtn}>
+                  Browse Catalog ({catalog.items.length}) ↓
+                </Link>
+                <Link href="/quote" className={styles.quoteBtn}>
                   Request BOQ Quote →
                 </Link>
               </div>
+            </div>
 
-              <ProductCatalogView
-                products={catalog.items}
-                categories={categorySummaries}
-              />
-            </section>
-
-            <section className={cn(journeyStyles.frame, journeyStyles.catalogSection)}>
-              <div className={journeyStyles.sectionHead}>
-                <div className={journeyStyles.sectionCopy}>
-                  <p className={journeyStyles.eyebrow}>Trust signals</p>
-                  <h2 className={journeyStyles.catalogTitle}>Proof-first buying support</h2>
-                  <p className={journeyStyles.catalogFeedback}>
-                    The goal is to reduce wrong material selection before money changes hands and to
-                    make installation standards visible, not implied.
-                  </p>
+            {/* Featured Product Spotlight */}
+            {heroProduct ? (
+              <div className={styles.heroSpotlight}>
+                <div className={styles.spotlightMedia}>
+                  <span className={styles.spotlightTag}>Featured Product</span>
+                  {heroProduct.imageUrl ? (
+                    <SmartImage
+                      src={heroProduct.imageUrl}
+                      alt={heroProduct.name}
+                      fill
+                      priority
+                      className={styles.spotlightImage}
+                      sizes="(max-width: 860px) 100vw, 42vw"
+                    />
+                  ) : null}
                 </div>
-                <Link href="/quote" className={journeyStyles.sectionLink}>
-                  Request guided quote
-                </Link>
+                <div className={styles.spotlightContent}>
+                  <div className={styles.spotlightMetaRow}>
+                    <span className={styles.spotlightCategory}>
+                      {heroProduct.categoryLabel || "Verified Product"}
+                    </span>
+                    <strong className={styles.spotlightPrice}>
+                      {formatProductPrice(heroProduct)}
+                    </strong>
+                  </div>
+                  <h3 className={styles.spotlightTitle}>{heroProduct.name}</h3>
+                  <Link
+                    href={`/products/${heroProduct.slug}`}
+                    className={styles.spotlightLink}
+                  >
+                    View Product Details →
+                  </Link>
+                </div>
               </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
 
-              <div className={journeyStyles.collectionGrid}>
-                <article className={journeyStyles.collectionCard}>
-                  <div className={journeyStyles.collectionCardBody}>
-                    <span className={journeyStyles.collectionCardCount}>Material quality promise</span>
-                    <h3 className={journeyStyles.collectionCardTitle}>Verified product guidance first</h3>
-                    <p className={journeyStyles.collectionCardText}>
-                      We help clients match cables, breakers, sockets, lighting, backup power items,
-                      and security products to the real installation need before payment.
-                    </p>
+      {/* 2. ACTIVE CATEGORIES (Visual & Concise, Empty Categories Filtered Out) */}
+      {activeCollections.length > 0 ? (
+        <section className={styles.sectionBlock}>
+          <div className={styles.container}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionHeaderCopy}>
+                <p className={styles.sectionEyebrow}>Product Categories</p>
+                <h2 className={styles.sectionTitle}>Shop by Category</h2>
+                <p className={styles.sectionSubtitle}>
+                  Explore verified electrical materials organized by installation scope.
+                </p>
+              </div>
+              <Link href="/quote" className={styles.spotlightLink}>
+                Get Material Advice →
+              </Link>
+            </div>
+
+            <div className={styles.categoryGrid}>
+              {activeCollections.map((category) => (
+                <Link
+                  key={category.key}
+                  href={category.collectionPath}
+                  className={styles.categoryCard}
+                >
+                  <div className={styles.categoryCardMedia}>
+                    {category.representativeProduct?.imageUrl ? (
+                      <SmartImage
+                        src={category.representativeProduct.imageUrl}
+                        alt={category.title}
+                        fill
+                        className={styles.categoryCardImage}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    ) : null}
                   </div>
-                </article>
-
-                <article className={journeyStyles.collectionCard}>
-                  <div className={journeyStyles.collectionCardBody}>
-                    <span className={journeyStyles.collectionCardCount}>Before we leave site</span>
-                    <h3 className={journeyStyles.collectionCardTitle}>Final checks are part of delivery</h3>
-                    <p className={journeyStyles.collectionCardText}>
-                      Visual finishing, functional testing, circuit confirmation, and handover review
-                      are completed before the work is treated as done.
+                  <div className={styles.categoryCardBody}>
+                    <div className={styles.categoryCardHeader}>
+                      <h3 className={styles.categoryCardTitle}>{category.title}</h3>
+                      <span className={styles.categoryCountBadge}>
+                        {category.count} Item{category.count === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <p className={styles.categoryCardDescription}>
+                      {category.shortTagline}
                     </p>
-                  </div>
-                </article>
-
-                <article className={journeyStyles.collectionCard}>
-                  <div className={journeyStyles.collectionCardBody}>
-                    <span className={journeyStyles.collectionCardCount}>Before installation</span>
-                    <h3 className={journeyStyles.collectionCardTitle}>We confirm route, load, and fit</h3>
-                    <p className={journeyStyles.collectionCardText}>
-                      Product fit, protection sizing, load intent, and site conditions are checked
-                      early so the selected materials support a clean installation path.
-                    </p>
-                  </div>
-                </article>
-
-                <article className={journeyStyles.collectionCard}>
-                  <div className={journeyStyles.collectionCardBody}>
-                    <span className={journeyStyles.collectionCardCount}>Photo review</span>
-                    <h3 className={journeyStyles.collectionCardTitle}>Why we ask for site details</h3>
-                    <p className={journeyStyles.collectionCardText}>
-                      Photos, layout notes, and location details improve quote accuracy, reduce wrong
-                      purchases, and help us advise on installation compatibility sooner.
-                    </p>
-                  </div>
-                </article>
-
-                <article className={journeyStyles.collectionCard}>
-                  <div className={journeyStyles.collectionCardBody}>
-                    <span className={journeyStyles.collectionCardCount}>Direct site delivery</span>
-                    <h3 className={journeyStyles.collectionCardTitle}>Reliable logistics across Lagos</h3>
-                    <p className={journeyStyles.collectionCardText}>
-                      We coordinate prompt material dispatch directly to job sites across Lagos Mainland
-                      and Island, ensuring your electrical and solar installation teams never wait on materials.
-                    </p>
-                  </div>
-                </article>
-
-                <article className={journeyStyles.collectionCard}>
-                  <div className={journeyStyles.collectionCardBody}>
-                    <span className={journeyStyles.collectionCardCount}>Transparent BOQ pricing</span>
-                    <h3 className={journeyStyles.collectionCardTitle}>Verified material schedules in 24 hours</h3>
-                    <p className={journeyStyles.collectionCardText}>
-                      Send your architectural drawings, load schedule, or material list. We provide transparent
-                      per-unit pricing and verified brand commitments with zero hidden markups.
-                    </p>
-                    <div className={journeyStyles.actions}>
-                      <Link href="/projects" className="btn outline">
-                        See project proof
-                      </Link>
-                      <Link href="/quote" className="btn primary">
-                        Request quote
-                      </Link>
+                    <div className={styles.categoryActionRow}>
+                      <span className={styles.categoryActionLink}>
+                        Explore Collection →
+                      </span>
                     </div>
                   </div>
-                </article>
+                </Link>
+              ))}
+            </div>
+
+            {/* Custom Sourcing Callout for Unlisted Categories (Breakers, Solar, CCTV, Trunking) */}
+            <div className={styles.customSourcingBanner}>
+              <div className={styles.customSourcingCopy}>
+                <span className={styles.customSourcingIcon} aria-hidden="true">
+                  📋
+                </span>
+                <div>
+                  <h4 className={styles.customSourcingHeading}>
+                    Need Circuit Breakers, Solar Inverters, Conduits, or CCTV?
+                  </h4>
+                  <p className={styles.customSourcingText}>
+                    We supply Schneider & Chint breakers, distribution panels, Felicity solar gear,
+                    and conduit routes direct to your project BOQ specifications.
+                  </p>
+                </div>
               </div>
-            </section>
+              <Link href="/quote" className={styles.customSourcingBtn}>
+                Request Custom Sourcing →
+              </Link>
+            </div>
           </div>
-        </Container>
+        </section>
+      ) : null}
+
+      {/* 3. CORE MATERIALS CATALOG (Interactive Search, Sort, Cart & WhatsApp) */}
+      <section className={styles.catalogContainer} id="catalog-grid">
+        <div className={styles.container}>
+          <div className={styles.catalogFrame}>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionHeaderCopy}>
+                <p className={styles.sectionEyebrow}>Live Inventory</p>
+                <h2 className={styles.sectionTitle}>Materials Directory</h2>
+                <p className={styles.sectionSubtitle}>
+                  Search by brand, size, or rating. Order online or request direct site supply.
+                </p>
+              </div>
+              <Link href="/quote" className={styles.spotlightLink}>
+                Upload Material Schedule →
+              </Link>
+            </div>
+
+            {catalogError ? (
+              <p style={{ color: "#ef4444", marginBottom: 16 }}>{catalogError}</p>
+            ) : null}
+
+            <ProductCatalogView
+              products={catalog.items}
+              categories={activeCollections}
+            />
+          </div>
+        </div>
       </section>
-    </>
+
+      {/* 4. TRUST & LOGISTICS STRIP (Lean 4-Pillar Grid, Not Text-Heavy) */}
+      <section className={styles.trustRibbon}>
+        <div className={styles.container}>
+          <div className={styles.trustGrid}>
+            <div className={styles.trustCard}>
+              <span className={styles.trustCardIcon} aria-hidden="true">
+                ⚡
+              </span>
+              <h3 className={styles.trustCardTitle}>100% Tested Materials</h3>
+              <p className={styles.trustCardText}>
+                Certified pure copper conductors and standard-compliant switchgear with zero counterfeit risk.
+              </p>
+            </div>
+
+            <div className={styles.trustCard}>
+              <span className={styles.trustCardIcon} aria-hidden="true">
+                🚚
+              </span>
+              <h3 className={styles.trustCardTitle}>Lagos Site Dispatch</h3>
+              <p className={styles.trustCardText}>
+                Prompt direct-to-site delivery across Lagos Mainland, Island, Lekki, and Ikorodu.
+              </p>
+            </div>
+
+            <div className={styles.trustCard}>
+              <span className={styles.trustCardIcon} aria-hidden="true">
+                📊
+              </span>
+              <h3 className={styles.trustCardTitle}>Contractor BOQ Pricing</h3>
+              <p className={styles.trustCardText}>
+                Transparent per-unit pricing on comprehensive building material schedules within 24 hours.
+              </p>
+            </div>
+
+            <div className={styles.trustCard}>
+              <span className={styles.trustCardIcon} aria-hidden="true">
+                🛠️
+              </span>
+              <h3 className={styles.trustCardTitle}>Technical Verification</h3>
+              <p className={styles.trustCardText}>
+                Qualified electricians confirm cable gauge, breaker ratings, and load compatibility before checkout.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
