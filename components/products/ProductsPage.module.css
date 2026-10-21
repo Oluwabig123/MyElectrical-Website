@@ -13,8 +13,8 @@
   pointer-events: none;
   opacity: 0.35;
   background:
-    radial-gradient(1100px 480px at 15% 0%, rgba(255, 213, 74, 0.09), transparent 65%),
-    radial-gradient(900px 420px at 85% 12%, rgba(46, 233, 255, 0.08), transparent 65%);
+    radial-gradient(1100px 480px at 15% 0%, rgba(255, 213, 74, 0.08), transparent 65%),
+    radial-gradient(900px 420px at 85% 12%, rgba(46, 233, 255, 0.07), transparent 65%);
 }
 
 .container {
@@ -25,25 +25,19 @@
 }
 
 /* =========================================================================
-   1. HERO SECTION
+   1. HERO SECTION (Open, Unboxed - No nested inner box)
    ========================================================================= */
 .heroSection {
-  padding-top: clamp(20px, 4vw, 36px);
-  padding-bottom: clamp(32px, 5vw, 56px);
+  padding-top: clamp(24px, 4vw, 44px);
+  padding-bottom: clamp(28px, 4vw, 48px);
 }
 
-.heroCard {
-  border-radius: 28px;
-  border: 1px solid rgba(157, 175, 203, 0.18);
-  background:
-    linear-gradient(180deg, rgba(16, 25, 42, 0.95), rgba(10, 16, 29, 0.98)),
-    #0c1424;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  padding: clamp(24px, 4vw, 44px);
+.heroLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: clamp(24px, 4vw, 48px);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 380px);
+  gap: clamp(28px, 4vw, 56px);
   align-items: center;
+  justify-content: space-between;
 }
 
 .heroCopy {
@@ -70,7 +64,7 @@
 
 .heroTitle {
   margin: 0;
-  font-size: clamp(28px, 4vw, 50px);
+  font-size: clamp(28px, 4.2vw, 52px);
   line-height: 1.1;
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -163,112 +157,14 @@
   color: #ffffff;
 }
 
-/* Hero Spotlight Card */
-.heroSpotlight {
-  position: relative;
-  border-radius: 22px;
-  overflow: hidden;
-  border: 1px solid rgba(157, 175, 203, 0.2);
-  background: linear-gradient(180deg, #131c2e, #0c1322);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-}
-
-.spotlightMedia {
-  position: relative;
+.featuredCardWrapper {
   width: 100%;
-  aspect-ratio: 4 / 3;
-  background: radial-gradient(circle at 50% 50%, #f1f5f9 0%, #e2e8f0 100%);
-  overflow: hidden;
-}
-
-.spotlightImage {
-  object-fit: cover;
-  object-position: center;
-  transition: transform 300ms ease;
-}
-
-.heroSpotlight:hover .spotlightImage {
-  transform: scale(1.03);
-}
-
-.spotlightTag {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 2;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(10, 16, 29, 0.85);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 213, 74, 0.35);
-  color: #ffd54a;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.spotlightContent {
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.spotlightMetaRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.spotlightCategory {
-  font-size: 11px;
-  font-weight: 700;
-  color: #67e8f9;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.spotlightPrice {
-  font-size: 17px;
-  font-weight: 800;
-  color: #ffd54a;
-}
-
-.spotlightTitle {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #f8fafc;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.spotlightLink {
-  margin-top: 4px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #ffd54a;
-  text-decoration: none;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.spotlightLink:hover {
-  text-decoration: underline;
+  max-width: 380px;
+  margin: 0 auto;
 }
 
 /* =========================================================================
-   2. ACTIVE CATEGORIES SECTION
+   2. CATEGORIES SECTION (Matches ProductCard reference styling)
    ========================================================================= */
 .sectionBlock {
   padding: clamp(24px, 4vw, 44px) 0;
@@ -312,122 +208,176 @@
   color: #94a3b8;
 }
 
+.spotlightLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffd54a;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.spotlightLink:hover {
+  text-decoration: underline;
+}
+
 .categoryGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
 
+/* Category Card matching ProductCard (Last Reference) */
 .categoryCard {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: 20px;
-  overflow: hidden;
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0;
   border: 1px solid rgba(157, 175, 203, 0.16);
+  border-radius: 22px;
+  overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(16, 24, 40, 0.88), rgba(10, 16, 28, 0.94)),
-    #0c1424;
-  text-decoration: none;
+    linear-gradient(180deg, rgba(14, 20, 34, 0.92), rgba(10, 16, 28, 0.98)),
+    rgba(10, 16, 28, 0.94);
   color: inherit;
-  transition: all 200ms ease;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+  box-shadow:
+    0 20px 34px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
 }
 
 .categoryCard:hover {
   border-color: rgba(255, 213, 74, 0.4);
   transform: translateY(-3px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
 }
 
 .categoryCardMedia {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
-  background: radial-gradient(circle at 50% 50%, #f8fafc 0%, #e2e8f0 100%);
+  display: block;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  aspect-ratio: 1 / 0.92;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.2), transparent 38%),
+    linear-gradient(180deg, #f8f8f8 0%, #ececec 100%);
   overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .categoryCardImage {
   object-fit: cover;
   object-position: center;
-  transition: transform 250ms ease;
+  transform: scale(1.03);
+  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .categoryCard:hover .categoryCardImage {
-  transform: scale(1.05);
+  transform: scale(1.06);
+}
+
+.categoryBadge {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  min-height: 28px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(255, 213, 74, 0.2);
+  border: 1px solid rgba(255, 213, 74, 0.42);
+  color: rgba(255, 233, 171, 0.96);
+  backdrop-filter: blur(8px);
 }
 
 .categoryCardBody {
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
+  display: grid;
+  gap: 9px;
+  padding: 18px 18px 20px;
+  background: transparent;
 }
 
-.categoryCardHeader {
+.categoryCardMetaRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
 }
 
-.categoryCountBadge {
-  font-size: 11px;
+.categoryCardEyebrow {
+  margin: 0;
+  color: rgba(193, 234, 243, 0.82);
+  font-size: 10px;
   font-weight: 700;
-  color: #ffd54a;
-  background: rgba(255, 213, 74, 0.12);
-  padding: 3px 8px;
-  border-radius: 6px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .categoryCardTitle {
   margin: 0;
+  color: rgba(247, 251, 255, 0.97);
+  font-family: var(--font-manrope), sans-serif;
   font-size: 17px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.25;
+  line-height: 1.14;
+  font-weight: 650;
+  letter-spacing: -0.005em;
 }
 
 .categoryCardDescription {
   margin: 0;
+  color: rgba(187, 199, 220, 0.86);
   font-size: 13px;
-  line-height: 1.5;
-  color: #94a3b8;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.6;
 }
 
-.categoryActionRow {
-  margin-top: auto;
-  padding-top: 10px;
+.categoryFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(157, 175, 203, 0.1);
 }
 
-.categoryActionLink {
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffd54a;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.categoryActionBtn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  width: 100%;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 213, 74, 0.4);
+  background: rgba(255, 213, 74, 0.08);
+  color: #ffd54a;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: all 180ms ease;
+}
+
+.categoryCard:hover .categoryActionBtn {
+  background: #ffd54a;
+  color: #0b111e;
 }
 
 /* Custom Sourcing Banner */
 .customSourcingBanner {
   margin-top: 24px;
   padding: 20px 24px;
-  border-radius: 20px;
+  border-radius: 22px;
   border: 1px solid rgba(255, 213, 74, 0.25);
   background:
     linear-gradient(135deg, rgba(255, 213, 74, 0.06) 0%, rgba(15, 23, 42, 0.8) 100%),
@@ -488,20 +438,10 @@
 }
 
 /* =========================================================================
-   3. CATALOG DIRECTORY SECTION
+   3. CATALOG DIRECTORY SECTION (No nested frame box)
    ========================================================================= */
 .catalogContainer {
   padding: clamp(24px, 4vw, 44px) 0;
-}
-
-.catalogFrame {
-  border-radius: 28px;
-  border: 1px solid rgba(157, 175, 203, 0.16);
-  background:
-    linear-gradient(180deg, rgba(16, 24, 40, 0.94), rgba(10, 16, 28, 0.96)),
-    #0c1424;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.25);
-  padding: clamp(20px, 3.5vw, 36px);
 }
 
 /* =========================================================================
@@ -549,9 +489,13 @@
    5. RESPONSIVE BREAKPOINTS
    ========================================================================= */
 @media (max-width: 980px) {
-  .heroCard {
+  .heroLayout {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+
+  .featuredCardWrapper {
+    max-width: 100%;
   }
 
   .trustGrid {
@@ -562,11 +506,6 @@
 @media (max-width: 768px) {
   .container {
     width: calc(100% - 20px);
-  }
-
-  .heroCard {
-    padding: 20px 16px;
-    border-radius: 20px;
   }
 
   .heroTitle {
@@ -587,11 +526,6 @@
   .categoryGrid {
     grid-template-columns: 1fr;
     gap: 14px;
-  }
-
-  .catalogFrame {
-    padding: 16px 12px;
-    border-radius: 18px;
   }
 
   .customSourcingBanner {

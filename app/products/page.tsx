@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import ProductCard from "@/components/products/ProductCard";
 import ProductCatalogView from "@/components/products/ProductCatalogView";
 import SmartImage from "@/components/ui/SmartImage";
 import JsonLd from "@/components/seo/JsonLd";
@@ -7,7 +8,6 @@ import { premiumCatalogCategories } from "@/data/premium-catalog-categories";
 import {
   buildCollectionPath,
   buildProductCatalog,
-  formatProductPrice,
   type Product,
   type ProductCategoryKey,
 } from "@/lib/product-catalog";
@@ -90,10 +90,10 @@ export default async function ProductsPage() {
     <div className={styles.page}>
       <JsonLd data={buildProductListSchema(catalog.items)} />
 
-      {/* 1. HERO SECTION */}
+      {/* 1. HERO SECTION (Open, Unboxed - No subtle inner box) */}
       <section className={styles.heroSection}>
         <div className={styles.container}>
-          <div className={styles.heroCard}>
+          <div className={styles.heroLayout}>
             <div className={styles.heroCopy}>
               <span className={styles.eyebrowBadge}>⚡ Genuine Electrical Materials</span>
               <h1 className={styles.heroTitle}>Verified Electrical Materials in Lagos</h1>
@@ -124,46 +124,22 @@ export default async function ProductsPage() {
               </div>
             </div>
 
-            {/* Featured Product Spotlight */}
+            {/* Featured Product Spotlight - Uses the EXACT ProductCard design (Last Reference) */}
             {heroProduct ? (
-              <div className={styles.heroSpotlight}>
-                <div className={styles.spotlightMedia}>
-                  <span className={styles.spotlightTag}>Featured Product</span>
-                  {heroProduct.imageUrl ? (
-                    <SmartImage
-                      src={heroProduct.imageUrl}
-                      alt={heroProduct.name}
-                      fill
-                      priority
-                      className={styles.spotlightImage}
-                      sizes="(max-width: 860px) 100vw, 42vw"
-                    />
-                  ) : null}
-                </div>
-                <div className={styles.spotlightContent}>
-                  <div className={styles.spotlightMetaRow}>
-                    <span className={styles.spotlightCategory}>
-                      {heroProduct.categoryLabel || "Verified Product"}
-                    </span>
-                    <strong className={styles.spotlightPrice}>
-                      {formatProductPrice(heroProduct)}
-                    </strong>
-                  </div>
-                  <h3 className={styles.spotlightTitle}>{heroProduct.name}</h3>
-                  <Link
-                    href={`/products/${heroProduct.slug}`}
-                    className={styles.spotlightLink}
-                  >
-                    View Product Details →
-                  </Link>
-                </div>
+              <div className={styles.featuredCardWrapper}>
+                <ProductCard
+                  product={heroProduct}
+                  variant="listing"
+                  priority
+                  showCategory
+                />
               </div>
             ) : null}
           </div>
         </div>
       </section>
 
-      {/* 2. ACTIVE CATEGORIES (Visual & Concise, Empty Categories Filtered Out) */}
+      {/* 2. ACTIVE CATEGORIES (Visual & Concise, Styled to Match Last Reference) */}
       {activeCollections.length > 0 ? (
         <section className={styles.sectionBlock}>
           <div className={styles.container}>
@@ -197,20 +173,22 @@ export default async function ProductsPage() {
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : null}
+                    <span className={styles.categoryBadge}>
+                      {category.count} Item{category.count === 1 ? "" : "s"}
+                    </span>
                   </div>
                   <div className={styles.categoryCardBody}>
-                    <div className={styles.categoryCardHeader}>
-                      <h3 className={styles.categoryCardTitle}>{category.title}</h3>
-                      <span className={styles.categoryCountBadge}>
-                        {category.count} Item{category.count === 1 ? "" : "s"}
-                      </span>
+                    <div className={styles.categoryCardMetaRow}>
+                      <p className={styles.categoryCardEyebrow}>Collection</p>
+                      <span className={styles.spotlightLink}>View Collection →</span>
                     </div>
+                    <h3 className={styles.categoryCardTitle}>{category.title}</h3>
                     <p className={styles.categoryCardDescription}>
                       {category.shortTagline}
                     </p>
-                    <div className={styles.categoryActionRow}>
-                      <span className={styles.categoryActionLink}>
-                        Explore Collection →
+                    <div className={styles.categoryFooter}>
+                      <span className={styles.categoryActionBtn}>
+                        Explore {category.title} →
                       </span>
                     </div>
                   </div>
@@ -242,32 +220,30 @@ export default async function ProductsPage() {
         </section>
       ) : null}
 
-      {/* 3. CORE MATERIALS CATALOG (Interactive Search, Sort, Cart & WhatsApp) */}
+      {/* 3. CORE MATERIALS CATALOG (Interactive Search, Sort, Cart & WhatsApp - Matching Last Reference) */}
       <section className={styles.catalogContainer} id="catalog-grid">
         <div className={styles.container}>
-          <div className={styles.catalogFrame}>
-            <div className={styles.sectionHeader}>
-              <div className={styles.sectionHeaderCopy}>
-                <p className={styles.sectionEyebrow}>Live Inventory</p>
-                <h2 className={styles.sectionTitle}>Materials Directory</h2>
-                <p className={styles.sectionSubtitle}>
-                  Search by brand, size, or rating. Order online or request direct site supply.
-                </p>
-              </div>
-              <Link href="/quote" className={styles.spotlightLink}>
-                Upload Material Schedule →
-              </Link>
+          <div className={styles.sectionHeader}>
+            <div className={styles.sectionHeaderCopy}>
+              <p className={styles.sectionEyebrow}>Live Inventory</p>
+              <h2 className={styles.sectionTitle}>Materials Directory</h2>
+              <p className={styles.sectionSubtitle}>
+                Search by brand, size, or rating. Order online or request direct site supply.
+              </p>
             </div>
-
-            {catalogError ? (
-              <p style={{ color: "#ef4444", marginBottom: 16 }}>{catalogError}</p>
-            ) : null}
-
-            <ProductCatalogView
-              products={catalog.items}
-              categories={activeCollections}
-            />
+            <Link href="/quote" className={styles.spotlightLink}>
+              Upload Material Schedule →
+            </Link>
           </div>
+
+          {catalogError ? (
+            <p style={{ color: "#ef4444", marginBottom: 16 }}>{catalogError}</p>
+          ) : null}
+
+          <ProductCatalogView
+            products={catalog.items}
+            categories={activeCollections}
+          />
         </div>
       </section>
 
