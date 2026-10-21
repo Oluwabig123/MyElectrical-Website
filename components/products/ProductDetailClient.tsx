@@ -2,18 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Container from "@/components/layout/Container";
 import PaystackCheckoutPanel from "@/components/payments/PaystackCheckoutPanel";
 import ProductBreadcrumbs from "@/components/products/ProductBreadcrumbs";
 import ProductCard from "@/components/products/ProductCard";
 import styles from "@/components/products/ProductDetailClient.module.css";
-import journeyStyles from "@/components/products/ProductJourney.module.css";
 import SmartImage from "@/components/ui/SmartImage";
-import { CONTACT, buildWhatsAppUrl } from "@/data/contact";
+import { buildWhatsAppUrl } from "@/data/contact";
 import { useCart } from "@/lib/cart-context";
 import {
   buildCollectionPath,
-  buildProductCredibilityNotes,
   buildProductHighlights,
   buildProductTagline,
   formatProductPrice,
@@ -36,13 +33,11 @@ function toStateClassName(value: string) {
 
 function buildProductPurchaseMessage(product: Product) {
   return [
-    "Hello Oduzz, I want to buy this product.",
+    "Hello Oduzz, I want to inquire about purchasing this product.",
     `Product: ${product.name}`,
-    `Slug: ${product.slug || product.id}`,
     `Price: ${formatProductPrice(product)}`,
-    `Availability: ${getProductAvailability(product)}`,
-    `Size/Spec: ${product.size || "N/A"}`,
-    `Type: ${product.type || "N/A"}`,
+    `Size / Spec: ${product.size || "Standard"}`,
+    `Brand: ${product.brand}`,
   ].join("\n");
 }
 
@@ -52,12 +47,12 @@ function clampQuantity(quantity: number, stockQty: number) {
 }
 
 function formatStockMessage(product: Product, availability: string) {
-  if (!product.isActive) return "This product is not active for online ordering.";
-  if (product.stockQty <= 0) return "Request current availability before planning pickup or delivery.";
+  if (!product.isActive) return "Currently unavailable for online checkout.";
+  if (product.stockQty <= 0) return "Contact us to confirm stock availability.";
   if (availability === "Low stock") {
-    return `Only ${product.stockQty} unit${product.stockQty === 1 ? "" : "s"} listed online.`;
+    return `Low stock: only ${product.stockQty} unit${product.stockQty === 1 ? "" : "s"} left.`;
   }
-  return `${product.stockQty} unit${product.stockQty === 1 ? "" : "s"} listed online.`;
+  return `In stock: ${product.stockQty} units ready for immediate Lagos dispatch.`;
 }
 
 function buildSpecDetails(product: Product, availability: string) {
@@ -70,12 +65,9 @@ function buildSpecDetails(product: Product, availability: string) {
     { label: "Category", value: product.categoryLabel },
     { label: "Brand", value: product.brand },
     { label: "Type", value: product.type },
-    { label: "Size / spec", value: product.size },
-    { label: "Best for", value: useCases.join(", ") || product.bestFor },
-    { label: "Stock status", value: availability },
-    product.source === "starter"
-      ? { label: "Catalog source", value: "Starter placeholder" }
-      : null,
+    { label: "Size / Spec", value: product.size },
+    { label: "Best For", value: useCases.join(", ") || product.bestFor },
+    { label: "Stock Availability", value: availability },
   ].filter((item): item is { label: string; value: string } => Boolean(item?.value && item.value !== "N/A"));
 }
 
@@ -87,25 +79,22 @@ export default function ProductDetailClient({
   const [cartFeedback, setCartFeedback] = useState("");
   const [showCardCheckout, setShowCardCheckout] = useState(false);
   const [quantity, setQuantity] = useState(() => clampQuantity(1, product.stockQty));
+
   const availability = getProductAvailability(product);
   const canAddToCart = product.isActive && product.stockQty > 0 && product.priceAmount > 0;
   const productHighlights = buildProductHighlights(product);
-  const credibilityNotes = buildProductCredibilityNotes(product);
   const productTagline = buildProductTagline(product);
   const collectionPath = buildCollectionPath(product.category);
   const whatsappUrl = buildWhatsAppUrl(encodeURIComponent(buildProductPurchaseMessage(product)));
-  const productUseCases = product.bestFor
-    .split("|")
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .slice(0, 3);
   const safeQuantity = clampQuantity(quantity, product.stockQty);
+
   const totalPriceLabel = canAddToCart
     ? formatProductPrice({
         priceAmount: product.priceAmount * safeQuantity,
         currency: product.currency,
       })
     : formatProductPrice(product);
+
   const availabilityClassName = toStateClassName(availability);
   const stateBadgeClassName =
     availabilityClassName === "in-stock"
@@ -113,6 +102,7 @@ export default function ProductDetailClient({
       : availabilityClassName === "low-stock"
         ? styles.stateLowStock
         : styles.stateUnavailable;
+
   const stockMessage = formatStockMessage(product, availability);
   const specDetails = buildSpecDetails(product, availability);
 
@@ -125,14 +115,15 @@ export default function ProductDetailClient({
   function handleAddToCart() {
     if (!canAddToCart) return;
     addItem(product, safeQuantity);
-    setCartFeedback(`${product.name} added to cart.`);
+    setCartFeedback(`✓ ${product.name} (${safeQuantity}x) added to cart.`);
   }
 
   return (
-    <section className={cn("section", journeyStyles.page)}>
-      <Container className={journeyStyles.container}>
-        <div className={journeyStyles.catalogStack}>
-          <div className={cn(journeyStyles.frame, styles.heroPanel)}>
+    <div className={styles.pageWrap}>
+      <div className={styles.container}>
+        <div className={styles.stack}>
+          {/* 1. MAIN PRODUCT SHOWCASE (No nested inner boxes) */}
+          <div className={styles.mainShowcase}>
             <ProductBreadcrumbs
               items={[
                 { label: "Products", href: "/products" },
@@ -141,9 +132,10 @@ export default function ProductDetailClient({
               ]}
             />
 
-            <div className={styles.layout}>
+            <div className={styles.productLayout}>
+              {/* Product Gallery Stage - Matches Last Reference */}
               <div className={styles.visualColumn}>
-                <div className={cn(styles.galleryStage, product.featured && styles.featuredStage)}>
+                <div className={styles.galleryStage}>
                   {product.imageUrl ? (
                     <SmartImage
                       src={product.imageUrl}
@@ -151,78 +143,62 @@ export default function ProductDetailClient({
                       className={styles.galleryImage}
                       fill
                       priority
-                      sizes="(max-width: 1024px) 100vw, 56vw"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
                     />
                   ) : (
                     <div className={styles.galleryFallback} aria-hidden="true">
-                      Oduzz
+                      {product.brand}
                     </div>
                   )}
-                  <div className={styles.mediaBadgeRow}>
-                    <span className={cn(styles.stateBadge, stateBadgeClassName)}>{availability}</span>
-                    {product.featured ? <span className={styles.featuredAccent}>Featured pick</span> : null}
-                  </div>
-                </div>
 
-                <div className={styles.visualFoot}>
-                  <div className={styles.visualMetaCard}>
-                    <span className={styles.metaLabel}>Category</span>
-                    <strong>{product.categoryLabel}</strong>
-                  </div>
-                  <div className={styles.visualMetaCard}>
-                    <span className={styles.metaLabel}>Brand</span>
-                    <strong>{product.brand}</strong>
-                  </div>
-                  <div className={styles.visualMetaCard}>
-                    <span className={styles.metaLabel}>Size / spec</span>
-                    <strong>{product.size}</strong>
+                  <div className={styles.mediaBadgeRow}>
+                    <span className={cn(styles.stateBadge, stateBadgeClassName)}>
+                      {availability}
+                    </span>
+                    {product.featured ? (
+                      <span className={styles.featuredBadge}>Featured Item</span>
+                    ) : null}
                   </div>
                 </div>
               </div>
 
+              {/* Product Details Column */}
               <div className={styles.detailColumn}>
-                <div className={styles.headerMeta}>
-                  <p className={journeyStyles.eyebrow}>{product.featured ? "Featured product" : "Product detail"}</p>
-                  <Link href={collectionPath} className={styles.headerLink}>
-                    Browse collection
+                <div className={styles.metaHeader}>
+                  <p className={styles.categoryEyebrow}>{product.categoryLabel}</p>
+                  <Link href={collectionPath} className={styles.collectionLink}>
+                    Browse {product.categoryLabel} →
                   </Link>
                 </div>
 
-                <h1 className={cn(journeyStyles.display, journeyStyles.displayDetail)}>{product.name}</h1>
-                <p className={styles.intro}>{productTagline}</p>
+                <h1 className={styles.productTitle}>{product.name}</h1>
 
-                <div className={styles.priceBar}>
-                  <strong className={styles.price}>{formatProductPrice(product)}</strong>
-                  <span className={styles.priceContext}>Current listed price</span>
+                <div className={styles.priceBlock}>
+                  <strong className={styles.priceValue}>{formatProductPrice(product)}</strong>
+                  <span className={styles.priceSub}>per unit / coil</span>
                 </div>
 
-                <div className={styles.specRow} aria-label={`${product.name} key specs`}>
-                  <span className={styles.specChip}>{product.type}</span>
-                  <span className={styles.specChip}>{product.brand}</span>
-                  {productUseCases.length > 0 ? <span className={styles.specChip}>{productUseCases[0]}</span> : null}
-                </div>
+                <p className={styles.tagline}>{productTagline}</p>
 
-                <div className={styles.buyPanel}>
-                  <div className={styles.buyHead}>
-                    <div>
-                      <span className={styles.metaLabel}>Buy or confirm</span>
-                      <strong className={styles.buyTitle}>Ready to order or compare?</strong>
-                    </div>
+                {/* Purchase Action Box */}
+                <div className={styles.actionCard}>
+                  <div className={styles.quantityRow}>
+                    <span className={styles.stockStatusText}>{stockMessage}</span>
                     {canAddToCart ? (
                       <div className={styles.quantityControl} aria-label="Choose quantity">
                         <button
                           type="button"
-                          className={styles.quantityButton}
+                          className={styles.qtyBtn}
                           disabled={safeQuantity <= 1}
                           onClick={() => setQuantity(clampQuantity(safeQuantity - 1, product.stockQty))}
                           aria-label="Decrease quantity"
                         >
-                          -
+                          −
                         </button>
-                        <span className={styles.quantityValue}>{safeQuantity}</span>
+                        <span className={styles.qtyValue}>{safeQuantity}</span>
                         <button
                           type="button"
-                          className={styles.quantityButton}
+                          className={styles.qtyBtn}
                           disabled={safeQuantity >= product.stockQty}
                           onClick={() => setQuantity(clampQuantity(safeQuantity + 1, product.stockQty))}
                           aria-label="Increase quantity"
@@ -233,193 +209,164 @@ export default function ProductDetailClient({
                     ) : null}
                   </div>
 
-                  <div className={journeyStyles.actions}>
+                  <div className={styles.buttonGroup}>
                     {canAddToCart ? (
-                      <>
-                        <button type="button" className="btn primary" onClick={handleAddToCart}>
-                          Add to cart
-                        </button>
-                        <button
-                          type="button"
-                          className="btn outline"
-                          onClick={() => setShowCardCheckout((prev) => !prev)}
-                        >
-                          {showCardCheckout ? "Hide Card Checkout" : "Pay with Card / Transfer"}
-                        </button>
-                        <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn outline">
-                          Order on WhatsApp
-                        </a>
-                      </>
-                    ) : (
-                      <>
-                        <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn primary">
-                          Request availability
-                        </a>
-                        <Link href="/quote" className="btn outline">
-                          Request quote
-                        </Link>
-                      </>
-                    )}
+                      <button type="button" className={styles.addToCartBtn} onClick={handleAddToCart}>
+                        + Add to Cart {safeQuantity > 1 ? `(${totalPriceLabel})` : ""}
+                      </button>
+                    ) : null}
+
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.whatsappBtn}
+                    >
+                      Inquire on WhatsApp →
+                    </a>
                   </div>
 
-                  <div className={styles.orderFacts} aria-label="Order summary">
-                    <span>{stockMessage}</span>
-                    {canAddToCart ? <strong>Total: {totalPriceLabel}</strong> : null}
-                  </div>
+                  {canAddToCart ? (
+                    <button
+                      type="button"
+                      className={styles.cardCheckoutToggle}
+                      onClick={() => setShowCardCheckout((prev) => !prev)}
+                    >
+                      {showCardCheckout ? "Hide Online Payment" : "💳 Pay with Card / Bank Transfer"}
+                    </button>
+                  ) : null}
 
                   {cartFeedback ? (
-                    <p className={journeyStyles.catalogFeedback}>
-                      {cartFeedback} <Link href="/cart">View cart</Link>
+                    <p className={styles.cartFeedback}>
+                      {cartFeedback} <Link href="/cart" style={{ textDecoration: "underline", color: "#ffd54a", marginLeft: 6 }}>View Cart →</Link>
                     </p>
                   ) : null}
 
-                  <div className={styles.buyNotes}>
-                    <span>WhatsApp response: {CONTACT.whatsappResponseTime}</span>
-                    <span>Confirm accessories or site-specific ratings before payment.</span>
-                  </div>
+                  {canAddToCart && showCardCheckout ? (
+                    <div style={{ marginTop: 10 }}>
+                      <PaystackCheckoutPanel
+                        productId={product.id}
+                        productName={product.name}
+                        priceLabel={formatProductPrice(product)}
+                        quantity={safeQuantity}
+                        totalLabel={totalPriceLabel}
+                        title="Secure Card & Transfer Checkout"
+                        compact
+                      />
+                    </div>
+                  ) : null}
                 </div>
 
-                {canAddToCart && showCardCheckout ? (
-                  <div className={styles.checkoutPanelWrap} style={{ marginTop: 12 }}>
-                    <PaystackCheckoutPanel
-                      productId={product.id}
-                      productName={product.name}
-                      priceLabel={formatProductPrice(product)}
-                      quantity={safeQuantity}
-                      totalLabel={totalPriceLabel}
-                      title="Secure Card & Transfer Checkout"
-                      compact
-                    />
-                  </div>
-                ) : null}
-
-                <div className={styles.installationCrossSell}>
-                  <div className={styles.installContent}>
-                    <div className={styles.installIcon} aria-hidden="true">
+                {/* Site Installation Banner */}
+                <div className={styles.installationBanner}>
+                  <div className={styles.installationCopy}>
+                    <span className={styles.installationIcon} aria-hidden="true">
                       ⚡
-                    </div>
-                    <div className={styles.installText}>
-                      <strong>Need this installed on your site?</strong>
-                      <p>
-                        Avoid faulty connections. Oduzz certified electricians provide guaranteed installation across Lagos.
-                      </p>
-                    </div>
+                    </span>
+                    <p className={styles.installationText}>
+                      <strong>Need professional site installation in Lagos?</strong>
+                      <br />
+                      Oduzz certified engineers handle conduit routing, DB connection, and testing.
+                    </p>
                   </div>
                   <Link
                     href={`/quote?service=${encodeURIComponent(
-                      product.categoryLabel || "Residential / commercial wiring",
-                    )}&details=${encodeURIComponent("Material specification: " + product.name + " (" + (product.size || "") + ")")}`}
-                    className={`btn outline ${styles.installBtn}`}
+                      product.categoryLabel || "Residential wiring",
+                    )}&details=${encodeURIComponent("Installation quote for: " + product.name)}`}
+                    className={styles.installationBtn}
                   >
-                    Request Installation Quote →
+                    Request Quote →
                   </Link>
                 </div>
 
-                <section className={styles.specPanel} aria-labelledby="product-spec-heading">
-                  <div className={styles.sectionHead}>
-                    <p className={journeyStyles.eyebrow}>Technical snapshot</p>
-                    <h2 id="product-spec-heading" className={styles.compactTitle}>
-                      Product details
-                    </h2>
-                  </div>
-                  <dl className={styles.specGrid}>
+                {/* Technical Specifications Snapshot */}
+                <div className={styles.specsSection}>
+                  <h3 className={styles.specsHeading}>Technical Specifications</h3>
+                  <div className={styles.specsTable}>
                     {specDetails.map((item) => (
-                      <div key={item.label} className={styles.specItem}>
-                        <dt>{item.label}</dt>
-                        <dd>{item.value}</dd>
+                      <div key={item.label} className={styles.specCell}>
+                        <span className={styles.specLabel}>{item.label}</span>
+                        <span className={styles.specValue}>{item.value}</span>
                       </div>
                     ))}
-                  </dl>
-                </section>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className={styles.contentGrid}>
-            <section className={cn(journeyStyles.frame, styles.contentSection)}>
-              <div className={styles.sectionHead}>
-                <p className={journeyStyles.eyebrow}>Product summary</p>
-                <h2 className={journeyStyles.catalogTitle}>What this product is for</h2>
-              </div>
-              <p className={styles.richCopy}>
+          {/* 2. DESCRIPTION & GUARANTEE (Clean, not text-heavy) */}
+          <section className={styles.detailsSection}>
+            <div className={styles.descriptionBox}>
+              <h2 className={styles.sectionTitle}>Product Overview</h2>
+              <p className={styles.descriptionText}>
                 {product.description ||
-                  `${product.name} sits within the ${product.categoryLabel.toLowerCase()} collection and is presented with the current size, type, and pricing details shown above.`}
+                  `The ${product.name} is manufactured to standard Nigerian and international electrical safety requirements, delivering reliable conductivity and durability for domestic and commercial projects.`}
               </p>
+
               {productHighlights.length > 0 ? (
-                <ul className={styles.featureList}>
+                <ul className={styles.featuresList}>
                   {productHighlights.map((feature) => (
-                    <li key={feature}>{feature}</li>
+                    <li key={feature} className={styles.featureItem}>
+                      <span className={styles.featureIcon}>✓</span>
+                      <span>{feature}</span>
+                    </li>
                   ))}
                 </ul>
               ) : null}
-            </section>
-
-            <section className={cn(journeyStyles.frame, styles.contentSection)}>
-              <div className={styles.sectionHead}>
-                <p className={journeyStyles.eyebrow}>Field notes</p>
-                <h2 className={journeyStyles.catalogTitle}>What we usually confirm before purchase</h2>
-              </div>
-              <div className={styles.noteGrid}>
-                <article className={styles.noteCard}>
-                  <span className={styles.metaLabel}>Best use</span>
-                  <p>{credibilityNotes.bestUseCase}</p>
-                </article>
-                <article className={styles.noteCard}>
-                  <span className={styles.metaLabel}>Safety</span>
-                  <p>{credibilityNotes.safetyNote}</p>
-                </article>
-                <article className={styles.noteCard}>
-                  <span className={styles.metaLabel}>Installation</span>
-                  <p>{credibilityNotes.installationNote}</p>
-                </article>
-                <article className={styles.noteCard}>
-                  <span className={styles.metaLabel}>Compatibility</span>
-                  <p>{credibilityNotes.compatibilityNote}</p>
-                </article>
-              </div>
-            </section>
-          </div>
-
-          <section className={cn(journeyStyles.frame, styles.supportBand)}>
-            <div className={styles.supportCopy}>
-              <p className={journeyStyles.eyebrow}>Need matching items?</p>
-              <h2 className={journeyStyles.catalogTitle}>Get the right accessories before checkout</h2>
-              <p className={styles.richCopy}>
-                Share your intended use, location, and any photos. We can help match accessories,
-                verify stock, and reduce wrong material selection before payment.
-              </p>
             </div>
-            <div className={journeyStyles.actions}>
-              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn primary">
-                Ask about this product
-              </a>
-              <Link href="/quote" className="btn outline">
-                Request a project quote
-              </Link>
+
+            <div className={styles.guaranteeBox}>
+              <h3 className={styles.sectionTitle}>Purchase Guarantees</h3>
+              <div className={styles.guaranteeItem}>
+                <span className={styles.guaranteeIcon}>🛡️</span>
+                <p className={styles.guaranteeText}>
+                  <strong>100% Genuine Copper:</strong> Certified pure conductivity with zero counterfeit risk.
+                </p>
+              </div>
+              <div className={styles.guaranteeItem}>
+                <span className={styles.guaranteeIcon}>🚚</span>
+                <p className={styles.guaranteeText}>
+                  <strong>Direct Site Delivery:</strong> Prompt dispatch to building sites across Lagos Mainland & Island.
+                </p>
+              </div>
+              <div className={styles.guaranteeItem}>
+                <span className={styles.guaranteeIcon}>📐</span>
+                <p className={styles.guaranteeText}>
+                  <strong>Technical Compatibility:</strong> Verified by qualified electricians before dispatch.
+                </p>
+              </div>
             </div>
           </section>
 
+          {/* 3. RELATED PRODUCTS (Uses the Exact ProductCard from Last Reference) */}
           {relatedProducts.length > 0 ? (
-            <section className={cn(journeyStyles.frame, styles.relatedSection)}>
-              <div className={journeyStyles.sectionHead}>
-                <div className={journeyStyles.sectionCopy}>
-                  <p className={journeyStyles.eyebrow}>Related products</p>
-                  <h2 className={journeyStyles.catalogTitle}>Keep the material path consistent</h2>
+            <section className={styles.relatedSection}>
+              <div className={styles.relatedHead}>
+                <div>
+                  <p className={styles.categoryEyebrow}>Related Materials</p>
+                  <h2 className={styles.sectionTitle}>You May Also Need</h2>
                 </div>
-                <Link href={collectionPath} className={journeyStyles.sectionLink}>
-                  View collection
+                <Link href={collectionPath} className={styles.collectionLink}>
+                  View All in {product.categoryLabel} →
                 </Link>
               </div>
 
-              <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridRelated)}>
+              <div className={styles.relatedGrid}>
                 {relatedProducts.map((item, index) => (
-                  <ProductCard key={item.id} product={item} variant="related" priority={index < 2} />
+                  <ProductCard
+                    key={item.id}
+                    product={item}
+                    variant="listing"
+                    showCategory
+                    priority={index < 2}
+                  />
                 ))}
               </div>
             </section>
           ) : null}
         </div>
-      </Container>
-    </section>
+      </div>
+    </div>
   );
 }

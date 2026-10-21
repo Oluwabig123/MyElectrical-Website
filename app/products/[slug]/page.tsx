@@ -114,7 +114,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   return (
     <section className={cn("section", journeyStyles.page)}>
       <Container className={journeyStyles.container}>
-        <div className={cn(journeyStyles.frame, journeyStyles.shell)}>
+        <div className={journeyStyles.shell}>
           <ProductBreadcrumbs
             items={[
               { label: "Products", href: "/products" },
@@ -160,7 +160,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </div>
               <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridRelated)}>
                 {suggestedProducts.map((item, index) => (
-                  <ProductCard key={item.id} product={item} variant="related" priority={index < 2} />
+                  <ProductCard key={item.id} product={item} variant="listing" showCategory priority={index < 2} />
                 ))}
               </div>
             </section>
