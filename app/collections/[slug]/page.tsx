@@ -6,11 +6,9 @@ import ProductCard from "@/components/products/ProductCard";
 import journeyStyles from "@/components/products/ProductJourney.module.css";
 import JsonLd from "@/components/seo/JsonLd";
 import FaqAccordion from "@/components/ui/FaqAccordion";
-import SmartImage from "@/components/ui/SmartImage";
 import { getServicePageBySlug } from "@/data/service-pages";
 import {
   buildCollectionPath,
-  buildProductPath,
   buildProductCatalog,
   type ProductCategoryKey,
   resolveProductCategory,
@@ -48,10 +46,9 @@ const CATEGORY_SERVICE_MAP: Partial<Record<ProductCategoryKey, string>> = {
 
 function buildCollectionDescription(label: string, group: string) {
   if (group === "Security & CCTV") {
-    return `A curated edit of ${label.toLowerCase()} for residential, commercial, and site security projects.`;
+    return `Verified ${label.toLowerCase()} for residential, commercial, and site security projects in Lagos.`;
   }
-
-  return `A curated selection of ${label.toLowerCase()} for cleaner comparison and confident project decisions.`;
+  return `Curated ${label.toLowerCase()} certified for residential, commercial, and industrial installations.`;
 }
 
 function buildCollectionFaqs(label: string) {
@@ -60,17 +57,17 @@ function buildCollectionFaqs(label: string) {
     {
       question: `How do I choose the right ${labelLower} for my project?`,
       answer:
-        "Start with your actual load, installation environment, and reliability needs. Oduzz can help narrow options so selected products match project scope.",
+        "Start with your actual electrical load, cable route, and circuit rating. Oduzz engineers confirm specifications before purchase to ensure safe delivery.",
     },
     {
-      question: `Do you support installation guidance for ${labelLower}?`,
+      question: `Do you provide installation services for ${labelLower}?`,
       answer:
-        "Yes. You can request service guidance alongside product selection so accessories, protection, and routing decisions stay aligned.",
+        "Yes. Our qualified electricians provide professional site installation, conduit wiring, DB integration, and testing across Lagos.",
     },
     {
-      question: `Can I request a quote for ${labelLower} and related materials together?`,
+      question: `Can I get a bulk contractor quote for ${labelLower}?`,
       answer:
-        "Yes. Share your location, required quantities, and project timeline through WhatsApp or the quote page for faster support.",
+        "Yes. Share your material schedule or bill of quantities (BOQ) through WhatsApp or our quote page for per-unit contractor pricing within 24 hours.",
     },
   ];
 }
@@ -82,7 +79,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!category) {
     return buildMetadata({
       title: `Collection: ${slug}`,
-      description: "Curated product collection from Oduzz Electrical Concept.",
+      description: "Curated electrical collection from Oduzz Electrical Concept.",
       path: `/collections/${slug}`,
       keywords: ["product collection", slug],
       image: "/hero/lightings.webp",
@@ -91,7 +88,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return buildMetadata({
     title: `${category.label} Collection | Electrical Materials in Lagos`,
-    description: `${buildCollectionDescription(category.label, category.group)} Oduzz supports electrical installation in Lagos with verified electrical materials and authentic electrical products.`,
+    description: `${buildCollectionDescription(category.label, category.group)} Oduzz supplies verified electrical materials across Lagos.`,
     path: buildCollectionPath(category.key),
     keywords: [
       `${category.label} collection`,
@@ -117,7 +114,7 @@ export default async function CollectionPage({ params }: PageProps) {
     return (
       <section className={cn("section", journeyStyles.page)}>
         <Container className={journeyStyles.container}>
-          <div className={cn(journeyStyles.frame, journeyStyles.shell)}>
+          <div className={journeyStyles.shell}>
             <ProductBreadcrumbs
               items={[
                 { label: "Products", href: "/products" },
@@ -126,13 +123,20 @@ export default async function CollectionPage({ params }: PageProps) {
             />
 
             <div className={journeyStyles.emptyState}>
-              <h1 className={journeyStyles.emptyTitle}>This collection is not available</h1>
+              <h1 className={journeyStyles.emptyTitle}>
+                {category?.label ? `${category.label} Collection` : "Collection not found"}
+              </h1>
               <p className={journeyStyles.emptyBody}>
-                The category may have moved or there may not be active products in it right now.
+                {category?.label
+                  ? `We supply ${category.label.toLowerCase()} direct to contractor BOQ specifications. Contact our sourcing desk for immediate pricing.`
+                  : "The requested category may have moved or is not currently active."}
               </p>
               <div className={journeyStyles.actions}>
                 <Link href="/products" className="btn primary">
-                  Browse products
+                  Browse Live Catalog
+                </Link>
+                <Link href="/quote" className="btn outline">
+                  Request Custom Sourcing
                 </Link>
               </div>
             </div>
@@ -142,19 +146,6 @@ export default async function CollectionPage({ params }: PageProps) {
     );
   }
 
-  const spotlightProducts = [
-    ...group.items.filter((item) => item.featured),
-    ...group.items.filter((item) => !item.featured),
-  ].slice(0, 3);
-  const featuredCount = group.items.filter((item) => item.featured).length;
-  const collectionModeValue =
-    group.items.length >= 4 ? "Stocked" : group.items.length >= 2 ? "Curated" : "Special";
-  const collectionModeLabel =
-    group.items.length >= 4
-      ? "Stocked collection"
-      : group.items.length >= 2
-        ? "Curated edit"
-        : "Special-order reference";
   const collectionFaqs = buildCollectionFaqs(category.label);
   const faqSchema = buildFaqSchema(collectionFaqs, { id: `${absoluteUrl(buildCollectionPath(category.key))}#faq` });
   const relatedService = getServicePageBySlug(CATEGORY_SERVICE_MAP[category.key] ?? "");
@@ -165,7 +156,7 @@ export default async function CollectionPage({ params }: PageProps) {
 
       <section className={cn("section", journeyStyles.page)}>
         <Container className={journeyStyles.container}>
-          <div className={cn(journeyStyles.frame, journeyStyles.shell)}>
+          <div className={journeyStyles.shell}>
             <ProductBreadcrumbs
               items={[
                 { label: "Products", href: "/products" },
@@ -175,7 +166,7 @@ export default async function CollectionPage({ params }: PageProps) {
 
             <div className="productCollectionHero">
               <div className="productCollectionHeroCopy">
-                <p className={journeyStyles.eyebrow}>{category.group} | {collectionModeLabel}</p>
+                <p className={journeyStyles.eyebrow}>{category.group} • Live Collection</p>
                 <h1 className={cn(journeyStyles.display, journeyStyles.displayCollection)}>{category.label}</h1>
                 <p className={cn(journeyStyles.lead, "productCollectionHeroLead")}>
                   {buildCollectionDescription(category.label, category.group)}
@@ -187,7 +178,7 @@ export default async function CollectionPage({ params }: PageProps) {
                     </Link>
                   ) : null}
                   <Link href="/quote" className="btn primary">
-                    Request quote
+                    Request BOQ Quote
                   </Link>
                 </div>
               </div>
@@ -195,69 +186,39 @@ export default async function CollectionPage({ params }: PageProps) {
               <div className={journeyStyles.stats}>
                 <div className={journeyStyles.stat}>
                   <strong className={journeyStyles.statValue}>{group.items.length}</strong>
-                  <span className={journeyStyles.statLabel}>Products</span>
+                  <span className={journeyStyles.statLabel}>In-Stock Items</span>
                 </div>
                 <div className={journeyStyles.stat}>
-                  <strong className={journeyStyles.statValue}>{featuredCount}</strong>
-                  <span className={journeyStyles.statLabel}>Featured picks</span>
+                  <strong className={journeyStyles.statValue}>100%</strong>
+                  <span className={journeyStyles.statLabel}>Pure Certified</span>
                 </div>
                 <div className={journeyStyles.stat}>
-                  <strong className={journeyStyles.statValue}>{collectionModeValue}</strong>
-                  <span className={journeyStyles.statLabel}>Collection mode</span>
+                  <strong className={journeyStyles.statValue}>Fast</strong>
+                  <span className={journeyStyles.statLabel}>Lagos Dispatch</span>
                 </div>
               </div>
             </div>
-
-            {spotlightProducts.length > 0 ? (
-              <div className="productCollectionSpotlightGrid">
-                {spotlightProducts.map((item, index) => (
-                  <Link key={item.id} href={buildProductPath(item)} className="productCollectionSpotlight">
-                    <div className="productCollectionSpotlightMedia product-image">
-                      {item.imageUrl ? (
-                        <SmartImage
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="productCollectionSpotlightImage"
-                          fill
-                          priority={index === 0}
-                          sizes="(max-width: 768px) 100vw, 50vw"
-                        />
-                      ) : (
-                        <div className="productCollectionTileFallback" aria-hidden="true">
-                          Oduzz
-                        </div>
-                      )}
-                    </div>
-                    <div className="productCollectionSpotlightBody">
-                      <span className="productCollectionTileMeta">
-                        {index === 0 ? "Editor's pick" : "Collection highlight"}
-                      </span>
-                      <h2 className="productCollectionTileTitle">{item.name}</h2>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : null}
 
             <div className={journeyStyles.catalogToolbar}>
               <div className={journeyStyles.catalogToolbarCopy}>
-                <p className={journeyStyles.eyebrow}>Collection catalog</p>
+                <p className={journeyStyles.eyebrow}>Verified Inventory</p>
                 <h2 className={journeyStyles.catalogTitle}>Browse {category.label.toLowerCase()}</h2>
                 <p className={journeyStyles.catalogFeedback}>
-                  Review these products as part of the wider installation decision, not as isolated items.
+                  Genuine electrical materials ready for direct site dispatch across Lagos.
                 </p>
               </div>
               <Link href="/products" className={journeyStyles.catalogReset}>
-                View all products
+                View all products →
               </Link>
             </div>
 
-            <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridCollection)}>
+            {/* Product Grid - Uses the Exact ProductCard from Last Reference (Image 3) */}
+            <div className={cn(journeyStyles.cardGrid, journeyStyles.cardGridListing)}>
               {group.items.map((item, index) => (
                 <ProductCard
                   key={item.id}
                   product={item}
-                  variant="collection"
+                  variant="listing"
                   priority={index < 4}
                   showCategory={false}
                 />
